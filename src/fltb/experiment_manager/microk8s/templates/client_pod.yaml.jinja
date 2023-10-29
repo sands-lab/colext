@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ pod_name }}
+spec:
+  initContainers:
+  - name: wait-for-fl-server
+    image: busybox:1.28
+    command: ['sh', '-c', "until nslookup fl-server-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for fl-server-svc; sleep 2; done"]
+  containers:
+  - name: fl-client
+    image: {{ image }}
+    command: ["python3", "{{ client_entrypoint }}"]
+    args: {{ image_args }}
+    env:
+      - name: FLTB_ENV
+        value: "1"
+      - name: FLTB_SERVER_ADDRESS
+        value: "fl-server-svc:80"
+      - name: FLTB_DATA_HOME_FOLDER
+        value: "/fltb/datasets"
+      - name: FLTB_JOB_ID
+        value: "{{ job_id }}"
+      - name: FLTB_CLIENT_ID
+        value: "{{ client_id }}"
+      - name: FLTB_CLIENT_DB_ID
+        value: "{{ client_db_id }}"
+    volumeMounts:
+    - mountPath: /fltb/datasets
+      name: fltb-datasets
+{% if jetson_dev is defined %}
+    - mountPath: /run/jtop.sock
+      name: jtop-socket
+{% endif %}
+  volumes:
+  - name: fltb-datasets
+    hostPath:
+      path: /fltb/datasets
+      type: Directory
+{% if jetson_dev is defined %}
+  - name: jtop-socket
+    hostPath:
+      path: /run/jtop.sock
+      type: Socket
+{% endif %}
+  restartPolicy: Never
+  imagePullSecrets:
+    - name: regcred
+  nodeSelector:
+    kubernetes.io/hostname: {{ device_hostname }}

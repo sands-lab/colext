@@ -1,0 +1,21 @@
+FROM python:3.8
+
+RUN python3 -m pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+RUN python3 -m pip install --no-cache-dir flwr psutil psycopg[binary]
+RUN python3 -m pip install --no-cache-dir tqdm
+
+# Bake the CIFAR-10 dataset in the image
+# RUN python -c "from torchvision.datasets import CIFAR10; CIFAR10('./data', download=True)"
+# To make it faster for now, data is copied from the server to inside the image 
+
+ENV PYTHONPATH "/fl_testbed:${PYTHONPATH}"
+
+WORKDIR /fl_testbed
+# COPY requirements.txt .
+# RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY ./src ./src
+COPY ./user_code_example ./user_code_example
+COPY ./data ./user_code_example/data
+CMD ["python3", "./user_code_example/client.py"]

@@ -1,0 +1,18 @@
+# Inspired by: https://uwekorn.com/2021/03/01/deploying-conda-environments-in-docker-how-to-do-it-right.html
+FROM condaforge/mambaforge
+
+WORKDIR /flwr
+COPY environment.yaml .
+
+RUN mamba env create -f environment.yaml -p ./env && \
+    mamba clean -ay
+
+# Make RUN commands use the new environment
+SHELL ["conda", "run", "-p", "./env", "/bin/bash", "-c"]
+
+COPY ./flower ./src
+
+# Based on https://stackoverflow.com/questions/55123637/activate-conda-environment-in-docker
+# Make the entrypoint use the conda environment
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-p", "./env"]
+CMD ["python", "./src/server.py"]

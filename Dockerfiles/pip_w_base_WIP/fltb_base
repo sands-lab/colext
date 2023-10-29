@@ -1,0 +1,13 @@
+FROM python:3.8
+
+RUN python3 -m pip install --no-cache-dir psutil psycopg[binary]
+
+WORKDIR /fl_testbed
+ENV PYTHONPATH "${PYTHONPATH}:/fl_testbed/src"
+# COPY requirements.txt .
+# RUN pip3 install --no-cache-dir -r requirements.txt
+
+COPY ./src ./src
+COPY ./user_code_example ./user_code_example
+COPY ./data ./user_code_example/data
+CMD ["python3", "./user_code_example/client.py"]

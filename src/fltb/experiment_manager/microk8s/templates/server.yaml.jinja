@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fl-server
+  labels:
+    fl_type: server
+spec:
+  containers:
+  - name: test-container
+    image: {{ image }}
+    command: ["python3", "{{ server_entrypoint }}"]
+    args: {{ image_args }}
+    env:
+      - name: FLTB_ENV
+        value: "1"
+      - name: FLTB_JOB_ID
+        value: "{{ job_id }}"
+    ports:
+      - containerPort: 8080
+        name: fl-server-svc
+  restartPolicy: Never
+  imagePullSecrets:
+  - name: regcred
+  nodeSelector:
+    kubernetes.io/hostname: kw61463
