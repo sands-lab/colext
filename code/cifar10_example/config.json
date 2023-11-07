@@ -1,0 +1,52 @@
+{
+    "server_port": 8080,
+    "server_ip": "10.0.0.70",
+    "dataset": "data",
+    "model": "model/cifar10.tflite",
+    "layers_sizes": [
+        1800,
+        24,
+        9600,
+        64,
+        768000,
+        480,
+        40320,
+        336,
+        3360,
+        40
+    ],
+    "classes": [
+        "cat",
+        "dog",
+        "truck",
+        "bird",
+        "airplane",
+        "ship",
+        "frog",
+        "horse",
+        "deer",
+        "automobile"
+    ],
+    "clients": [
+        {
+            "device_name": "OnePlus Nord",
+            "partition_id": 0
+        },
+        {
+            "device_name": "Samsung Galaxy S21 FE",
+            "partition_id": 1
+        },
+        {
+            "device_name": "ROG Phone",
+            "partition_id": 2
+        },
+        {
+            "device_name": "Samsung Galaxy M54",
+            "partition_id": 3
+        },
+        {
+            "device_name": "Samsung galaxy XCover 5 Pro",
+            "partition_id": 4
+        }
+    ]
+}
