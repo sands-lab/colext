@@ -1,1 +1,5 @@
 flwr>=1.0,<2.0
+
+psycopg2~=2.9.9
+numpy~=1.26.1
+tensorflow~=2.14.1

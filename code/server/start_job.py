@@ -11,6 +11,8 @@ import time
 
 from server import run_server, check_android_device_online
 
+TRAINING_DATA = "examples/femnist_example"
+
 
 class NotEnoughDevicesException(Exception):
     pass
@@ -33,7 +35,7 @@ def main():
     sql = "INSERT INTO fl_testbed_logging.jobs(start_time, user_id) VALUES (CURRENT_TIMESTAMP, 1) returning job_id"
     cursor.execute(sql)
 
-    with open("../fl_testbed/config.json", 'r') as json_file:
+    with open("../" + TRAINING_DATA + "/config.json", 'r') as json_file:
 
         try:
 
@@ -144,13 +146,18 @@ def push_data_to_device(data, client_id, client_ip, partition_id):
 
     try:
 
-        shutil.copy2('../cifar10_example/app.apk', "../temp/config_" + str(client_id) + "/fl_testbed/app.apk")
+        shutil.copy2('../' + TRAINING_DATA + '/app.apk', "../temp/config_" + str(client_id) + "/fl_testbed/app.apk")
 
-        split_dataset_by_clients("../cifar10_example/data", "../temp/config_" + str(client_id) + "/fl_testbed/data",
+        split_dataset_by_clients("../" + TRAINING_DATA + "/data", "../temp/config_" + str(client_id) + "/fl_testbed/data",
                                  "partition_" + str(partition_id) + "_test.txt")
 
-        split_dataset_by_clients("../cifar10_example/data", "../temp/config_" + str(client_id) + "/fl_testbed/data",
+        split_dataset_by_clients("../" + TRAINING_DATA + "/data", "../temp/config_" + str(client_id) + "/fl_testbed/data",
                                  "partition_" + str(partition_id) + "_train.txt")
+
+        source_file = os.path.join('../' + TRAINING_DATA, 'model', 'cnn_femnist.tflite')
+        destination_file = os.path.join("../temp/config_" + str(client_id) + "/fl_testbed", 'model', 'cnn_femnist.tflite')
+        os.makedirs(os.path.dirname(destination_file), exist_ok=True)
+        shutil.copy2(source_file, destination_file)
 
         subprocess.check_output(
             "adb -s " + client_ip + " push --sync ../temp/config_" + str(client_id) + "/fl_testbed/ "

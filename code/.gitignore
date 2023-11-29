@@ -8,4 +8,4 @@ saved_model/
 temp/
 venv/
 .idea/
-/cifar10_example/data/
+/examples
