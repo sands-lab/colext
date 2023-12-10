@@ -1,4 +1,3 @@
-import multiprocessing
 import shutil
 
 import psycopg2
@@ -11,7 +10,8 @@ import time
 
 from server import run_server, check_android_device_online
 
-TRAINING_DATA = "examples/femnist_example"
+TRAINING_DATA = "../examples/femnist_example"
+TEMP_FOLDER = "../temp/"
 
 
 class NotEnoughDevicesException(Exception):
@@ -32,19 +32,18 @@ def main():
 
     cursor = DB_CONNECTION.cursor()
 
-    sql = "INSERT INTO fl_testbed_logging.jobs(start_time, user_id) VALUES (CURRENT_TIMESTAMP, 1) returning job_id"
-    cursor.execute(sql)
-
-    with open("../" + TRAINING_DATA + "/config.json", 'r') as json_file:
+    with open(TRAINING_DATA + "/config.json", 'r') as json_file:
 
         try:
 
             config_json = json.load(json_file)
             config_devices = [(client["device_name"], client["partition_id"]) for client in config_json["clients"]]
 
-            JOB_ID = cursor.fetchone()[0]
-
             config_devices_names = [i[0] for i in config_devices]
+
+            sql = "INSERT INTO fl_testbed_logging.jobs(start_time, user_id) VALUES (CURRENT_TIMESTAMP, 1) returning job_id"
+            cursor.execute(sql)
+            JOB_ID = cursor.fetchone()[0]
 
             sql = "select device_id, device_code as ip, device_name from fl_testbed_logging.devices where device_name in %s and status = %s"
             data = (tuple(config_devices_names), 'ACTIVE')
@@ -66,7 +65,6 @@ def main():
                         data.append((str(counter), str(JOB_ID), str(device_id)))
                         counter += 1
                         clients_partitions[cur_device_ip] = config_devices[device_index][1]
-                        # config_devices.remove(device_index)
                         del config_devices[device_index]
                     else:
                         print("Device not available: " + str(cur_device_ip))
@@ -88,8 +86,7 @@ def main():
 
             threads = []
 
-            server_process = threading.Thread(target=run_server,
-                                              args=(DB_CONNECTION, JOB_ID, CLIENTS, "10.0.0.70", 8080))
+            server_process = threading.Thread(target=run_server, args=(DB_CONNECTION, JOB_ID, CLIENTS, config_json["server_ip"], config_json["server_port"]))
             server_process.start()
 
             for c in db_clients:
@@ -135,32 +132,32 @@ def main():
 
 def push_data_to_device(data, client_id, client_ip, partition_id):
     print("Pushing config file")
-    os.makedirs(os.path.dirname("../temp/config_" + str(client_id) + "/fl_testbed/config.json"), exist_ok=True)
+    os.makedirs(os.path.dirname(TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed/config.json"), exist_ok=True)
     data["client_id"] = client_id
     data["partition_id"] = partition_id + 1
     del data["clients"]
-    with open("../temp/config_" + str(client_id) + "/fl_testbed/config.json", 'w') as json_file:
+    with open(TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed/config.json", 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
     print("Config file pushed")
 
     try:
 
-        shutil.copy2('../' + TRAINING_DATA + '/app.apk', "../temp/config_" + str(client_id) + "/fl_testbed/app.apk")
+        shutil.copy2(TRAINING_DATA + '/app.apk', TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed/app.apk")
 
-        split_dataset_by_clients("../" + TRAINING_DATA + "/data", "../temp/config_" + str(client_id) + "/fl_testbed/data",
+        split_dataset_by_clients(TRAINING_DATA + "/data", TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed/data",
                                  "partition_" + str(partition_id) + "_test.txt")
 
-        split_dataset_by_clients("../" + TRAINING_DATA + "/data", "../temp/config_" + str(client_id) + "/fl_testbed/data",
+        split_dataset_by_clients(TRAINING_DATA + "/data", TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed/data",
                                  "partition_" + str(partition_id) + "_train.txt")
 
-        source_file = os.path.join('../' + TRAINING_DATA, 'model', 'cnn_femnist.tflite')
-        destination_file = os.path.join("../temp/config_" + str(client_id) + "/fl_testbed", 'model', 'cnn_femnist.tflite')
+        source_file = os.path.join(TRAINING_DATA, data["model"])
+        destination_file = os.path.join(TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed", data["model"])
         os.makedirs(os.path.dirname(destination_file), exist_ok=True)
         shutil.copy2(source_file, destination_file)
 
         subprocess.check_output(
-            "adb -s " + client_ip + " push --sync ../temp/config_" + str(client_id) + "/fl_testbed/ "
+            "adb -s " + client_ip + " push --sync " + TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed/ "
                                                                                       "/storage/emulated/0/Documents/"
             , shell=True, text=True)
 
