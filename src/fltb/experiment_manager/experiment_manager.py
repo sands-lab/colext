@@ -21,11 +21,13 @@ class DeviceTypeRequest:
     count: int
 
 
-REGISTY_PATH="kw61463:5000/fltestbed"
+REGISTY_PATH="kw61463:5000"
+STD_DATASETS_PATH="/fltb/datasets/"
+PYTORCH_DATASETS_PATH="/fltb/pytorch_datasets/"
 base_pod_config_by_type = {
-    "Lattepanda":    { "image_suffix": "client" },
-    "Jetson":        { "image_suffix": "client_jetson", "jetson_dev": True},
-    "Server":        { "image_suffix": "server" }
+    "Lattepanda":    { "image_name": "client" },
+    "Jetson":        { "image_name": "client_jetson", "jetson_dev": True},
+    "Server":        { "image_name": "server" }
 }
 
 def get_base_pod_config_by_type(dev_type, config: Dict[str, str]):
@@ -36,7 +38,9 @@ def get_base_pod_config_by_type(dev_type, config: Dict[str, str]):
     
     pod_config = copy.deepcopy(base_pod_config)
     project_name = config["project"]
-    pod_config["image"] =  f"{REGISTY_PATH}/{project_name}_{pod_config['image_suffix']}:latest"
+    pod_config["image"] =  f"{REGISTY_PATH}/{project_name}/{pod_config['image_name']}:latest"
+    pod_config["std_datasets_path"] = STD_DATASETS_PATH
+    pod_config["pytorch_datasets_path"] = PYTORCH_DATASETS_PATH
     return pod_config
 
 class ExperimentManager():

@@ -40,14 +40,14 @@ docker build --platform linux/amd64 \
     -f Dockerfiles/pip/fltb_server -t $REGISTY/${PROJECT_NAME}_server:latest --push $CONTEXT_PATH
 
 echo 
-echo "Building client image for aarch64" 
+echo "Building client image for jetsons (aarch64)" 
 docker buildx build --platform linux/aarch64 \
     --build-arg $BUILD_ARG_USER_CODE_PATH --build-arg $BUILD_ARG_FLTB_PATH \
     -f Dockerfiles/pip/fltb_client_jetson -t $REGISTY/${PROJECT_NAME}_client_jetson:latest --push $CONTEXT_PATH
 
-# echo 
-# echo "Building client image for amd64" 
-# # docker build --platform linux/amd64,linux/aarch64 \
-# docker build --platform linux/amd64 \
-#    --build-arg $BUILD_ARGS \    
-#   -f Dockerfiles/pip/fltb__client -t $REGISTY/${PROJECT_NAME}__client:latest --push .
+
+echo 
+echo "Building client image for LattePanda (amd64) and OrangePi(aarch64)" 
+docker buildx build --platform linux/amd64,linux/aarch64 \
+    --build-arg $BUILD_ARG_USER_CODE_PATH --build-arg $BUILD_ARG_FLTB_PATH \
+    -f Dockerfiles/pip/fltb_client_jetson -t $REGISTY/${PROJECT_NAME}_client:latest --push $CONTEXT_PATH

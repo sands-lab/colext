@@ -1,9 +1,0 @@
-# sudo mkdir -p /var/snap/microk8s/current/args/certs.d/kw61463:5000
-# sudo vim /var/snap/microk8s/current/args/certs.d/kw61463:5000/hosts.toml
-
-# Add flserver to /etc/hosts to avoid issues with name resolution
-
-
-# microk8s stop && microk8s start 
-# or
-# sudo snap stop microk8s && sudo snap start microk8s

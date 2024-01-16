@@ -1,0 +1,25 @@
+- name: Copy hosts.toml file
+  vars: 
+    priv_registry_address: "{{ priv_registry.hostname }}:{{ priv_registry.port}}"
+  block:
+  - name: Create folder for registry
+    ansible.builtin.file:
+      path: "/var/snap/microk8s/current/args/certs.d/{{ priv_registry_address }}"
+      state: directory
+      owner: root
+      group: microk8s
+      mode: '0770'
+
+  - name: Copy file
+    ansible.builtin.template:
+      src: "private_registry/hosts.toml.j2"
+      dest: "/var/snap/microk8s/current/args/certs.d/{{ priv_registry_address }}/hosts.toml"
+      owner: root
+      group: microk8s
+      mode: '0660'
+    notify: Restart microk8s
+
+- name: Add private registry hostname to /etc/hosts to avoid issues with name resolution
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ priv_registry.internal_ip }}\t{{ priv_registry.hostname }}"

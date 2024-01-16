@@ -1,6 +1,0 @@
-# Install microk8s
-# Configure private registry
-# Add 10.0.0.100 kw61463 to /etc/hosts
-# If jetson, configure containerd
-# Disable default graphical interface
-# Add standard datasets

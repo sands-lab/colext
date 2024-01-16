@@ -17,25 +17,34 @@ spec:
         value: "1"
       - name: FLTB_SERVER_ADDRESS
         value: "fl-server-svc:80"
-      - name: FLTB_DATA_HOME_FOLDER
-        value: "/fltb/datasets"
       - name: FLTB_JOB_ID
         value: "{{ job_id }}"
       - name: FLTB_CLIENT_ID
         value: "{{ client_id }}"
       - name: FLTB_CLIENT_DB_ID
         value: "{{ client_db_id }}"
+
+      - name: FLTB_DATA_HOME_FOLDER
+        value: "/fltb/datasets"
+      - name: FLTB_PYTORCH_DATASETS
+        value: "/fltb/pytorch_datasets"        
     volumeMounts:
     - mountPath: /fltb/datasets
-      name: fltb-datasets
+      name: fltb-std-datasets
+    - mountPath: /fltb/pytorch_datasets
+      name: fltb-pytorch-datasets
 {% if jetson_dev is defined %}
     - mountPath: /run/jtop.sock
       name: jtop-socket
 {% endif %}
   volumes:
-  - name: fltb-datasets
+  - name: fltb-std-datasets
     hostPath:
-      path: /fltb/datasets
+      path: {{ std_datasets_path }}
+      type: Directory
+  - name: fltb-pytorch-datasets
+    hostPath:
+      path: {{ pytorch_datasets_path }}
       type: Directory
 {% if jetson_dev is defined %}
   - name: jtop-socket

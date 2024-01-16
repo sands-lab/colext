@@ -1,0 +1,20 @@
+- name: Ensure standard dataset path exists
+  ansible.builtin.file:
+    path: "{{ std_datasets.dest_path }}"
+    state: directory
+    owner: root
+    group: microk8s
+    mode: '0555'
+
+- name: Push standard datasets to device
+  ansible.posix.synchronize:
+    src: "{{ std_datasets.src_path }}"
+    dest: "{{ std_datasets.dest_path }}"
+
+- name: Ensure dataset path for pytorch datasets exists
+  ansible.builtin.file:
+    path: "{{ pytorch_datasets.path }}"
+    state: directory
+    owner: root
+    group: microk8s
+    mode: '0555'
