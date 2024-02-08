@@ -46,8 +46,10 @@ class MonitorManager():
     def stop_monitoring(self):
         log.debug("Stopping monitoring.")
         self.finish_event.set()
-        log.debug("Wait for background process to finish.")
-        self.process.join()
+        log.debug("Wait for background process to finish. Max 10sec.")
+        self.process.join(timeout=10) 
+        if self.process.exitcode != 0:
+            log.debug("Process terminated with non zero exit!")
         log.debug("Monitor stopped")
 
 def get_scrapper_agent_for_dev(pid) -> ScrapperBase:

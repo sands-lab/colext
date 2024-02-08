@@ -1,0 +1,5 @@
+prune deployment
+prune tests
+prune build
+prune user_code_example
+prune .git

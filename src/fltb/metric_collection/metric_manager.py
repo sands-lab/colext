@@ -9,7 +9,7 @@ import psycopg
 
 class MetricManager():
     def __init__(self) -> None:
-        self.metric_queue = multiprocessing.JoinableQueue()
+        self.metric_queue = multiprocessing.Queue()
         self.wait_for_queue_value_sec = 0.5
 
         self.metrics = []
@@ -33,7 +33,6 @@ class MetricManager():
             try:
                 p_metrics = self.metric_queue.get_nowait()
                 self.record_metric(p_metrics)
-                self.metric_queue.task_done()
             except queue.Empty:
                 log.debug("queue is empty. Stopping")
                 break

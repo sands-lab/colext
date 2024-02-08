@@ -1,0 +1,23 @@
+---
+job_name: "Cool FL experiment"
+# project name should not have spaces
+project: fltb_test 
+
+data:
+  dataset: "cifar10"
+  
+code: 
+  # TODO: We can ommit this and assume the current folder
+  path: "/home/faustiar/fl-testbed/user_code_example"
+  client:
+    entrypoint: "client.py"
+    args: ""
+  server: 
+    entrypoint: server.py
+    args: "--num_clients=2 --num_rounds=1"
+
+devices:
+  - device_type: JetsonAGXOrin
+    count: 1
+  - device_type: JetsonOrinNano
+    count: 1

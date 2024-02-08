@@ -1,0 +1,6 @@
+- name: Restart microk8s
+  ansible.builtin.shell:
+    cmd: sudo snap stop microk8s && sudo snap start microk8s
+
+- name: Rest SSH connection
+  meta: reset_connection

@@ -1,0 +1,23 @@
+FROM python:3.8.10-slim-bullseye
+# Python version matches version in jetson image
+
+ARG USER_CODE_PATH
+RUN test -n "$USER_CODE_PATH"
+ARG FLTB_PATH
+RUN test -n "$FLTB_PATH"
+
+RUN python3 -m pip install --no-cache-dir psycopg[binary] psutil
+
+WORKDIR /fl_testbed
+# Add fltb src to pythonpath
+ENV PYTHONPATH "/fl_testbed:${PYTHONPATH}"
+
+COPY ${USER_CODE_PATH}/requirements.txt ./user_code/
+RUN python3 -m pip install --no-cache-dir -r ./user_code/requirements.txt
+
+COPY $USER_CODE_PATH ./user_code
+COPY $FLTB_PATH ./fltb
+
+WORKDIR /fl_testbed/user_code
+
+ENV PYTHONPATH "/fl_testbed:/fl_testbed/user_code:${PYTHONPATH}"

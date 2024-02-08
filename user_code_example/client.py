@@ -6,7 +6,7 @@ from collections import OrderedDict
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Disable tensorflow logging messages
 import flwr as fl
-from fltb.decorators import MonitorFlwrClient
+from fltb import MonitorFlwrClient
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -55,8 +55,8 @@ def train(net, trainloader, epochs):
             criterion(net(images.to(DEVICE)), labels.to(DEVICE)).backward()
             optimizer.step()
             
-            count+=1
-            if count > 10: 
+            count += 1
+            if count > 1000: 
                 break
 
 
@@ -70,7 +70,8 @@ def test(net, testloader):
             labels = labels.to(DEVICE)
             loss += criterion(outputs, labels).item()
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
-            break
+            # break
+
     accuracy = correct / len(testloader.dataset)
     return loss, accuracy
 

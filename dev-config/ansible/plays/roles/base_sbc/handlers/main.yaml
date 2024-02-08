@@ -1,0 +1,4 @@
+- name: Restart ntp
+  ansible.builtin.service:
+    name: systemd-timesyncd 
+    state: restarted

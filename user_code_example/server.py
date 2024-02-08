@@ -6,7 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Disable tensorflow logging messages
 import argparse
 import flwr as fl
 from flwr.common import Metrics
-from fltb.decorators import MonitorFlwrStrategy
+from fltb import MonitorFlwrStrategy
 
 # Define metric aggregation function
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -17,10 +17,33 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     # Aggregate and return custom metric (weighted average)
     return {"accuracy": sum(accuracies) / sum(examples)}
 
-# If you define your own class, decorate it with the MonitorFlwrStrategy
-# @MonitorFlwrStrategy
-# class YourFLStrategy(fl.server.strategy.FedAvg):
-#     pass
+
+# Decorate existing Flwr strategy
+# The decoration does nothing if outsite the FLTB environment
+@MonitorFlwrStrategy
+class FlowerStrategy(fl.server.strategy.FedAvg):
+    pass
+
+"""
+class FlowerStrategy(Strategy):
+    def initialize_parameters(self, client_manager):
+        # Your implementation here
+
+    def configure_fit(self, server_round, parameters, client_manager):
+        # Your implementation here
+
+    def aggregate_fit(self, server_round, results, failures):
+        # Your implementation here
+
+    def configure_evaluate(self, server_round, parameters, client_manager):
+        # Your implementation here
+
+    def aggregate_evaluate(self, server_round, results, failures):
+        # Your implementation here
+
+    def evaluate(self, parameters):
+        # Your implementation here
+"""
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -40,11 +63,9 @@ if __name__ == '__main__':
     args = get_args()
 
     n_clients = args.num_clients
-    n_rounds = args.num_clients
-    # Decorate existing Flwr strategy
-    # The decoration does nothing if outsite the FLTB environment
-    monitored_strategy = MonitorFlwrStrategy(fl.server.strategy.FedAvg)
-    strategy = monitored_strategy( 
+    n_rounds = args.num_rounds
+    
+    strategy = FlowerStrategy( 
         min_fit_clients=n_clients, 
         min_evaluate_clients=n_clients, 
         min_available_clients=n_clients, 
