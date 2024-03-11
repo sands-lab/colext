@@ -24,8 +24,8 @@ mkdir $log_folder
 
 num_clients=1
 # Hardcoded vars to test
-export FLTB_JOB_ID=1
-export FLTB_CLIENT_DB_ID=25
+export COLEXT_JOB_ID=1
+export COLEXT_CLIENT_DB_ID=25
 
 echo ""
 echo "Starting server"

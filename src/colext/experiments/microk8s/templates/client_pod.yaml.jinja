@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ pod_name }}
+  labels:
+    colext-dev-type: client
+    colext-job-id: "{{ job_id }}"
+spec:
+  initContainers:
+  - name: wait-for-fl-server
+    image: busybox:1.28
+    command: ['sh', '-c', "until nslookup fl-server-svc.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for fl-server-svc; sleep 2; done"]
+  containers:
+  - name: fl-client
+    image: {{ image }}
+    command: ["bash", "-c"]
+    args: ["python3 {{ client_entrypoint }} {{ image_args }}"]
+    env:
+      - name: COLEXT_ENV
+        value: "1"
+      - name: COLEXT_SERVER_ADDRESS
+        value: "fl-server-svc:80"
+      - name: COLEXT_JOB_ID
+        value: "{{ job_id }}"
+      - name: COLEXT_CLIENT_ID
+        value: "{{ client_id }}"
+      - name: COLEXT_CLIENT_DB_ID
+        value: "{{ client_db_id }}"
+
+      - name: COLEXT_DATA_HOME_FOLDER
+        value: "/colext/datasets"
+      - name: COLEXT_PYTORCH_DATASETS
+        value: "/colext/pytorch_datasets"        
+    volumeMounts:
+    - mountPath: /colext/datasets
+      name: colext-std-datasets
+    - mountPath: /colext/pytorch_datasets
+      name: colext-pytorch-datasets
+{% if jetson_dev is defined %}
+    - mountPath: /run/jtop.sock
+      name: jtop-socket
+{% endif %}
+  volumes:
+  - name: colext-std-datasets
+    hostPath:
+      path: {{ std_datasets_path }}
+      type: Directory
+  - name: colext-pytorch-datasets
+    hostPath:
+      path: {{ pytorch_datasets_path }}
+      type: Directory
+{% if jetson_dev is defined %}
+  - name: jtop-socket
+    hostPath:
+      path: /run/jtop.sock
+      type: Socket
+{% endif %}
+  restartPolicy: Never
+  imagePullSecrets:
+    - name: regcred
+  nodeSelector:
+    kubernetes.io/hostname: {{ device_hostname }}

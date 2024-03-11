@@ -1,7 +1,7 @@
-- name: "Ensure timesyncd is installed"
-  ansible.builtin.apt:
-    name: systemd-timesyncd     
-    state: present
+# - name: "Ensure timesyncd is installed"
+#   ansible.builtin.apt:
+#     name: systemd-timesyncd     
+#     state: present
 
 - name: Ensure systemd-timesyncd is enabled and running
   ansible.builtin.service:

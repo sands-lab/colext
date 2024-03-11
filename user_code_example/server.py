@@ -6,7 +6,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Disable tensorflow logging messages
 import argparse
 import flwr as fl
 from flwr.common import Metrics
-from fltb import MonitorFlwrStrategy
+from colext import MonitorFlwrStrategy
 
 # Define metric aggregation function
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -19,13 +19,14 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
 
 
 # Decorate existing Flwr strategy
-# The decoration does nothing if outsite the FLTB environment
+# The decoration does nothing if outsite the CoLExT environment
 @MonitorFlwrStrategy
 class FlowerStrategy(fl.server.strategy.FedAvg):
     pass
 
 """
-class FlowerStrategy(Strategy):
+@MonitorFlwrStrategy
+class FlowerStrategy(flwr.server.strategy.Strategy):
     def initialize_parameters(self, client_manager):
         # Your implementation here
 
@@ -56,6 +57,7 @@ def get_args():
     args = parser.parse_args()
 
     assert args.num_clients > 0, "Number of clients should be larger than 0"
+    assert args.num_rounds > 0, "Number of rounds should be larger than 0"
 
     return args
 

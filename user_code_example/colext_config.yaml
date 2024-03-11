@@ -1,0 +1,17 @@
+project: colext_example # project name should not have spaces 
+job_name: "SOTA FL experiment"
+  
+code: 
+  # Path can be omited if colext_config.yaml is in the root folder of the project
+  path: "/home/faustiar/colext/user_code_example"
+  client:
+    entrypoint: "client.py"
+    args: "--flserver_address=${COLEXT_SERVER_ADDRESS}"
+
+  server: 
+    entrypoint: server.py
+    args: "--num_clients=${COLEXT_N_CLIENTS} --num_rounds=4"
+
+devices:
+  - { device_type: JetsonAGXOrin,  count: 1 }
+  - { device_type: JetsonOrinNano, count: 1 }

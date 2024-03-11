@@ -2,11 +2,12 @@
 
 import warnings
 from collections import OrderedDict
+import argparse
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # Disable tensorflow logging messages
 import flwr as fl
-from fltb import MonitorFlwrClient
+from colext import MonitorFlwrClient
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,16 +49,11 @@ def train(net, trainloader, epochs):
     """Train the model on the training set."""
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-    count = 0
     for _ in range(epochs):
         for images, labels in tqdm(trainloader):
             optimizer.zero_grad()
             criterion(net(images.to(DEVICE)), labels.to(DEVICE)).backward()
             optimizer.step()
-            
-            count += 1
-            if count > 1000: 
-                break
 
 
 def test(net, testloader):
@@ -70,7 +66,6 @@ def test(net, testloader):
             labels = labels.to(DEVICE)
             loss += criterion(outputs, labels).item()
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
-            # break
 
     accuracy = correct / len(testloader.dataset)
     return loss, accuracy
@@ -93,6 +88,7 @@ net = Net().to(DEVICE)
 trainloader, testloader = load_data()
 
 # Define Flower client
+# The decoration does nothing if outsite the CoLExT environment
 @MonitorFlwrClient
 class FlowerClient(fl.client.NumPyClient):
     def get_parameters(self, config):
@@ -113,9 +109,23 @@ class FlowerClient(fl.client.NumPyClient):
         loss, accuracy = test(net, testloader)
         return loss, len(testloader.dataset), {"accuracy": accuracy}
 
-FL_SERVER_ADDRESS = os.getenv("FLTB_SERVER_ADDRESS", default = "127.0.0.1:8080") 
-# Start Flower client
-fl.client.start_numpy_client(
-    server_address=FL_SERVER_ADDRESS,
-    client=FlowerClient(),
-)
+def get_args():
+    parser = argparse.ArgumentParser(
+                    prog='FL Client',
+                    description='Starts the FL client')
+    
+    parser.add_argument('--flserver_address', type=str, default = "127.0.0.1:8080", help="FL server address ip:port")
+    args = parser.parse_args()
+
+    return args
+
+if __name__ == '__main__':
+    args = get_args()
+
+    flserver_address = args.flserver_address
+
+    # Start Flower client
+    fl.client.start_numpy_client(
+        server_address=flserver_address,
+        client=FlowerClient(),
+    )

@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fltb"
+name = "colext"
 version = "0.1.0"
 requires-python = ">= 3.8"
 description = "FL testbed decorators and launch scripts."
@@ -26,7 +26,7 @@ dependencies = [
 jetson = ["jetson-stats"]
 
 [project.scripts]
-fltb_launch_job = "fltb.experiment_controller:launch_experiment"
-
+colext_launch_job = "colext.experiments:launch_experiment"
+colext_get_metrics = "colext.experiments:retrieve_metrics"
 
 [tool.setuptools_scm]

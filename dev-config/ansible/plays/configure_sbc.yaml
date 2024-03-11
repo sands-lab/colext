@@ -8,7 +8,7 @@
         auth:
           key: "{{ lookup('file', '/home/' + lookup('env', 'USER') + '/.ssh/id_rsa.pub') }}"
         ntp:
-          ip: 10.0.0.100 # flserver
+          ip: 10.68.191.30 # flserver gateway
         std_datasets:
           src_path: /fltb/datasets/
           dest_path: /fltb/datasets/
