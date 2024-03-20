@@ -1,2 +1,1 @@
-# fl-testbed
-FL testbed
+# CoLExt: Collaborative Learning Experimentation Testbed
