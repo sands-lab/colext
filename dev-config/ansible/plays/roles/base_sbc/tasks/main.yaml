@@ -15,11 +15,11 @@
 
 - name: Configure NTP
   ansible.builtin.import_tasks: configure_ntp.yaml
-
+  
 - name: Install packages
   ansible.builtin.import_tasks: install_packages.yaml
 
-# - name: Configure datasets
-#   ansible.builtin.import_tasks: configure_datasets.yaml
+- name: Configure datasets
+  ansible.builtin.import_tasks: configure_datasets.yaml
 
 # Disable default graphical interface?

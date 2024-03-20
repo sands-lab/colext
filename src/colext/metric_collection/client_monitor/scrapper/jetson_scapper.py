@@ -4,10 +4,11 @@ from datetime import datetime, timezone
 import psutil
 from jtop import jtop
 from colext.common.logger import log
+import time
 
 class JetsonMonitor(ScrapperBase):
-    def __init__(self, pid):
-        super().__init__(pid)
+    def __init__(self, pid, collection_interval_s):
+        super().__init__(pid, collection_interval_s)
         self.p = psutil.Process(pid)
 
         # For some reason jetson.gpu returns a list of gpus. We only have 1 so we query it's name and cache it here
@@ -21,19 +22,40 @@ class JetsonMonitor(ScrapperBase):
             
             self.gpu_key = gpu_list[0]
 
+        # TODO: Avoid using psutils?
+        # 0.15 magic number is roughly the time psutils takes to run 
+        # jtop provides metrics at half of the speed we want 
+        interval = (collection_interval_s - 0.15) / 2
+        self.jetson = jtop(interval)
+        self.jetson.start()
+
     def scrape_process_metrics(self) -> ProcessMetrics:
+        start_ps_m_time = time.time()
         with self.p.oneshot():
             cpu_percent = self.p.cpu_percent()
             rss = self.p.memory_full_info().rss
-
-        with jtop() as jetson:
-            # This method is needed when you start jtop using with
-            # Otherwise we risk trying to get stats in an inconsistent state
-            # https://rnext.it/jetson_stats/reference/jtop.html#jtop.jtop.ok
-            if jetson.ok():
-                power_mw = jetson.power["tot"]["power"]
-                gpu_util = jetson.gpu[self.gpu_key]["status"]["load"]
+        end_ps_m_time = time.time()
+        log.debug(f"psutil time = {end_ps_m_time - start_ps_m_time}")
+        
+        # This method is needed when you start jtop using with
+        # Otherwise we risk trying to get stats in an inconsistent state
+        # jetson.ok blocks until ready to retrieve new metrics
+        # https://rnext.it/jetson_stats/reference/jtop.html#jtop.jtop.ok
+        start_jtop_m_time = time.time()
+        if self.jetson.ok():
+            power_mw = self.jetson.power["tot"]["power"]
+            gpu_util = self.jetson.gpu[self.gpu_key]["status"]["load"]
+            end_jtop_m_time = time.time()
+            log.debug(f"jtop time = {end_jtop_m_time - start_jtop_m_time}")
             
-        time = datetime.now(timezone.utc)
-        p_metrics = ProcessMetrics(time, cpu_percent, rss, power_mw, gpu_util)
-        return p_metrics
+            timestamp = datetime.now(timezone.utc)
+            p_metrics = ProcessMetrics(timestamp, cpu_percent, rss, power_mw, gpu_util)
+            return p_metrics
+        else:
+            log.error("jetson.ok returned false!")
+    
+    # If we don't close the jtop connection, the jtop service may crash
+    def __del__(self):
+        log.debug(f"Closing jtop connection")
+        self.jetson.close()
+        log.debug(f"jtop connection closed")

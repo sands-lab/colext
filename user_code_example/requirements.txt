@@ -6,4 +6,4 @@ torchvision
 torchaudio
 # fltb Omitting this for now
 # With this dependency we need to install fltb before we install the user requirements 
-# This forces the dependencies to be reinstalled everytime we change the package code
+# This forces the user code requirements to be reinstalled everytime we change the colext package code

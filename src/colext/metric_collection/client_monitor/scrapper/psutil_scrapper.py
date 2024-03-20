@@ -4,8 +4,8 @@ import psutil
 from .scrapper_base import ScrapperBase, ProcessMetrics
 
 class PSUtilMonitor(ScrapperBase):
-    def __init__(self, pid):
-        super().__init__(pid)
+    def __init__(self, pid, collection_interval_s):
+        super().__init__(pid, collection_interval_s)
         self.p = psutil.Process(pid)
 
     def scrape_process_metrics(self) -> ProcessMetrics:

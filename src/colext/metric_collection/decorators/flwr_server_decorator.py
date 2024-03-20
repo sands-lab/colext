@@ -37,18 +37,29 @@ def MonitorFlwrStrategy(FlwrStrategy):
             DB_CONNECTION_INFO = "host=10.0.0.100 dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
             return psycopg.connect(DB_CONNECTION_INFO)
 
-        def record_new_round(self, server_round: int, round_type: str):
+        def record_start_round(self, server_round: int, round_type: str):
             cursor = self.DB_CONNECTION.cursor()
-
-            sql = "INSERT INTO fl_testbed_logging.rounds(round_number, start_time, job_id, fit_eval) \
+            sql = "INSERT INTO rounds(round_number, start_time, job_id, fit_eval) \
                     VALUES (%s, CURRENT_TIMESTAMP, %s, %s) returning round_id"
             data = (str(server_round), str(self.JOB_ID), round_type)
             cursor.execute(sql, data)
             ROUND_ID = cursor.fetchone()[0]
-
+            self.DB_CONNECTION.commit()
             cursor.close()
 
             return ROUND_ID
+        
+        def record_end_round(self, server_round: int, round_type: str):
+            cursor = self.DB_CONNECTION.cursor()
+
+            sql = """
+                    UPDATE rounds SET end_time = CURRENT_TIMESTAMP 
+                    WHERE round_number = %s AND job_id = %s AND fit_eval = %s
+                """
+            data = (str(server_round), str(self.JOB_ID), round_type)
+            cursor.execute(sql, data)
+            self.DB_CONNECTION.commit()
+            cursor.close()
         
         def get_client_db_id(self, client_proxy: ClientProxy) -> int:
             ip_address = re.search(r'ipv4:(\d+\.\d+\.\d+\.\d+):\d+', client_proxy.cid.__str__()).group(1)
@@ -69,7 +80,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             cursor = self.DB_CONNECTION.cursor()
 
             # Register clients in round
-            sql = "INSERT INTO fl_testbed_logging.clients_in_rounds (client_id, round_id, client_state) \
+            sql = "INSERT INTO clients_in_rounds (client_id, round_id, client_state) \
                     VALUES (%s, %s, %s) returning cir_id"
             for (proxy, fit_ins) in client_instructions:  # First (ClientProxy, FitIns) pair
                 client_db_id = self.get_client_db_id(proxy)
@@ -92,7 +103,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             """Configure the next round of training."""
             log.debug("configure_fit function")
             
-            round_id = self.record_new_round(server_round, "FIT")
+            round_id = self.record_start_round(server_round, "FIT")
             client_instructions = super().configure_fit(server_round, parameters, client_manager)
             self.configure_clients_in_round(client_instructions, round_id)
 
@@ -102,14 +113,15 @@ def MonitorFlwrStrategy(FlwrStrategy):
                           failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]]) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
             """Aggregate training results."""
             log.debug("aggregate_fit function")
+            self.record_end_round(server_round, "FIT")
             return super().aggregate_fit(server_round, results, failures)
 
         def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
             """Configure the next round of evaluation."""
             log.debug("configure_evaluate function")
 
-            round_id = self.record_new_round(server_round, "EVAL")
-            client_instructions = super().configure_fit(server_round, parameters, client_manager)
+            round_id = self.record_start_round(server_round, "EVAL")
+            client_instructions = super().configure_evaluate(server_round, parameters, client_manager)
             self.configure_clients_in_round(client_instructions, round_id)
 
             return client_instructions
@@ -118,6 +130,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
                                failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]) -> Tuple[Optional[float], Dict[str, Scalar]]:
             """Aggregate evaluation results."""
             log.debug("aggregate_evaluate function")
+            self.record_end_round(server_round, "EVAL")
             return super().aggregate_evaluate(server_round, results, failures)
         
         # Not used

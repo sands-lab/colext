@@ -9,7 +9,8 @@ DEFAULT_FORMATTER = logging.Formatter(
 
 LOGGER_NAME = "COLEXT"
 TESTBED_LOGGER = logging.getLogger(LOGGER_NAME)
-TESTBED_LOGGER.setLevel(logging.DEBUG)
+# TODO configure logging as a parameter to the decorators
+TESTBED_LOGGER.setLevel(logging.INFO)
 
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(DEFAULT_FORMATTER)

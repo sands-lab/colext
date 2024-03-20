@@ -11,7 +11,7 @@ from colext.common.vars import REGISTY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH
 
 from colext.common.logger import log
 
-
+FL_DEFAULT_SERVER_ADDRESS = "fl-server-svc:80"
 # ClientConfig: TypeAlias = Dict[str, str]
 # JobConfig: TypeAlias = Dict[str, str]
 
@@ -22,9 +22,7 @@ class DeviceTypeRequest:
     count: int
 
 base_pod_config_by_type = {
-    "Server":     { "image_name": "generic" },
-    "Lattepanda": { "image_name": "generic" },
-    "OrangePi": { "image_name": "generic" },
+    "Generic": { "image_name": "generic" },
     "Jetson":     { "image_name": "jetson", "jetson_dev": True},
 }
 
@@ -32,7 +30,7 @@ def get_base_pod_config_by_type(dev_type, config: Dict[str, str]):
     if "Jetson" in dev_type:
         base_pod_config = base_pod_config_by_type["Jetson"] 
     else:
-        base_pod_config =  base_pod_config_by_type[dev_type]
+        base_pod_config =  base_pod_config_by_type["Generic"]
     
     pod_config = copy.deepcopy(base_pod_config)
     project_name = config["project"]
@@ -56,13 +54,13 @@ class ExperimentManager():
         # Get server service
         self.server_service_path = os.path.join(dirname, 'microk8s/server_service.yaml')
 
-    def prepare_server(self, job_id, config):
+    def prepare_server_for_launch(self, job_id, config):
         server_pod_config = get_base_pod_config_by_type("Server", config)
         
         server_pod_config["job_id"] = job_id
         server_pod_config["n_clients"] = config["n_clients"]
-        server_pod_config["image_args"] = config["code"]["server"]["args"]
-        server_pod_config["server_entrypoint"] = config["code"]["server"]["entrypoint"]
+        server_pod_config["entrypoint"] = config["code"]["server"]["entrypoint"]
+        server_pod_config["entrypoint_args"] = config["code"]["server"]["args"]
 
         return server_pod_config
 
@@ -86,40 +84,35 @@ class ExperimentManager():
         
         return (dev_id, dev_hostname)
 
-    def prepare_clients(self, job_id, config):
+    def prepare_clients_for_launch(self, job_id, config):
         client_types_to_generate = config["client_types_to_generate"]
         curr_available_devices_by_type = self.get_available_devices_by_type(client_types_to_generate)
-        client_image_args = config["code"]["client"]["args"]
-        client_entrypoint = config["code"]["client"]["entrypoint"]
         
-        clients_to_db = []
         pod_configs = []
         for client_i, client_type in enumerate(client_types_to_generate):
-            (dev_id, dev_hostname) = self.get_device_hostname_by_type(curr_available_devices_by_type, client_type)
             pod_config = get_base_pod_config_by_type(client_type, config)
-            pod_config["device_hostname"] = dev_hostname
+            (dev_id, dev_hostname) = self.get_device_hostname_by_type(curr_available_devices_by_type, client_type)
+            
             pod_config["pod_name"] = f"client-{client_i}"
-            pod_config["job_id"] = job_id
             pod_config["client_id"] = client_i
-            pod_config["client_entrypoint"] = client_entrypoint
-            pod_config["image_args"] = client_image_args
+            pod_config["job_id"] = job_id
+            pod_config["entrypoint"] = config["code"]["client"]["entrypoint"]
+            pod_config["entrypoint_args"] = config["code"]["client"]["args"]
+            pod_config["client_db_id"] = self.db_utils.register_client(client_i, dev_id, job_id)            
+            pod_config["device_hostname"] = dev_hostname
+            pod_config["dev_type"] = client_type
+            pod_config["server_address"] = FL_DEFAULT_SERVER_ADDRESS
 
             pod_configs.append(pod_config)
-            clients_to_db.append((client_i, job_id, dev_id))
         
         log.debug(f"Generated {len(pod_configs)} pod configs")
-        return pod_configs, clients_to_db
+        return pod_configs
     
-    def update_client_pod_dicts(self, client_pod_dicts, reg_clients):
-        reg_clients_dict = {reg_client["client_number"]: reg_client["client_id"] for reg_client in reg_clients}
-        for client_pod_dict in client_pod_dicts:
-            client_i = client_pod_dict["client_id"]
-            client_pod_dict["client_db_id"] = reg_clients_dict[client_i]
 
     def clear_prev_experiment(self) -> None:
         log.info("Clearing previous experiment")
-        self.k_utils.delete_client_pods()
         self.k_utils.delete_fl_service()
+        self.k_utils.delete_experiment_pods()
 
     def deploy_setup(self, server_pod_config, client_pod_configs) -> None:
         log.info(f"Deploying FL server and service")
@@ -138,11 +131,8 @@ class ExperimentManager():
 
         job_id = self.db_utils.create_job()
         
-        server_pod_config = self.prepare_server(job_id, config)
-
-        client_pod_config, clients_to_db = self.prepare_clients(job_id, config)
-        registered_client_ids = self.db_utils.register_clients(job_id, clients_to_db)
-        self.update_client_pod_dicts(client_pod_config, registered_client_ids)
+        server_pod_config = self.prepare_server_for_launch(job_id, config)
+        client_pod_config = self.prepare_clients_for_launch(job_id, config)
         
         self.deploy_setup(server_pod_config, client_pod_config)
 
@@ -153,6 +143,8 @@ class ExperimentManager():
         # expected pods = n_clients + 1 server
         expected_pods = config["n_clients"] + 1 
         self.k_utils.wait_for_pods(f"colext-job-id={job_id}", expected_pods)
+
+        self.db_utils.finish_job(job_id)
 
     def retrieve_metrics(self, job_id):
         """ Retrieve client metrics for job_id """

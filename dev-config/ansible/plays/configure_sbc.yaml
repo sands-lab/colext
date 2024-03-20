@@ -10,16 +10,16 @@
         ntp:
           ip: 10.68.191.30 # flserver gateway
         std_datasets:
-          src_path: /fltb/datasets/
-          dest_path: /fltb/datasets/
+          src_path: /colext/datasets/
+          dest_path: /colext/datasets/
         pytorch_datasets:
-          path: /fltb/pytorch_datasets/
+          path: /colext/pytorch_datasets/
 
     - role: microk8s_worker
       vars:
         microk8s: 
           host: 10.0.0.100:25000
-          token: a1ef095d59c2fef65d5263090e678cc0/6dd903933278
+          token: a1ef095d59c2fef65d5263090e678cc0/3466aad00757
           # Generated a valid token with the duration of 1 year
           # microk8s add-node --token a1ef095d59c2fef65d5263090e678cc0 -l 31536000
           # /var/snap/microk8s/current/credentials/cluster-tokens.txt 

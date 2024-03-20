@@ -10,11 +10,12 @@ class ProcessMetrics:
     rss: int
     power_mw: int
     gpu_util: float
+    # network util: int # 
     # temperature: int # jtop.temperature.temp
     # fan_speed: int # jtop.fan.speed
 
 class ScrapperBase(ABC):
-    def __init__(self, pid) -> None:
+    def __init__(self, pid, collection_interval_s) -> None:
         self.monitor_pid = pid
 
     def scrape_process_metrics(self) -> ProcessMetrics:

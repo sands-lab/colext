@@ -5,16 +5,14 @@ WORKDIR /fl_testbed
 
 RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools
 # Taken from https://medium.com/@tonistiigi/build-secrets-and-ssh-forwarding-in-docker-18-09-ae8161d066
-RUN apt install --no-cache openssh-client git gcc\
+RUN apt update && apt install -y openssh-client git gcc \
     && install -m 0600 -d ~/.ssh \
-    && ssh-keyscan github.com >> ~/.ssh/known_hosts
+    && ssh-keyscan -p 443 ssh.github.com >> ~/.ssh/known_hosts
 
-# Clone our private repository
-RUN --mount=type=ssh git clone git@github.com:sands-lab/fl-testbed.git
-# Install fltb package
-RUN python3 -m pip install .
+# Install the colext package
+RUN --mount=type=ssh python3 -m pip install -I -U git+ssh://git@ssh.github.com:443/sands-lab/colext.git@sbc#egg=colext
 
-# DOCKER script assumes the context is set to the user's code path
+# Dockerfile assumes the context is set to the user's code path
 COPY ./requirements.txt ./user_code/
 RUN python3 -m pip install --no-cache-dir -r ./user_code/requirements.txt
 

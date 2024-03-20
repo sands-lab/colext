@@ -6,4 +6,5 @@ INSERT INTO fl_testbed_logging.clients(client_number, job_id, device_id) VALUES(
 
 INSERT INTO fl_testbed_logging.devices(device_name, device_code, status) VALUES ('JetsonAGXOrin', 'jao1', 'ACTIVE');
 INSERT INTO fl_testbed_logging.devices(device_name, device_code, status) VALUES ('JetsonOrinNano', 'jon3', 'ACTIVE');
-INSERT INTO fl_testbed_logging.devices(device_name, device_code, status) VALUES ('LattePanda', 'lattepanda4', 'ACTIVE');
+INSERT INTO fl_testbed_logging.devices(device_name, device_code, status) VALUES ('LattePandaDelta3', 'lp4', 'ACTIVE');
+INSERT INTO fl_testbed_logging.devices(device_name, device_code, status) VALUES ('OrangePi5B', 'op1', 'ACTIVE');

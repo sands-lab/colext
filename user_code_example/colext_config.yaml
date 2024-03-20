@@ -10,8 +10,10 @@ code:
 
   server: 
     entrypoint: server.py
-    args: "--num_clients=${COLEXT_N_CLIENTS} --num_rounds=4"
+    args: "--num_clients=${COLEXT_N_CLIENTS} --num_rounds=3"
 
 devices:
   - { device_type: JetsonAGXOrin,  count: 1 }
   - { device_type: JetsonOrinNano, count: 1 }
+  - { device_type: LattePandaDelta3, count: 1 }
+  - { device_type: OrangePi5B, count: 1 }

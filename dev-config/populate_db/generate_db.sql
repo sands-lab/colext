@@ -29,7 +29,7 @@ CREATE TABLE fl_testbed_logging.rounds (
 CREATE TABLE fl_testbed_logging.devices (
     device_id serial primary key,
     device_name varchar(100),
-    device_code varchar(100),
+    device_code varchar(100) UNIQUE,
     OS_version varchar(100),
     status varchar(50)
 );

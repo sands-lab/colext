@@ -16,4 +16,11 @@
     owner: root
     group: root
     mode: '0644'
-  notify: Restart ntp
+  register: ntp_conf
+
+- name: Restart timesyncd
+  ansible.builtin.service:
+    name: systemd-timesyncd 
+    state: restarted
+  when: ntp_conf.changed
+

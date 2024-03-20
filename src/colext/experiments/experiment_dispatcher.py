@@ -8,6 +8,7 @@ import logging
 from .experiment_manager import ExperimentManager
 from colext.common.logger import log
 from colext.common.vars import REGISTY
+import time
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
@@ -72,9 +73,10 @@ def containerize_app(config_dict, testing_locally):
                         },
                         push=True)
     
-DASHBOARD_URL = "http://localhost:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/fl-dashboard?orgId=1"
+DASHBOARD_URL = ("http://localhost:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/colext-dashboard?"
+                 "orgId=1&from=now-5m&to=now&refresh=5s&var-clientid=All")
 def launch_experiment():
-    log.setLevel(logging.INFO)
+    log.setLevel(logging.DEBUG)
     print(f"Starting experiment manager")
 
     args = get_args()
@@ -92,6 +94,7 @@ def launch_experiment():
     print(f"\nExperiment running...")
 
     if args.wait_for_experiment:
+        time.sleep(1)
         e_manager.wait_for_job(job_id, config_dict)
         print(f"Experiment complete.")
     else: 

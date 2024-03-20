@@ -10,7 +10,7 @@ spec:
   - name: fl-server
     image: {{ image }}
     command: ["bash", "-c"]
-    args: ["python3 {{ server_entrypoint }} {{ image_args }}"]
+    args: ["python3 {{ entrypoint }} {{ entrypoint_args }}"]
     env:
       - name: COLEXT_ENV
         value: "1"
@@ -18,6 +18,17 @@ spec:
         value: "{{ job_id }}"
       - name: COLEXT_N_CLIENTS
         value: "{{ n_clients }}"
+      - name: COLEXT_DATA_HOME_FOLDER
+        value: "/colext/datasets"
+      - name: COLEXT_PYTORCH_DATASETS
+        value: "/colext/pytorch_datasets" 
+
+    volumeMounts:
+      - mountPath: /colext/datasets
+        name: colext-std-datasets
+      - mountPath: /colext/pytorch_datasets
+        name: colext-pytorch-datasets
+
     ports:
       - containerPort: 8080
         name: flserver-port
@@ -27,8 +38,18 @@ spec:
       initialDelaySeconds: 5
       periodSeconds: 10
       failureThreshold: 2
+
+  volumes:
+    - name: colext-std-datasets
+      hostPath:
+        path: {{ std_datasets_path }}
+        type: Directory
+    - name: colext-pytorch-datasets
+      hostPath:
+        path: {{ pytorch_datasets_path }}
+        type: Directory
   restartPolicy: Never
   imagePullSecrets:
-  - name: regcred
+    - name: regcred
   nodeSelector:
     kubernetes.io/hostname: kw61463

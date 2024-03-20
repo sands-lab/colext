@@ -16,7 +16,6 @@
 
 - name: "Install Jtop"
   ansible.builtin.pip:
-    name: "jetson-stats"
+    name: "jetson-stats==4.2.7"
     executable: pip3
-    extra_args: -U
   when: "'jetsons' in group_names"
