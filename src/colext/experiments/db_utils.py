@@ -59,7 +59,7 @@ class DBUtils:
 
         return client_id
 
-    def get_metrics(self, job_id, metric_writer):
+    def get_hw_metrics(self, job_id, metric_writer):
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY 
@@ -69,6 +69,22 @@ class DBUtils:
                     JOIN jobs USING (job_id)
                     JOIN devices USING(device_id)
                     WHERE jobs.job_id = %s) 
+                TO STDOUT WITH (FORMAT CSV, HEADER)
+               """
+        data = (job_id,)
+        with cursor.copy(sql, data) as copy:
+            for data in copy:
+                metric_writer.write(data)
+
+        cursor.close()
+
+    def get_round_timestamps(self, job_id, metric_writer):
+        cursor = self.DB_CONNECTION.cursor()
+        sql = """
+                COPY 
+                (SELECT round_number, start_time, end_time, fit_eval 
+                    from rounds 
+                    WHERE job_id = %s) 
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)

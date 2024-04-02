@@ -148,6 +148,9 @@ class ExperimentManager():
 
     def retrieve_metrics(self, job_id):
         """ Retrieve client metrics for job_id """
-        with open(f"colext_hw_metrics_job_{job_id}.csv", "wb") as metric_writer:
-            self.db_utils.get_metrics(job_id, metric_writer)
+        with open(f"colext_{job_id}_hw_metrics.csv", "wb") as metric_writer:
+            self.db_utils.get_hw_metrics(job_id, metric_writer)
+        
+        with open(f"colext_{job_id}_round_timestamps.csv", "wb") as metric_writer:
+            self.db_utils.get_round_timestamps(job_id, metric_writer)
         
