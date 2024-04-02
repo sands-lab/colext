@@ -93,3 +93,22 @@ class DBUtils:
                 metric_writer.write(data)
 
         cursor.close()
+
+    def get_client_info(self, job_id, metric_writer):
+        cursor = self.DB_CONNECTION.cursor()
+        sql = """
+                COPY 
+                (SELECT client_number AS client_id,device_code AS device_name, device_name AS device_type 
+                    FROM clients
+                        JOIN devices USING(device_id)
+                    WHERE job_id = %s
+                    ORDER BY client_number) 
+                TO STDOUT WITH (FORMAT CSV, HEADER)
+               """
+        data = (job_id,)
+        with cursor.copy(sql, data) as copy:
+            for data in copy:
+                metric_writer.write(data)
+
+        cursor.close()
+        

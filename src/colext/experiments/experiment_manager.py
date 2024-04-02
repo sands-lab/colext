@@ -153,4 +153,9 @@ class ExperimentManager():
         
         with open(f"colext_{job_id}_round_timestamps.csv", "wb") as metric_writer:
             self.db_utils.get_round_timestamps(job_id, metric_writer)
+
+        with open(f"colext_{job_id}_client_info.csv", "wb") as metric_writer:
+            self.db_utils.get_client_info(job_id, metric_writer)
+        
+            
         
