@@ -43,7 +43,7 @@ def read_config(config_file):
 
     config_dict["n_clients"] = n_clients
 
-    print(f"CoLExT configuration read successfully")
+    print("CoLExT configuration read successfully")
 
     return config_dict
 
@@ -84,9 +84,9 @@ def launch_experiment():
     
     containerize_app(config_dict, args.test_local)
 
-    e_manager = ExperimentManager()
+    e_manager = ExperimentManager() 
     job_id = e_manager.launch_experiment(config_dict)
-
+    
     print(f"Launched experiment with {job_id=}")
     print(f"Job logs and metrics are available on the Grafana dashboard:\n{DASHBOARD_URL}&var-jobid={job_id}")
     print(f"You may need to create an SSH tunnel to see the dashboard:")

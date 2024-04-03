@@ -127,6 +127,10 @@ class ExperimentManager():
             self.k_utils.create_from_dict(client_pod_dict)
 
     def launch_experiment(self, config):
+        """
+            Launch experiment in kubernetes cluster 
+            Prepares and deployes client pods and fl service
+        """
         self.clear_prev_experiment()
 
         job_id = self.db_utils.create_job()
@@ -140,9 +144,7 @@ class ExperimentManager():
     
     def wait_for_job(self, job_id, config):
         """ Wait for all pods with label colext-job-id """
-        # expected pods = n_clients + 1 server
-        expected_pods = config["n_clients"] + 1 
-        self.k_utils.wait_for_pods(f"colext-job-id={job_id}", expected_pods)
+        self.k_utils.wait_for_pods(f"colext-job-id={job_id}")
 
         self.db_utils.finish_job(job_id)
 

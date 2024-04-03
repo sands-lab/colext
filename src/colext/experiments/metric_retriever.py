@@ -1,7 +1,7 @@
 import argparse
 import logging
-from .experiment_manager import ExperimentManager
 from colext.common.logger import log
+from .experiment_manager import ExperimentManager
 
 def get_args():
     parser = argparse.ArgumentParser(description='Retrieve metrics from CoLExt')
@@ -14,7 +14,7 @@ def get_args():
 
 def retrieve_metrics():
     log.setLevel(logging.INFO)
-    print(f"Retrieving metrics")
+    print("Retrieving metrics")
 
     args = get_args()
     
@@ -22,7 +22,7 @@ def retrieve_metrics():
     e_manager.retrieve_metrics(args.job_id)
 
 if __name__ == "__main__":
-    job_id = 140
+    job_id = 146
 
     e_manager = ExperimentManager()
     e_manager.retrieve_metrics(job_id)

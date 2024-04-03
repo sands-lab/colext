@@ -8,8 +8,8 @@ class DBUtils:
         self.DB_CONNECTION = self.create_db_connection()
 
     def create_db_connection(self):
-        DB_CONNECTION_INFO = "host=flserver dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
-        return psycopg.connect(DB_CONNECTION_INFO, autocommit=True)
+        DB_CONN_INFO = "host=flserver dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
+        return psycopg.connect(DB_CONN_INFO, autocommit=True)
     
     def create_job(self) -> str:
         cursor = self.DB_CONNECTION.cursor()
@@ -29,7 +29,10 @@ class DBUtils:
     
     def get_current_available_clients(self, device_types: tuple) -> str:
         cursor = self.DB_CONNECTION.cursor()
-        sql = "SELECT device_id, device_code AS hostname, device_name FROM devices WHERE device_name = ANY(%s) AND status = %s"
+        sql = """
+                SELECT device_id, device_code AS hostname, device_name 
+                FROM devices WHERE device_name = ANY(%s) AND status = %s
+            """
         data = (device_types, 'ACTIVE')
         cursor.execute(sql, data)
         db_devices = cursor.fetchall()
@@ -52,7 +55,10 @@ class DBUtils:
     
     def register_client(self, client_i, dev_id, job_id):
         cursor = self.DB_CONNECTION.cursor()
-        sql = "INSERT INTO clients (client_number, device_id, job_id) values (%s, %s, %s) returning client_id"
+        sql = """
+                INSERT INTO clients (client_number, device_id, job_id) 
+                VALUES (%s, %s, %s) RETURNING client_id
+            """
         cursor.execute(sql, (client_i, dev_id, job_id))
         client_id = cursor.fetchone()[0]
         cursor.close()
@@ -63,7 +69,8 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY 
-                (SELECT client_number, time, cpu_util, mem_util, gpu_util, power_consumption
+                (SELECT client_number, time, cpu_util, mem_util, gpu_util, power_consumption,
+                        n_bytes_sent, n_bytes_rcvd, net_usage_out, net_usage_in
                     FROM clients
                     JOIN device_measurements USING (client_id)
                     JOIN jobs USING (job_id)
@@ -82,7 +89,7 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY 
-                (SELECT round_number, start_time, end_time, fit_eval 
+                (SELECT round_number, start_time, end_time, stage 
                     from rounds 
                     WHERE job_id = %s) 
                 TO STDOUT WITH (FORMAT CSV, HEADER)

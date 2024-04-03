@@ -10,7 +10,12 @@ class ProcessMetrics:
     rss: int
     power_mw: int
     gpu_util: float
-    # network util: int # 
+
+    n_bytes_sent: int
+    n_bytes_rcvd: int
+    net_usage_out: float
+    net_usage_in: float
+
     # temperature: int # jtop.temperature.temp
     # fan_speed: int # jtop.fan.speed
 

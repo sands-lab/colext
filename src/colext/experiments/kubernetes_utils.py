@@ -65,11 +65,11 @@ class KubernetesUtils:
                     else:
                         log.error(f"Unexpected error while checking service status for service {service_name}")
             
-            time.sleep(4) 
+            time.sleep(4)
         
         log.info(f"All services deleted")
         
-    def wait_for_pods(self, label_selectors, expected_pods):
+    def wait_for_pods(self, label_selectors):
         # Get current pods
         pods = self.k8s_core_v1.list_namespaced_pod(FL_NAMESPACE, label_selector=label_selectors).items
         pod_names_to_wait = [pod.metadata.name for pod in pods]

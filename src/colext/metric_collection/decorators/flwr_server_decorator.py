@@ -20,13 +20,13 @@ def MonitorFlwrStrategy(FlwrStrategy):
         return FlwrStrategy
     
     log.debug(f"Decorating user Flower server class with Monitor class")
-    class MonitorFlwrStrategy(FlwrStrategy):
+    class _MonitorFlwrStrategy(FlwrStrategy):
         def __init__(self, *args, **kwargs):
             log.debug("init function")
             super().__init__(*args, **kwargs)
 
             self.JOB_ID = os.getenv("COLEXT_JOB_ID")
-            if self.JOB_ID == None:
+            if self.JOB_ID is None:
                 print(f"Inside CoLExT environment but COLEXT_JOB_ID env variable is not defined. Exiting.") 
                 exit(1)
             
@@ -37,11 +37,11 @@ def MonitorFlwrStrategy(FlwrStrategy):
             DB_CONNECTION_INFO = "host=10.0.0.100 dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
             return psycopg.connect(DB_CONNECTION_INFO)
 
-        def record_start_round(self, server_round: int, round_type: str):
+        def record_start_round(self, server_round: int, stage: str):
             cursor = self.DB_CONNECTION.cursor()
-            sql = "INSERT INTO rounds(round_number, start_time, job_id, fit_eval) \
+            sql = "INSERT INTO rounds(round_number, start_time, job_id, stage) \
                     VALUES (%s, CURRENT_TIMESTAMP, %s, %s) returning round_id"
-            data = (str(server_round), str(self.JOB_ID), round_type)
+            data = (str(server_round), str(self.JOB_ID), stage)
             cursor.execute(sql, data)
             ROUND_ID = cursor.fetchone()[0]
             self.DB_CONNECTION.commit()
@@ -54,7 +54,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
 
             sql = """
                     UPDATE rounds SET end_time = CURRENT_TIMESTAMP 
-                    WHERE round_number = %s AND job_id = %s AND fit_eval = %s
+                    WHERE round_number = %s AND job_id = %s AND stage = %s
                 """
             data = (str(server_round), str(self.JOB_ID), round_type)
             cursor.execute(sql, data)
@@ -144,4 +144,4 @@ def MonitorFlwrStrategy(FlwrStrategy):
         #     return super().evaluate(parameters)
 
         # ====== End Flower functions ======
-    return MonitorFlwrStrategy
+    return _MonitorFlwrStrategy
