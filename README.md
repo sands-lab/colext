@@ -25,11 +25,14 @@ Create colext_config.yaml
 | COLEXT_DATA_HOME_FOLDER | Datasets path    |
 | COLEXT_PYTORCH_DATASETS | Pytorch datasets |
 
-|    Internal Vars    |                                                         |
-| :-----------------: | ------------------------------------------------------- |
-|    COLEXT_JOB_ID    | Experiment job id                                       |
-|     COLEXT_ENV      | Presence of this variable identifies COLEXT environment |
-| COLEXT_CLIENT_DB_ID | Unique client ID on the database                        |
+|           Internal Vars           |                                                                     |
+| :-------------------------------: | ------------------------------------------------------------------- |
+|           COLEXT_JOB_ID           | Experiment job id                                                   |
+|            COLEXT_ENV             | Presence of this variable identifies COLEXT environment             |
+|        COLEXT_CLIENT_DB_ID        | Unique client ID on the database                                    |
+|  COLEXT_MONITORING_LIVE_METRICS   | Indicates if metrics are periodically sent to DB or only at the end |
+|  COLEXT_MONITORING_PUSH_INTERVAL  | Interval between metric push to DB                                  |
+| COLEXT_MONITORING_SCRAPE_INTERVAL | Interval between HW metric scraping                                 |
 
 ## Available client types
 - JetsonAGXOrin

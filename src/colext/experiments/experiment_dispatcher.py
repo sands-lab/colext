@@ -43,6 +43,10 @@ def read_config(config_file):
 
     config_dict["n_clients"] = n_clients
 
+    # Update config based on monitoring defaults
+    default_monitoring = {"live_metrics": True, "push_interval": 10, "scrapping_interval": 0.3} # intervals are in seconds
+    config_dict["monitoring"] = {**default_monitoring, **config_dict.get("monitoring", {})}
+
     print("CoLExT configuration read successfully")
 
     return config_dict
@@ -81,7 +85,7 @@ def launch_experiment():
 
     args = get_args()
     config_dict = read_config(args.config_file)
-    
+
     containerize_app(config_dict, args.test_local)
 
     e_manager = ExperimentManager() 
@@ -96,9 +100,9 @@ def launch_experiment():
     if args.wait_for_experiment:
         time.sleep(1)
         e_manager.wait_for_job(job_id, config_dict)
-        print(f"Experiment complete.")
-    else: 
-        print(f"Command will exit but experiment is still running. ")
+        print("Experiment complete.")
+    else:
+        print("Command will exit but experiment is still running. ")
 
     # if args.collect_metrics:
     #     print(f"Collecting metrics to...")

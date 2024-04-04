@@ -1,8 +1,8 @@
 import os
 import re
-import atexit
 import psycopg
 from colext.common.logger import log
+from colext.common.utils import get_colext_env_var_or_exit
 
 from typing import List, Tuple, Union, Optional, Dict
 from flwr.common import (
@@ -25,11 +25,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             log.debug("init function")
             super().__init__(*args, **kwargs)
 
-            self.JOB_ID = os.getenv("COLEXT_JOB_ID")
-            if self.JOB_ID is None:
-                print(f"Inside CoLExT environment but COLEXT_JOB_ID env variable is not defined. Exiting.") 
-                exit(1)
-            
+            self.JOB_ID = get_colext_env_var_or_exit("COLEXT_JOB_ID")
             self.DB_CONNECTION = self.create_db_connection()
             self.clients_ip_to_id = {}
 
@@ -79,10 +75,20 @@ def MonitorFlwrStrategy(FlwrStrategy):
         def configure_clients_in_round(self, client_instructions: List[Tuple[ClientProxy, FitIns]], round_id: int) -> List[Tuple[ClientProxy, FitIns]]:
             cursor = self.DB_CONNECTION.cursor()
 
+            # For some reason flwr decided to have all FitIns point to a single dataclass
+            # This prevents specifying a different config per client 
+            # Maybe it's related to the strategy?
+            # base_config, base_fit_ins = client_instructions[0]
+            # client_instructions = [(c_proxy, copy.deepcopy(fit_ins)) for (c_proxy, fit_ins) in client_instructions]
+            # TODO !!! The below solution will not work for simultaneous jobs !!!
+
             # Register clients in round
-            sql = "INSERT INTO clients_in_rounds (client_id, round_id, client_state) \
-                    VALUES (%s, %s, %s) returning cir_id"
-            for (proxy, fit_ins) in client_instructions:  # First (ClientProxy, FitIns) pair
+            sql = """
+                    INSERT INTO clients_in_round (client_id, round_id, client_state)
+                    VALUES (%s, %s, %s) RETURNING cir_id
+                """
+            base_cir_id = 0;
+            for i, (proxy, fit_ins) in enumerate(client_instructions):  # First (ClientProxy, FitIns) pair
                 client_db_id = self.get_client_db_id(proxy)
                 
                 cur_client_state = "AVAILABLE"
@@ -90,7 +96,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
                 cursor.execute(sql, data)
                 cir_id = cursor.fetchone()[0]
 
-                fit_ins.config["CIR_ID"] = cir_id
+                if i == 0:
+                    base_cir_id = cir_id
+                fit_ins.config["COLEXT_CLIENT_IN_ROUND_BASE_ID"] = base_cir_id
 
             self.DB_CONNECTION.commit()
             cursor.close()

@@ -7,12 +7,11 @@ class PSUtilMonitor(ScrapperBase):
         Base scrapper using psutil.
         This scrapper does not collect power consumption or GPU utilization.
     """
-    def __init__(self, pid, collection_interval_s, net_interface="eth0"):
+    def __init__(self, pid, collection_interval_s):
         super().__init__(pid, collection_interval_s)
         self.proc = psutil.Process(pid)
 
-        self.net_interface = net_interface
-        self.prev_net_stat = psutil.net_io_counters(pernic=True, nowrap=True)[self.net_interface]
+        self.prev_net_stat = psutil.net_io_counters(nowrap=True)
         self.total_bytes_sent = 0
         self.total_bytes_recv = 0
         self.last_scrape_time = datetime.now(timezone.utc)
@@ -22,7 +21,7 @@ class PSUtilMonitor(ScrapperBase):
             cpu_percent = self.proc.cpu_percent()
             rss = self.proc.memory_full_info().rss
 
-        current_net_stat = psutil.net_io_counters(pernic=True, nowrap=True)[self.net_interface]
+        current_net_stat = psutil.net_io_counters(nowrap=True)
         n_bytes_sent = current_net_stat.bytes_sent - self.prev_net_stat.bytes_sent
         n_bytes_rcvd = current_net_stat.bytes_recv - self.prev_net_stat.bytes_recv
         self.total_bytes_sent += n_bytes_sent

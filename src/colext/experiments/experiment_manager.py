@@ -93,15 +93,18 @@ class ExperimentManager():
             pod_config = get_base_pod_config_by_type(client_type, config)
             (dev_id, dev_hostname) = self.get_device_hostname_by_type(curr_available_devices_by_type, client_type)
             
-            pod_config["pod_name"] = f"client-{client_i}"
-            pod_config["client_id"] = client_i
             pod_config["job_id"] = job_id
+            pod_config["client_id"] = client_i
+            pod_config["pod_name"] = f"client-{client_i}"
             pod_config["entrypoint"] = config["code"]["client"]["entrypoint"]
             pod_config["entrypoint_args"] = config["code"]["client"]["args"]
             pod_config["client_db_id"] = self.db_utils.register_client(client_i, dev_id, job_id)            
-            pod_config["device_hostname"] = dev_hostname
             pod_config["dev_type"] = client_type
+            pod_config["device_hostname"] = dev_hostname
             pod_config["server_address"] = FL_DEFAULT_SERVER_ADDRESS
+            pod_config["monitoring_live_metrics"] = config["monitoring"]["live_metrics"]
+            pod_config["monitoring_push_interval"] = config["monitoring"]["push_interval"]
+            pod_config["monitoring_scrape_interval"] = config["monitoring"]["scrapping_interval"]
 
             pod_configs.append(pod_config)
         
@@ -156,8 +159,10 @@ class ExperimentManager():
         with open(f"colext_{job_id}_round_timestamps.csv", "wb") as metric_writer:
             self.db_utils.get_round_timestamps(job_id, metric_writer)
 
+        with open(f"colext_{job_id}_client_round_timings.csv", "wb") as metric_writer:
+            self.db_utils.get_client_round_timings(job_id, metric_writer)
+        
         with open(f"colext_{job_id}_client_info.csv", "wb") as metric_writer:
             self.db_utils.get_client_info(job_id, metric_writer)
         
-            
         

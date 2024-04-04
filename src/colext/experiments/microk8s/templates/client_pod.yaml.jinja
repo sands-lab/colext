@@ -33,6 +33,13 @@ spec:
       - name: COLEXT_DEVICE_TYPE
         value: "{{ dev_type }}"
 
+      - name: COLEXT_MONITORING_LIVE_METRICS
+        value: "{{ monitoring_live_metrics }}"
+      - name: COLEXT_MONITORING_PUSH_INTERVAL
+        value: "{{ monitoring_push_interval }}"
+      - name: COLEXT_MONITORING_SCRAPE_INTERVAL
+        value: "{{ monitoring_scrape_interval }}"
+
       - name: COLEXT_DATA_HOME_FOLDER
         value: "/colext/datasets"
       - name: COLEXT_PYTORCH_DATASETS

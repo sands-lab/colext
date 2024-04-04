@@ -119,3 +119,22 @@ class DBUtils:
 
         cursor.close()
         
+    def get_client_round_timings(self, job_id, metric_writer):
+        cursor = self.DB_CONNECTION.cursor()
+        sql = """
+                COPY 
+                (SELECT client_number, round_number, stage, 
+                        cir.start_time, cir.end_time
+                    FROM clients_in_round as cir
+                        JOIN rounds USING(round_id)
+                        JOIN clients USING(client_id)
+                    WHERE rounds.job_id = %s
+                    ORDER BY client_number, round_id) 
+                TO STDOUT WITH (FORMAT CSV, HEADER)
+               """
+        data = (job_id,)
+        with cursor.copy(sql, data) as copy:
+            for data in copy:
+                metric_writer.write(data)
+
+        cursor.close()

@@ -79,9 +79,13 @@ class KubernetesUtils:
         while pod_names_to_wait:
             for pod_name in pod_names_to_wait:
                 try:
-                    client_container_state = self.k8s_core_v1.read_namespaced_pod_status(pod_name, FL_NAMESPACE).status.container_statuses[0].state
+                    container_statuses = self.k8s_core_v1.read_namespaced_pod_status(pod_name, FL_NAMESPACE).status.container_statuses
+                    if container_statuses is None:
+                        log.info(f"Could not read container_status yet. Ignoring pod {pod_name} for this iteration.")
+                        continue
                     
-                    if client_container_state.terminated != None:
+                    client_container_state = container_statuses[0].state
+                    if client_container_state.terminated is not None:
                         if client_container_state.terminated.reason == "Completed":
                             log.info(f"{pod_name} terminated successfully.")
                         else:

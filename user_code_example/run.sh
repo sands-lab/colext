@@ -12,29 +12,33 @@ cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"/
 # Only works because we already cded into the folder with this script
 export PYTHONPATH="$(dirname `pwd`)/src:"
 
-# Indicate FL testbed env
-export FL_TESTBED_ENV=1
-
-# Download the CIFAR-10 dataset
-python -c "from torchvision.datasets import CIFAR10; CIFAR10('./data', download=True)"
-
 log_folder="./logs"
-rm -r $log_folder
+rm -fr $log_folder
 mkdir $log_folder
 
-num_clients=1
-# Hardcoded vars to test
+# Hardcoded env vars to test
+export COLEXT_ENV=1
+export COLEXT_SERVER_ADDRESS="0.0.0.0:8080"
 export COLEXT_JOB_ID=1
 export COLEXT_CLIENT_DB_ID=25
+export COLEXT_DEVICE_TYPE=FLServer
+# export COLEXT_DATA_HOME_FOLDER=/colext/datasets
+# export COLEXT_PYTORCH_DATASETS=/colext/pytorch_datasets
+export COLEXT_MONITORING_LIVE_METRICS=True
+export COLEXT_MONITORING_PUSH_INTERVAL=10
+export COLEXT_MONITORING_SCRAPE_INTERVAL=1
+export COLEXT_LOG_LEVEL=DEBUG
 
+num_clients=1
+num_rounds=1
 echo ""
 echo "Starting server"
-python server.py > ${log_folder}/server.out 2>&1 &
+python server.py -n $num_clients -r $num_rounds > ${log_folder}/server.out 2>&1 &
 sleep 3  # Sleep for 3s to give the server enough time to start
 
 for i in `seq 0 $((num_clients - 1))`; do
     echo "Starting client $i"
-    export CLIENT_ID=$i
+    export COLEXT_CLIENT_ID=$i
     python client.py > ${log_folder}/client_${i}.out 2>&1 &
 
     if [ "$i" -eq 0 ]; then
