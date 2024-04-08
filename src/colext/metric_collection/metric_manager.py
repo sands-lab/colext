@@ -5,6 +5,7 @@ import time
 import multiprocessing
 import threading
 import psycopg
+from psycopg_pool import ConnectionPool
 
 from colext.common.utils import get_colext_env_var_or_exit
 from colext.common.logger import log
@@ -33,11 +34,11 @@ class MetricManager():
         self.finish_event = threading.Event()
         
         self.CLIENT_DB_ID = get_colext_env_var_or_exit("COLEXT_CLIENT_DB_ID")
-        self.DB_CONNECTION = self.create_db_connection()
+        self.db_pool = self.create_db_pool()
 
-    def create_db_connection(self):
+    def create_db_pool(self):
         DB_CONNECTION_INFO = "host=10.0.0.100 dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
-        return psycopg.connect(DB_CONNECTION_INFO, autocommit=True)
+        return ConnectionPool(DB_CONNECTION_INFO, open=True, min_size=2, max_size=2)
 
     def start_metric_gathering(self):
         log.debug("Start metric monitoring.")
@@ -110,8 +111,9 @@ class MetricManager():
             }
             for m in self.hw_metrics]
         
-        with self.DB_CONNECTION.cursor() as cur:
-            cur.executemany(sql, formatted_metrics)
+        with self.db_pool.connection() as conn:
+            with conn.cursor() as cur:
+                cur.executemany(sql, formatted_metrics)
 
         self.total_hw_metric_count += len(self.hw_metrics)
         self.hw_metrics.clear()
@@ -119,7 +121,6 @@ class MetricManager():
     def push_stage_timings(self, stage, cir_id: int, stage_start_time: datetime, stage_end_time: datetime):
         log.info(f"Pushing stage timings for cir_id = {cir_id} stage = {stage}")
 
-        cursor = self.DB_CONNECTION.cursor()
         sql = """
                 UPDATE clients_in_round 
                     SET start_time = %s, end_time = %s
@@ -127,6 +128,6 @@ class MetricManager():
               """     
         
         data = (stage_start_time, stage_end_time, cir_id)
-        cursor.execute(sql, data)
-        cursor.close()
+        with self.db_pool.connection() as conn:
+            conn.execute(sql, data)
         

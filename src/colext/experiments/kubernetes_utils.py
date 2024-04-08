@@ -74,6 +74,7 @@ class KubernetesUtils:
         pods = self.k8s_core_v1.list_namespaced_pod(FL_NAMESPACE, label_selector=label_selectors).items
         pod_names_to_wait = [pod.metadata.name for pod in pods]
 
+        all_pods_completed = True
         log.info(f"Found {len(pod_names_to_wait)} running pods.")
         log.info(f"Waiting for pods to complete.")
         while pod_names_to_wait:
@@ -93,6 +94,7 @@ class KubernetesUtils:
                         pod_names_to_wait.remove(pod_name)
                         break
                 except kubernetes.client.rest.ApiException as e:
+                    all_pods_completed = False
                     if e.status == 404:
                         log.error(f"{pod_name} pod was deleted while waiting for it. Removing it from the waiting list.")
                     else:
@@ -100,6 +102,9 @@ class KubernetesUtils:
                     pod_names_to_wait.remove(pod_name)
                     break
             
-            time.sleep(4) 
-        
-        log.info(f"All pods completed successfully")
+            time.sleep(4)
+
+        if all_pods_completed:
+            log.info(f"All pods completed successfully.")
+        else:
+            log.info(f"Not all pods finished successfully. An error occured during the job.")

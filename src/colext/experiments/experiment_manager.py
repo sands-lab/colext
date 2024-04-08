@@ -148,7 +148,6 @@ class ExperimentManager():
     def wait_for_job(self, job_id, config):
         """ Wait for all pods with label colext-job-id """
         self.k_utils.wait_for_pods(f"colext-job-id={job_id}")
-
         self.db_utils.finish_job(job_id)
 
     def retrieve_metrics(self, job_id):
