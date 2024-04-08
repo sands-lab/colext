@@ -34,7 +34,6 @@ def MonitorFlwrClient(FlwrClientClass):
             self.monitor_mgr: MonitorManager = MonitorManager(self.metric_mgr.get_hw_metric_queue())
             self.monitor_mgr.start_monitoring()
             
-            
             # Replace this, we might be able to do it if the server tells us this is the last round
             atexit.register(self.clean_up)
         
@@ -68,18 +67,19 @@ def MonitorFlwrClient(FlwrClientClass):
 
         def fit(self, parameters, config):
             log.debug("fit function")
-            client_in_round_id = config["COLEXT_CLIENT_IN_ROUND_BASE_ID"] + self.client_id
+            # client_in_round_id = config["COLEXT_CLIENT_IN_ROUND_MAP"][self.client_DB_id]
+            client_in_round_id = config.get(f"COLEXT_CIR_MAP_{self.client_DB_id}")
             
             start_fit_time = datetime.now(timezone.utc)
             fit_result = super().fit(parameters, config)
             end_fit_time = datetime.now(timezone.utc)
             self.metric_mgr.push_stage_timings("FIT", client_in_round_id, start_fit_time, end_fit_time)
-
             return fit_result
 
         def evaluate(self, parameters, config):
             log.debug("evaluate function")
-            client_in_round_id = config["COLEXT_CLIENT_IN_ROUND_BASE_ID"] + self.client_id
+            # client_in_round_id = config["COLEXT_CLIENT_IN_ROUND_MAP"][self.client_DB_id]
+            client_in_round_id = config.get(f"COLEXT_CIR_MAP_{self.client_DB_id}")
             
             start_eval_time = datetime.now(timezone.utc)
             eval_result = super().evaluate(parameters, config)

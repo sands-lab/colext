@@ -125,9 +125,8 @@ class MetricManager():
                 UPDATE clients_in_round 
                     SET start_time = %s, end_time = %s
                 WHERE cir_id = %s
-              """     
-        
+              """
+
         data = (stage_start_time, stage_end_time, cir_id)
         with self.db_pool.connection() as conn:
             conn.execute(sql, data)
-        

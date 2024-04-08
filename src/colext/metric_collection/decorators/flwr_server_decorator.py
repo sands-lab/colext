@@ -80,25 +80,22 @@ def MonitorFlwrStrategy(FlwrStrategy):
             # Maybe it's related to the strategy?
             # base_config, base_fit_ins = client_instructions[0]
             # client_instructions = [(c_proxy, copy.deepcopy(fit_ins)) for (c_proxy, fit_ins) in client_instructions]
-            # TODO !!! The below solution will not work for simultaneous jobs !!!
+            # TODO !!! The below solution is inneficient. The more clients we have the mode data we send !!!
 
             # Register clients in round
             sql = """
                     INSERT INTO clients_in_round (client_id, round_id, client_state)
                     VALUES (%s, %s, %s) RETURNING cir_id
                 """
-            base_cir_id = 0;
-            for i, (proxy, fit_ins) in enumerate(client_instructions):  # First (ClientProxy, FitIns) pair
+            for proxy, fit_ins in client_instructions:  # First (ClientProxy, FitIns) pair
                 client_db_id = self.get_client_db_id(proxy)
                 
                 cur_client_state = "AVAILABLE"
                 data = (client_db_id, str(round_id), cur_client_state)
                 cursor.execute(sql, data)
                 cir_id = cursor.fetchone()[0]
-
-                if i == 0:
-                    base_cir_id = cir_id
-                fit_ins.config["COLEXT_CLIENT_IN_ROUND_BASE_ID"] = base_cir_id
+                # Flower does not support dict in the config ?
+                fit_ins.config[f"COLEXT_CIR_MAP_{client_db_id}"] = cir_id
 
             self.DB_CONNECTION.commit()
             cursor.close()
