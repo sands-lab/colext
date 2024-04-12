@@ -27,7 +27,8 @@ target "generic-base" {
   ssh = ["default"]
   context = "${CONTEXT}"
   args = {
-    BASE_IMAGE: "python:3.8.10-slim-buster",
+    // BASE_IMAGE: "python:3.8.10-slim-buster",
+    BASE_IMAGE: "pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime",
     INSTALL_OPTIONS: "",
     BUILD_TYPE: "generic"
   }

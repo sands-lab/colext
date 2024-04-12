@@ -1,4 +1,5 @@
-FROM python:3.8.10-slim-buster
+# FROM python:3.8.10-slim-buster
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 # Python version matches version in jetson image
 
 WORKDIR /fl_testbed
