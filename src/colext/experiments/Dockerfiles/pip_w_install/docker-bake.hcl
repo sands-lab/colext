@@ -16,30 +16,49 @@ variable "CONTEXT" {
 }
 
 group "default" {
-  targets = ["generic", "jetson"]
+  targets = ["generic-cpu", "generic-gpu", "jetson"]
 }
 
 group "testing" {
-  targets = ["generic-test", "jetson-test"]
+  targets = ["generic-cpu-test", "generic-gpu-test", "jetson-test"]
 }
 
-target "generic-base" {
+target "base" {
   ssh = ["default"]
   context = "${CONTEXT}"
+  dockerfile = "${BAKE_FILE_DIR}/colext_general.Dockerfile"
+}
+
+target "test-override" {
+  dockerfile = "${BAKE_FILE_DIR}/colext_test.Dockerfile"
+}
+
+target "generic-cpu" {
+  inherits = ["base"]
   args = {
-    // BASE_IMAGE: "python:3.8.10-slim-buster",
-    BASE_IMAGE: "pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime",
+    BASE_IMAGE: "python:3.8.10-slim-buster",
     INSTALL_OPTIONS: "",
-    BUILD_TYPE: "generic"
+    BUILD_TYPE: "generic-cpu"
   }
 
   platforms = ["linux/amd64", "linux/arm64"]
-  tags = ["${REGISTY}/${PROJECT_NAME}/generic:latest"]
+  tags = ["${REGISTY}/${PROJECT_NAME}/generic-cpu:latest"]
 }
 
-target "jetson-base" {
-  ssh = ["default"]
-  context = "${CONTEXT}"
+target "generic-gpu" {
+  inherits = ["base"]
+  args = {
+    BASE_IMAGE: "pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime",
+    INSTALL_OPTIONS: "",
+    BUILD_TYPE: "generic-gpu"
+  }
+
+  platforms = ["linux/amd64"]
+  tags = ["${REGISTY}/${PROJECT_NAME}/generic-gpu:latest"]
+}
+
+target "jetson" {
+  inherits = ["base"]
   args = {
     // BASE_IMAGE: "dustynv/pytorch:2.0-r35.4.1",
     BASE_IMAGE: "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3",
@@ -50,24 +69,16 @@ target "jetson-base" {
   tags = ["${REGISTY}/${PROJECT_NAME}/jetson:latest"]
 }
 
-target "generic" {
-  inherits = ["generic-base"]
-  dockerfile = "${BAKE_FILE_DIR}/colext_generic.Dockerfile"
-}
-
-target "jetson" {
-  inherits = ["jetson-base"]
-  dockerfile = "${BAKE_FILE_DIR}/colext_jetson.Dockerfile"
-}
-
-target "generic-test" {
-  inherits = ["generic-base"]
+target "generic-cpu-test" {
+  inherits = ["generic-cpu", "test-override"]
   # Override platforms to ignore arm64
-  platforms = ["linux/amd64"]
-  dockerfile = "${BAKE_FILE_DIR}/colext_test.Dockerfile"
+  // platforms = ["linux/amd64"]
+}
+
+target "generic-gpu-test" {
+  inherits = ["generic-gpu", "test-override"]
 }
 
 target "jetson-test" {
-  inherits = ["jetson-base"]
-  dockerfile = "${BAKE_FILE_DIR}/colext_test.Dockerfile"
+  inherits = ["jetson", "test-override"]
 }
