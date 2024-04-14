@@ -7,7 +7,7 @@ class ProcessMetrics:
     """Class to keep track of process metrics"""
     time: datetime
     cpu_percent: float
-    rss: int
+    memory_usage: int
     power_mw: int
     gpu_util: float
 

@@ -25,14 +25,14 @@ class MetricManager():
         self.push_metrics_interval = float(get_colext_env_var_or_exit("COLEXT_MONITORING_PUSH_INTERVAL"))
         log.info(f"Live metrics: {self.live_metrics}")
         log.info(f"Push metrics interval: {self.push_metrics_interval}")
-        
+
         self.hw_metric_queue = multiprocessing.Queue()
         self.hw_metrics = []
 
         self.total_hw_metric_count = 0
         self.metric_push_th = threading.Thread(target=self.capture_metrics, daemon=True)
         self.finish_event = threading.Event()
-        
+
         self.CLIENT_DB_ID = get_colext_env_var_or_exit("COLEXT_CLIENT_DB_ID")
         self.db_pool = self.create_db_pool()
 
@@ -72,10 +72,10 @@ class MetricManager():
         if self.live_metrics:
             log.info("Waiting for background thread to finish. Max 15sec.")
             self.finish_event.set()
-            self.metric_push_th.join(timeout=15) 
+            self.metric_push_th.join(timeout=15)
             if self.metric_push_th.is_alive():
                 log.error("Thread is still alive... Ignoring it")
-        
+
         self.collect_available_metrics()
         self.push_current_hw_metrics()
         log.info(f"Nr of metrics pushed = {self.total_hw_metric_count}.")
@@ -85,32 +85,32 @@ class MetricManager():
         if len(self.hw_metrics) == 0:
             log.debug(f"No HW metrics to push.")
             return
-        
+
         log.info(f"Pushing {len(self.hw_metrics)} HW metrics from client {self.CLIENT_DB_ID} to DB")
 
-        sql = """ 
-                INSERT INTO fl_testbed_logging.device_measurements 
+        sql = """
+                INSERT INTO fl_testbed_logging.device_measurements
                         (time, client_id, cpu_util, mem_util, gpu_util, power_consumption,
-                        n_bytes_sent, n_bytes_rcvd, net_usage_out, net_usage_in) 
+                        n_bytes_sent, n_bytes_rcvd, net_usage_out, net_usage_in)
                 VALUES (%(time)s, %(client_id)s, %(cpu_util)s, %(mem_util)s, %(gpu_util)s, %(power_consumption)s,
                         %(n_bytes_sent)s, %(n_bytes_rcvd)s, %(net_usage_out)s, %(net_usage_in)s);
                 """
-        
+
         formatted_metrics = [
             {
-                'time': m.time, 
-                'client_id': self.CLIENT_DB_ID, 
-                'cpu_util': m.cpu_percent, 
-                'mem_util': m.rss,
+                'time': m.time,
+                'client_id': self.CLIENT_DB_ID,
+                'cpu_util': m.cpu_percent,
+                'mem_util': m.memory_usage,
                 'gpu_util': m.gpu_util,
                 'power_consumption': m.power_mw,
-                'n_bytes_sent': m.n_bytes_sent, 
-                'n_bytes_rcvd': m.n_bytes_rcvd, 
-                'net_usage_out': m.net_usage_out, 
+                'n_bytes_sent': m.n_bytes_sent,
+                'n_bytes_rcvd': m.n_bytes_rcvd,
+                'net_usage_out': m.net_usage_out,
                 'net_usage_in': m.net_usage_in
             }
             for m in self.hw_metrics]
-        
+
         with self.db_pool.connection() as conn:
             with conn.cursor() as cur:
                 cur.executemany(sql, formatted_metrics)
@@ -122,7 +122,7 @@ class MetricManager():
         log.info(f"Pushing stage timings for cir_id = {cir_id} stage = {stage}")
 
         sql = """
-                UPDATE clients_in_round 
+                UPDATE clients_in_round
                     SET start_time = %s, end_time = %s
                 WHERE cir_id = %s
               """

@@ -19,7 +19,7 @@ class PSUtilMonitor(ScrapperBase):
     def scrape_process_metrics(self) -> ProcessMetrics:
         with self.proc.oneshot():
             cpu_percent = self.proc.cpu_percent()
-            rss = self.proc.memory_full_info().rss
+            memory_usage = self.proc.memory_full_info().vms
 
         current_net_stat = psutil.net_io_counters(nowrap=True)
         n_bytes_sent = current_net_stat.bytes_sent - self.prev_net_stat.bytes_sent
@@ -38,7 +38,7 @@ class PSUtilMonitor(ScrapperBase):
         power_mw = 0
         gpu_util = 0
         p_metrics = ProcessMetrics(
-                        time, cpu_percent, rss, power_mw, gpu_util,
+                        time, cpu_percent, memory_usage, power_mw, gpu_util,
                         self.total_bytes_sent, self.total_bytes_recv, net_usage_out, net_usage_in)
         return p_metrics
     
