@@ -18,7 +18,7 @@ COPY ./requirements.txt ./user_code/
 # Removing torch requirement to prevent this
 RUN sed -i '/^torch/d' ./user_code/requirements.txt
     
-RUN python3 -m pip install --no-cache-dir -r ./user_code/requirements.txt
+RUN --mount=type=ssh python3 -m pip install --no-cache-dir -r ./user_code/requirements.txt
 
 COPY . ./user_code
 

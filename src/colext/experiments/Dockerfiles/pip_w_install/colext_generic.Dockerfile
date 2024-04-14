@@ -15,7 +15,7 @@ RUN --mount=type=ssh python3 -m pip install -I -U git+ssh://git@ssh.github.com:4
 
 # Dockerfile assumes the context is set to the user's code path
 COPY ./requirements.txt ./user_code/
-RUN python3 -m pip install --no-cache-dir -r ./user_code/requirements.txt
+RUN  --mount=type=ssh python3 -m pip install --no-cache-dir -r ./user_code/requirements.txt
 
 COPY . ./user_code
 
