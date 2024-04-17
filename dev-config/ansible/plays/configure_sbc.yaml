@@ -1,4 +1,4 @@
---- 
+---
 - name: "Configure SBC"
   hosts: devices
   become: true
@@ -16,14 +16,15 @@
           path: /colext/pytorch_datasets/
 
     - role: microk8s_worker
+      tags: microk8s
       vars:
-        microk8s: 
+        microk8s:
           host: 10.0.0.100:25000
           token: a1ef095d59c2fef65d5263090e678cc0/3466aad00757
           # Generated a valid token with the duration of 1 year
           # microk8s add-node --token a1ef095d59c2fef65d5263090e678cc0 -l 31536000
-          # /var/snap/microk8s/current/credentials/cluster-tokens.txt 
-        priv_registry: 
+          # /var/snap/microk8s/current/credentials/cluster-tokens.txt
+        priv_registry:
           hostname: flserver
           internal_ip: 10.0.0.100
           port: 5000

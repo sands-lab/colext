@@ -22,7 +22,7 @@ CREATE TABLE fl_testbed_logging.rounds (
     start_time timestamp with time zone,
     end_time timestamp with time zone,
     accuracy decimal,
-    fit_eval varchar(50),
+    stage varchar(50),
     job_id INT REFERENCES fl_testbed_logging.jobs(job_id)
 );
 
@@ -41,11 +41,13 @@ CREATE TABLE fl_testbed_logging.clients (
 		device_id INT REFERENCES fl_testbed_logging.devices(device_id)
 );
 
-CREATE TABLE fl_testbed_logging.clients_in_rounds (
+CREATE TABLE fl_testbed_logging.clients_in_round (
     cir_id serial primary key,
     client_id INT REFERENCES fl_testbed_logging.clients(client_id),
     round_id INT REFERENCES fl_testbed_logging.rounds(round_id),
-		client_state varchar(50)
+    start_time timestamp with time zone,
+    end_time timestamp with time zone,
+    client_state varchar(50)
 );
 
 CREATE TABLE fl_testbed_logging.epochs (
@@ -53,7 +55,7 @@ CREATE TABLE fl_testbed_logging.epochs (
     epoch_number integer,
     start_time timestamp with time zone,
     end_time timestamp with time zone,
-    cir_id INT REFERENCES fl_testbed_logging.clients_in_rounds(cir_id)
+    cir_id INT REFERENCES fl_testbed_logging.clients_in_round(cir_id)
 );
 
 CREATE TABLE fl_testbed_logging.batches (
@@ -75,8 +77,14 @@ CREATE TABLE fl_testbed_logging.device_measurements (
     gpu_util decimal,
     battery_state decimal,
     power_consumption decimal,
-		gpu_info jsonb,
-		cpu_info jsonb,
+    
+    n_bytes_sent decimal,
+    n_bytes_rcvd decimal,
+    net_usage_out decimal,
+    net_usage_in decimal,
+
+    gpu_info jsonb,
+    cpu_info jsonb,
     client_id INT REFERENCES fl_testbed_logging.clients(client_id)
 );
 

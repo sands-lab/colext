@@ -16,11 +16,13 @@ variable "CONTEXT" {
 }
 
 group "default" {
-  targets = ["generic-cpu", "generic-gpu", "jetson"]
+  targets = ["generic-gpu", "jetson-nano"]
+  // targets = ["generic-cpu", "generic-gpu", "jetson", "jetson-nano"]
 }
 
 group "testing" {
-  targets = ["generic-cpu-test", "generic-gpu-test", "jetson-test"]
+  // targets = ["generic-gpu-test", "jetson-nano-test"]
+  targets = ["generic-cpu-test", "generic-gpu-test", "jetson-test", "jetson-nano-test"]
 }
 
 target "base" {
@@ -69,6 +71,14 @@ target "jetson" {
   tags = ["${REGISTY}/${PROJECT_NAME}/jetson:latest"]
 }
 
+target "jetson-nano" {
+  inherits = ["jetson"]
+  args = {
+    BASE_IMAGE: "flserver:5000/colext/jetson-nano:torch1.10-r32.7.1-py38",
+  }
+  tags = ["${REGISTY}/${PROJECT_NAME}/jetson-nano:latest"]
+}
+
 target "generic-cpu-test" {
   inherits = ["generic-cpu", "test-override"]
   # Override platforms to ignore arm64
@@ -81,4 +91,8 @@ target "generic-gpu-test" {
 
 target "jetson-test" {
   inherits = ["jetson", "test-override"]
+}
+
+target "jetson-nano-test" {
+  inherits = ["jetson-nano", "test-override"]
 }

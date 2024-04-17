@@ -4,10 +4,10 @@ This work is being developed such that if your code can be deployed using the Fl
 
 ## Overview
 The repository contains two main sections:
-- dev-config: Collection of Ansible scripts used to perform the initial configuration setup of Smartphones/IoT devices 
-- colext package: Used to deploy user code in the CoLExT. 
+- dev-config: Collection of Ansible scripts used to perform the initial configuration setup of Smartphones/IoT devices
+- colext package: Used to deploy user code in the CoLExT.
 
-## Usage 
+## Usage
 - Decorate + Read FL server address from env variable
 - Have a requirements.txt at the root folder
 Create colext_config.yaml
@@ -45,8 +45,8 @@ This is being imposed by the base image being used for the jetson docker image.
 # Local development
 
 ## Connect to flserver
-Currently development happens inside the flserver machine. 
-The flserver is part of an isolated KAUST network due to RC3 concerns. 
+Currently development happens inside the flserver machine.
+The flserver is part of an isolated KAUST network due to RC3 concerns.
 
 To access the flserver, provide your public ssh key and kaust username.
 Then add this config to your local .ssh/config
@@ -142,3 +142,17 @@ AttributeError: 'NoneType' object has no attribute 'group'
 
 docker login
 specify which address the fl server expects to use
+
+## Known issues:
+sudo modprobe nf_conntrack
+
+
+# Considering supporting conda-lock
+Conda-lock fixes the conda environment to the specific os and platform
+```
+conda env export --from-history | egrep -v "^(name|prefix): " > environment.yaml
+conda-lock -f environment.yml -p linux-64 -p linux-aarch64
+```
+
+https://github.com/canonical/microk8s/issues/2110
+https://github.com/tekn0ir/toe

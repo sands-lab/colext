@@ -27,6 +27,11 @@
   ansible.builtin.import_tasks: configure_containerd.yaml
   when: "'jetsons' in group_names"
 
+- name: Disable HA to support flannel over calico (jetsons don't like it)
+  become: false
+  ansible.builtin.shell:
+    cmd: "microk8s disable ha-cluster --force"
+
 - name: Add SBC to kubernetes pool
   become: false
   ansible.builtin.shell:

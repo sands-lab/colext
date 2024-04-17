@@ -19,7 +19,13 @@
 - name: Install packages
   ansible.builtin.import_tasks: install_packages.yaml
 
+- name: Configure HW for max performance
+  ansible.builtin.import_tasks: configure_hw.yaml
+
 - name: Configure datasets
   ansible.builtin.import_tasks: configure_datasets.yaml
 
-# Disable default graphical interface?
+# Disable default graphical interface
+- name: Temporarily disable graphical interface (lost with reboot)
+  ansible.builtin.shell: 
+    cmd: sudo init 3

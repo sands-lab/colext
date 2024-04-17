@@ -13,7 +13,7 @@ RUN apt update && apt install -y openssh-client git gcc \
     && ssh-keyscan -p 443 ssh.github.com >> ~/.ssh/known_hosts
 
 # Install the colext package
-RUN --mount=type=ssh python3 -m pip install -I -U \
+RUN --mount=type=ssh python3 -m pip install \
     git+ssh://git@ssh.github.com:443/sands-lab/colext.git@sbc#egg=colext${INSTALL_OPTIONS}
 
 # Dockerfile assumes the context is set to the user's code path
