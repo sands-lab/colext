@@ -1,0 +1,10 @@
+[Unit]
+Description=Modify powercap energy file permissions to 0444
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=+/usr/bin/find /sys/devices/virtual/powercap -name energy_uj -exec chmod 0444 {} +
+
+[Install]
+WantedBy=multi-user.target

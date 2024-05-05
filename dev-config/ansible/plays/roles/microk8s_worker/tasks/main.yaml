@@ -31,6 +31,9 @@
   become: false
   ansible.builtin.shell:
     cmd: "microk8s disable ha-cluster --force"
+  register: microk8s_output
+  failed_when:
+    - "not ('This MicroK8s deployment is acting as a node in a cluster' in microk8s_output.stdout and microk8s_output.rc == 1)"
 
 - name: Add SBC to kubernetes pool
   become: false

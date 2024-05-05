@@ -5,3 +5,4 @@ user_code_example/data
 __pycache__
 dist
 *.csv
+build

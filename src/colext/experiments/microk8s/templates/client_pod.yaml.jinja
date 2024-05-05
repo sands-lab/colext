@@ -9,7 +9,7 @@ spec:
   initContainers:
   - name: wait-for-fl-server
     image: busybox:1.28
-    command: ['sh', '-c', 
+    command: ['sh', '-c',
               "NC_ADDR=$(echo $COLEXT_SERVER_ADDRESS | sed 's/:/ /') && until nc -z -w 2 $NC_ADDR; do echo waiting for $COLEXT_SERVER_ADDRESS; done"]
     env:
       - name: COLEXT_SERVER_ADDRESS
@@ -28,6 +28,8 @@ spec:
         value: "{{ job_id }}"
       - name: COLEXT_CLIENT_ID
         value: "{{ client_id }}"
+      - name: COLEXT_N_CLIENTS
+        value: "{{ n_clients }}"
       - name: COLEXT_CLIENT_DB_ID
         value: "{{ client_db_id }}"
       - name: COLEXT_DEVICE_TYPE
@@ -43,7 +45,7 @@ spec:
       - name: COLEXT_DATA_HOME_FOLDER
         value: "/colext/datasets"
       - name: COLEXT_PYTORCH_DATASETS
-        value: "/colext/pytorch_datasets"        
+        value: "/colext/pytorch_datasets"
     volumeMounts:
       - mountPath: /colext/datasets
         name: colext-std-datasets

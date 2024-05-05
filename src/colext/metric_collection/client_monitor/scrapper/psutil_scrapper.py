@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import psutil
 from .scrapper_base import ScrapperBase, ProcessMetrics
 
-class PSUtilMonitor(ScrapperBase):
+class PSUtilScrapper(ScrapperBase):
     """
         Base scrapper using psutil.
         This scrapper does not collect power consumption or GPU utilization.

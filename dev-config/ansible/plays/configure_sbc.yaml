@@ -4,6 +4,7 @@
   become: true
   roles:
     - role: base_sbc
+      tags: base
       vars:
         auth:
           key: "{{ lookup('file', '/home/' + lookup('env', 'USER') + '/.ssh/id_rsa.pub') }}"

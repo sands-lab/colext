@@ -1,9 +1,9 @@
-flwr~=1.6.0
+flwr~=1.5.0
 tqdm~=4.66.1
 # --extra-index-url https://download.pytorch.org/whl/cu116
-torch 
-torchvision 
+torch
+torchvision
 torchaudio
 # fltb Omitting this for now
-# With this dependency we need to install fltb before we install the user requirements 
+# With this dependency we need to install fltb before we install the user requirements
 # This forces the user code requirements to be reinstalled everytime we change the colext package code

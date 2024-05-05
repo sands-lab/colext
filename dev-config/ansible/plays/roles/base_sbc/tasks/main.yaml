@@ -15,9 +15,12 @@
 
 - name: Configure NTP
   ansible.builtin.import_tasks: configure_ntp.yaml
-  
+
 - name: Install packages
   ansible.builtin.import_tasks: install_packages.yaml
+
+- name: Install services
+  ansible.builtin.import_tasks: install_services.yaml
 
 - name: Configure HW for max performance
   ansible.builtin.import_tasks: configure_hw.yaml
@@ -27,5 +30,5 @@
 
 # Disable default graphical interface
 - name: Temporarily disable graphical interface (lost with reboot)
-  ansible.builtin.shell: 
+  ansible.builtin.shell:
     cmd: sudo init 3
