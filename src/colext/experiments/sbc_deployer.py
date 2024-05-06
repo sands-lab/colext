@@ -52,8 +52,9 @@ class SBCDeploymentHandler:
 
         target = "default"
         context = user_code_path
+        inheritance_target = "prod-base"
         if test_env:
-            target = "testing"
+            inheritance_target = "test-base"
             # Testing assumes code from /colext/user_code_example
             # We need to set context to /colext so we can copy the package
             context = os.path.dirname(user_code_path)
@@ -66,6 +67,7 @@ class SBCDeploymentHandler:
                                 "REGISTY": REGISTY,
                                 "PROJECT_NAME": project_name,
                                 "CONTEXT": context,
+                                "INHERITANCE_TARGET": inheritance_target,
                                 "BAKE_FILE_DIR": self.hcl_file_dir
                             },
                             push=True)
@@ -91,6 +93,7 @@ class SBCDeploymentHandler:
             (dev_id, dev_hostname) = self.get_device_hostname_by_type(curr_available_devices_by_type, client_type)
 
             pod_config["job_id"] = job_id
+            pod_config["n_clients"] = config["n_clients"]
             pod_config["client_id"] = client_i
             pod_config["pod_name"] = f"client-{client_i}"
             pod_config["entrypoint"] = config["code"]["client"]["entrypoint"]
@@ -111,8 +114,8 @@ class SBCDeploymentHandler:
     BASE_POD_CONFIG_BY_TYPE = {
         "GenericCPU": { "image_name": "generic-cpu" },
         "GenericGPU": { "image_name": "generic-gpu" }, # only supports amd64
-        "Jetson":      { "image_name": "jetson", "jetson_dev": True},
-        "JetsonNano": { "image_name": "jetson-nano", "jetson_dev": True},
+        "Jetson":     { "image_name": "jetson", "jetson_dev": True },
+        "JetsonNano": { "image_name": "jetson-nano", "jetson_dev": True },
     }
 
     def get_base_pod_config(self, dev_type, config: Dict[str, str]):
