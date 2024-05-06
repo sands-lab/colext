@@ -25,8 +25,8 @@ tiny_rounds = False
 print(f"Using device = {DEVICE}")
 
 # MODEL_CONFIG = [3, 20, 20, 64, 64, 64, 64, 10]
-MODEL_CONFIG = [3, 48, 48, 96, 96, 96, 96, 10]
-#MODEL_CONFIG = [3, 96, 96, 192, 192, 192, 192, 10]
+# MODEL_CONFIG = [3, 48, 48, 96, 96, 96, 96, 10]
+MODEL_CONFIG = [3, 96, 96, 192, 192, 192, 192, 10]
 class Net(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -94,7 +94,7 @@ def train(net, trainloader, epochs):
 
             if tiny_rounds:
                 chunk += 1
-                if chunk > 300:
+                if chunk > 100:
                     break
 
 def test(net, testloader):
@@ -112,7 +112,7 @@ def test(net, testloader):
 
             if tiny_rounds:
                 chunk += 1
-                if chunk > 300:
+                if chunk > 100:
                     break
 
     accuracy = correct / len(testloader.dataset)
