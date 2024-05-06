@@ -14,13 +14,18 @@ Create colext_config.yaml
 
 ### Exposed environment variables
 
-|      Client Vars      |                                 |
-| :-------------------: | ------------------------------- |
-| COLEXT_SERVER_ADDRESS | Server address (host:port)      |
-|   COLEXT_CLIENT_ID    | ID of the client (0..n_clients) |
+|      Client Vars      |                                                             |
+| :-------------------: | ----------------------------------------------------------- |
+| COLEXT_SERVER_ADDRESS | Server address (host:port)                                  |
+|   COLEXT_N_CLIENTS    | Number of clients                                           |
+|   COLEXT_CLIENT_ID    | ID of the client (0..n_clients)                             |
 |  COLEXT_DEVICE_TYPE   | Hardware type of the client as requested in the config file |
 
-|        Data Vars        |                  |
+|      Server Vars      |                                                             |
+| :-------------------: | ----------------------------------------------------------- |
+|   COLEXT_N_CLIENTS    | Number of clients                                           |
+
+|        Dataset Vars        |                  |
 | :---------------------: | ---------------- |
 | COLEXT_DATA_HOME_FOLDER | Datasets path    |
 | COLEXT_PYTORCH_DATASETS | Pytorch datasets |
