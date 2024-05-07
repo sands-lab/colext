@@ -50,10 +50,10 @@ def get_args():
     parser = argparse.ArgumentParser(
                     prog='FL Server',
                     description='Starts the FL server')
-    
+
     parser.add_argument('-n', '--num_clients', type=int, required=True, help="number of FL clients")
     parser.add_argument('-r', '--num_rounds', type=int, required=True, help="number of FL rounds")
-    
+
     args = parser.parse_args()
 
     assert args.num_clients > 0, "Number of clients should be larger than 0"
@@ -66,11 +66,11 @@ if __name__ == '__main__':
 
     n_clients = args.num_clients
     n_rounds = args.num_rounds
-    
-    strategy = FlowerStrategy( 
-        min_fit_clients=n_clients, 
-        min_evaluate_clients=n_clients, 
-        min_available_clients=n_clients, 
+
+    strategy = FlowerStrategy(
+        min_fit_clients=n_clients,
+        min_evaluate_clients=n_clients,
+        min_available_clients=n_clients,
         evaluate_metrics_aggregation_fn=weighted_average)
 
     # Start Flower server

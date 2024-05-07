@@ -1,6 +1,5 @@
 from pathlib import Path
 import os
-import copy
 import yaml
 import sys
 from python_on_whales import docker
@@ -50,7 +49,6 @@ class SBCDeploymentHandler:
         project_name = config_dict["project"]
         user_code_path = Path(config_dict["code"]["path"])
 
-        target = "default"
         context = user_code_path
         inheritance_target = "prod-base"
         if test_env:
@@ -61,7 +59,16 @@ class SBCDeploymentHandler:
             assert os.path.isdir(os.path.join(context, "src", "colext")), \
                 f"Testing package. Expected to find src/colext dir in '{context}'"
 
-        docker.buildx.bake( targets=[target],
+        # Construct targets based on requested device types + Server, which is always there
+        server_image = self.get_image_for_device_type("Server")
+        targets = [server_image]
+        for dev in config_dict["devices"]:
+            dev_image = self.get_image_for_device_type(dev["device_type"])
+            if dev_image not in targets:
+                targets.append(dev_image)
+
+        log.info(f"Building containers for {targets=}")
+        docker.buildx.bake( targets=targets,
                             files=os.path.join(self.hcl_file_dir, "docker-bake.hcl"),
                             variables={
                                 "REGISTY": REGISTY,
@@ -111,26 +118,25 @@ class SBCDeploymentHandler:
         log.debug(f"Generated {len(pod_configs)} pod configs")
         return pod_configs
 
-    BASE_POD_CONFIG_BY_TYPE = {
-        "GenericCPU": { "image_name": "generic-cpu" },
-        "GenericGPU": { "image_name": "generic-gpu" }, # only supports amd64
-        "Jetson":     { "image_name": "jetson", "jetson_dev": True },
-        "JetsonNano": { "image_name": "jetson-nano", "jetson_dev": True },
+    IMAGE_BY_DEV_TYPE = {
+        "JetsonNano":       "jetson-nano",
+        "JetsonAGXOrin":    "jetson",
+        "JetsonOrinNano":   "jetson",
+        "JetsonXavierNX":   "jetson",
+        "Server":           "generic-gpu",     # only supports amd64
+        "LattePandaDelta3": "generic-cpu-x86",
+        "OrangePi5B":       "generic-cpu-arm",
     }
 
-    def get_base_pod_config(self, dev_type, config: Dict[str, str]):
-        pod_type = "GenericCPU"
-        if "JetsonNano" == dev_type:
-            pod_type = "JetsonNano"
-        elif "Jetson" in dev_type:
-            pod_type = "Jetson"
-        elif "Server" in dev_type:
-            pod_type = "GenericGPU"
-        base_pod_config = self.BASE_POD_CONFIG_BY_TYPE[pod_type]
-        pod_config = copy.deepcopy(base_pod_config)
+    def get_image_for_device_type(self, dev_type):
+        return self.IMAGE_BY_DEV_TYPE[dev_type]
 
+    def get_base_pod_config(self, dev_type, config: Dict[str, str]):
+        pod_config = {}
         project_name = config["project"]
-        pod_config["image"] =  f"{REGISTY}/{project_name}/{pod_config['image_name']}:latest"
+
+        pod_image_name = self.get_image_for_device_type(dev_type)
+        pod_config["image"] =  f"{REGISTY}/{project_name}/{pod_image_name}:latest"
         pod_config["std_datasets_path"] = STD_DATASETS_PATH
         pod_config["pytorch_datasets_path"] = PYTORCH_DATASETS_PATH
 

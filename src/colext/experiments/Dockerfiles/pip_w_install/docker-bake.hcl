@@ -1,4 +1,4 @@
-// Variables are set in experiment_dispatcher.py
+// Variables are set in sbc_deployer.py
 variable "REGISTY" {
   default = null
 }
@@ -20,7 +20,6 @@ variable "INHERITANCE_TARGET" {
 }
 
 group "default" {
-  // targets = ["generic-gpu", "jetson-nano"]
   targets = ["generic-cpu", "generic-gpu", "jetson", "jetson-nano"]
 }
 
@@ -45,6 +44,18 @@ target "generic-cpu" {
 
   platforms = ["linux/amd64", "linux/arm64"]
   tags = ["${REGISTY}/${PROJECT_NAME}/generic-cpu:latest"]
+}
+
+target "generic-cpu-x86" {
+  inherits = ["generic-cpu"]
+  platforms = ["linux/amd64"]
+  tags = ["${REGISTY}/${PROJECT_NAME}/generic-cpu-x86:latest"]
+}
+
+target "generic-cpu-arm" {
+  inherits = ["generic-cpu"]
+  platforms = ["linux/arm64"]
+  tags = ["${REGISTY}/${PROJECT_NAME}/generic-cpu-arm:latest"]
 }
 
 target "generic-gpu" {

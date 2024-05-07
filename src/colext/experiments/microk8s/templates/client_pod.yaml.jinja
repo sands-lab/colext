@@ -51,7 +51,7 @@ spec:
         name: colext-std-datasets
       - mountPath: /colext/pytorch_datasets
         name: colext-pytorch-datasets
-    {% if jetson_dev is defined %}
+    {% if "Jetson" in dev_type %}
       - mountPath: /run/jtop.sock
         name: jtop-socket
     {% endif %}
@@ -64,7 +64,7 @@ spec:
       hostPath:
         path: {{ pytorch_datasets_path }}
         type: Directory
-    {% if jetson_dev is defined %}
+    {% if "Jetson" in dev_type %}
     - name: jtop-socket
       hostPath:
         path: /run/jtop.sock
