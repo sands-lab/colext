@@ -5,33 +5,42 @@
 # Configuration of containerd_template was based on this GitHub issue: https://github.com/NVIDIA/k8s-device-plugin/issues/406
 # Kubernetes + Jetson: https://wiki.seeedstudio.com/Jetson-Mate/#installing-kubernetes
 
-- name: Find containerd.toml files for microk8s
-  ansible.builtin.find:
-    paths: /var/snap/microk8s
-    file_type: file
-    recurse: true
-    patterns:
-      - 'containerd-template.toml'
-  register: containerd_files
+# - name: Find containerd.toml files for microk8s
+#   ansible.builtin.find:
+#     paths: /var/snap/microk8s/current/args/containerd-template.toml
+#     file_type: file
+#     recurse: true
+#     patterns:
+#       - 'containerd-template.toml'
+#   register: containerd_files
 
-- name: Ensure there's only one version of microk8s
-  ansible.builtin.fail:
-    msg: "Expected to find a single microk8s 'containerd.toml' file. Found {{ containerd_files.files|length }}" 
-  when: containerd_files.files|length != 1
+# - name: Ensure there's only one version of microk8s
+#   ansible.builtin.fail:
+#     msg: "Expected to find a single microk8s 'containerd.toml' file. Found {{ containerd_files.files|length }}"
+#   when: containerd_files.files|length != 1
+
+- name: Confirm containerd-template exists
+  ansible.builtin.stat:
+    path: /var/snap/microk8s/current/args/containerd-template.toml
+  register: containerd_stat_result
+
+- name: fail if file not found
+  fail: msg="Could not read fle"
+  when: not containerd_stat_result.stat.exists
 
 - name: Check if nvidia-container-runtime is configured
   ansible.builtin.shell:
     cmd: "grep -F '[plugins.\"io.containerd.grpc.v1.cri\".containerd.runtimes.nvidia-container-runtime]' \
-          {{containerd_files.files[0].path}}"
+          {{ containerd_stat_result.stat.path }}"
   changed_when: false
 
 - name: Set default container runtime to nvidia-container-runtime
   ansible.builtin.replace:
-    path: "{{ containerd_files.files[0].path }}"
+    path: "{{ containerd_stat_result.stat.path }}"
     after: 'default_runtime_name is the default runtime name to use.'
     regexp: 'default_runtime_name = "\$\{RUNTIME\}"'
     replace: 'default_runtime_name = "nvidia-container-runtime"'
   notify: Restart microk8s
 
-# Seems no further modifications are required, but I'll keep the original file 
+# Seems no further modifications are required, but I'll keep the original file
 # used to configure contained in the files dir

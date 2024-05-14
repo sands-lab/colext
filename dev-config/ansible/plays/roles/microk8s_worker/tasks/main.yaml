@@ -1,4 +1,5 @@
 #  sudo snap install microk8s --classic --channel=1.29
+# It seems this might be getting deprecated
 - name: Install microk8s
   community.general.snap:
     name: microk8s
@@ -33,10 +34,17 @@
     cmd: "microk8s disable ha-cluster --force"
   register: microk8s_output
   failed_when:
-    - "not ('This MicroK8s deployment is acting as a node in a cluster' in microk8s_output.stdout and microk8s_output.rc == 1)"
+    - microk8s_output.rc != 0
+    - not ('This MicroK8s deployment is acting as a node in a cluster' in microk8s_output.stdout)
+
+- name: Leave current cluster and disable HA
+  become: false
+  ansible.builtin.shell:
+    cmd: "microk8s leave && microk8s disable ha-cluster --force"
+  when: "'This MicroK8s deployment is acting as a node in a cluster.' in microk8s_output"
 
 - name: Add SBC to kubernetes pool
   become: false
   ansible.builtin.shell:
-    cmd: "microk8s join {{microk8s.host}}/{{microk8s.token}} --worker"
+    cmd: "microk8s join {{microk8s.host}}/{{microk8s.token}}"
   when: "'outOfNetwork' not in group_names"
