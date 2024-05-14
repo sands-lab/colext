@@ -10,6 +10,7 @@ def get_args():
 
     parser.add_argument('-c', '--config_file', type=str, default="./colext_config.yaml", help="Path to CoLExT config file.")
     parser.add_argument('-t', '--test_env', default=False, action='store_true', help="Test deployment in test environment.")
+    parser.add_argument('-v', '--verify_only', default=False, action='store_true', help="Only verify if deployment is feasible.")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true', help="Wait for experiment to finish.")
 
     args = parser.parse_args()
@@ -39,8 +40,8 @@ def read_config(config_file):
     config_dict["n_clients"] = n_clients
 
     # Update config based on monitoring defaults
-    default_monitoring = {"live_metrics": True, "push_interval": 10, "scrapping_interval": 0.3} # intervals are in seconds
-    config_dict["monitoring"] = {**default_monitoring, **config_dict.get("monitoring", {})}
+    monitoring_defaults = {"live_metrics": True, "push_interval": 10, "scrapping_interval": 0.3} # intervals are in seconds
+    config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
 
     print("CoLExT configuration read successfully")
 
@@ -50,19 +51,28 @@ DASHBOARD_URL = ("http://localhost:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/c
                  "orgId=1&from=now-5m&to=now&refresh=5s&var-clientid=All")
 def launch_experiment():
     log.setLevel(logging.DEBUG)
-    print(f"Starting experiment manager")
+    print("Starting experiment manager")
 
     args = get_args()
     config_dict = read_config(args.config_file)
 
     e_manager = ExperimentManager(config_dict, args.test_env)
+
+    if args.verify_only:
+        feasible = e_manager.validate_feasibility()
+        if feasible:
+            print("Setup is feasible")
+        else:
+            print("Setup is not feasible")
+        sys.exit(0)
+
     job_id = e_manager.launch_experiment()
 
     print(f"Launched experiment with {job_id=}")
     print(f"Job logs and metrics are available on the Grafana dashboard:\n{DASHBOARD_URL}&var-jobid={job_id}")
-    print(f"You may need to create an SSH tunnel to see the dashboard:")
-    print(f"ssh -L 3000:localhost:3000 -N flserver")
-    print(f"\nExperiment running...")
+    print("You may need to create an SSH tunnel to see the dashboard:")
+    print("ssh -L 3000:localhost:3000 -N flserver")
+    print("\nExperiment running...")
 
     if args.wait_for_experiment:
         e_manager.wait_for_job(job_id)

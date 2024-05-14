@@ -10,8 +10,8 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools
 
 # DOCKER file assumes the context is set to root of the fltb project
 # Install requirements first
-COPY ./requirements.txt ./requirements.txt
-COPY ./user_code_example/requirements.txt ./user_code_example/requirements.txt
+COPY ./requirements.txt .
+COPY ./user_code_example/requirements.txt ./user_code_example/
 
 # Installing torch on jetson environment will remove support for gpu
 # Removing torch requirement to prevent this

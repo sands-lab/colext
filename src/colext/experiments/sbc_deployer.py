@@ -39,7 +39,9 @@ class SBCDeploymentHandler:
         self.hcl_file_dir = os.path.join(parent_dir, "Dockerfiles", "pip_w_install")
 
     def validate_feasibility(self):
+        """Validate that experiment can be deployed"""
         self.containerize_app(self.config, self. test_env)
+        return True
 
     def prepare_deployment(self, job_id):
         self.server_pod_config = self.prepare_server_for_launch(job_id, self.config)

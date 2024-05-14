@@ -14,17 +14,19 @@ class ExperimentManager():
     def __init__(self, config, test_env):
         self.db_utils = DBUtils()
         self.config = config
-        self.test_env = test_env
         self.d_handler = SBCDeploymentHandler(config, test_env)
+
+    def validate_feasibility(self):
+        return self.d_handler.validate_feasibility()
 
     def launch_experiment(self):
         d_handler = self.d_handler
         # Validate that deployment is feasible
-        self.d_handler.validate_feasibility()
+        d_handler.validate_feasibility()
         d_handler.clear_prev_experiment()
 
         job_id = self.db_utils.create_job()
-        self.d_handler.prepare_deployment(job_id)
+        d_handler.prepare_deployment(job_id)
         d_handler.deploy_setup()
 
         return job_id
