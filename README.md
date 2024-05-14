@@ -118,9 +118,9 @@ Jetson clocks - I think it turns off dynamic voltage and frequency scaling (DVFS
 https://rnext.it/jetson_stats/reference/jetson_clocks.html#jtop.core.jetson_clocks.JetsonClocks
 
 # Nvidia Power Model Tool (NVP) models
-- [Orin models](https://docs.nvidia.com/jetson/archives/r35.4.1/DeveloperGuide/text/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html)
-- [Xavier NX](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-325/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_jetson_xavier.html)
-- [Nano](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-3273/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_nano.html)
+- [Orin models](https://docs.nvidia.com/jetson/archives/r35.4.1/DeveloperGuide/text/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html#supported-modes-and-power-efficiency)
+- [Xavier NX](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-325/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_jetson_xavier.html#wwpID0E0VO0HA)
+- [Nano](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-3273/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_nano.html#wwpID0E0FL0HA)
 
 
 Jetson power consumption:
