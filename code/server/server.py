@@ -168,9 +168,9 @@ def run_server(db_conn, job_id, clients, server_ip, server_port):
     strategy = CustomClientConfigStrategy(
         fraction_fit=1.0,
         fraction_evaluate=1.0,
-        min_fit_clients=5,
-        min_evaluate_clients=5,
-        min_available_clients=5,
+        min_fit_clients=1,
+        min_evaluate_clients=1,
+        min_available_clients=1,
         evaluate_fn=None,
         on_fit_config_fn=fit_config,
         db_conn=db_conn,
@@ -191,7 +191,12 @@ def run_server(db_conn, job_id, clients, server_ip, server_port):
 
 
 def check_android_device_online(device_ip):
-    result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                            check=True)
-    result_grep = subprocess.run(['grep', device_ip], input=result.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    # result = subprocess.run(['adb', 'devices'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    #                        check=True)
+    # result_grep = subprocess.run(['grep', device_ip], input=result.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    result_grep = subprocess.run('adb devices | grep ' + device_ip,
+                                 check=True,
+                                 capture_output=True,
+                                 shell=True,
+                                 text=True)
     return result_grep.returncode == 0 and 'device' in result_grep.stdout

@@ -9,3 +9,5 @@ temp/
 venv/
 .idea/
 /examples
+/helpers/femnist/data/
+/helpers/femnist/input_data/
