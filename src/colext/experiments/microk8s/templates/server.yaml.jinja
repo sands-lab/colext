@@ -36,9 +36,9 @@ spec:
     startupProbe:
       tcpSocket:
         port: flserver-port
-      initialDelaySeconds: 5
+      initialDelaySeconds: 10
       periodSeconds: 10
-      failureThreshold: 2
+      failureThreshold: 10
 
   volumes:
     - name: colext-std-datasets
