@@ -2,7 +2,6 @@ ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
 ARG BUILD_TYPE
-ARG COLEXT_COMMIT_HASH
 ARG INSTALL_OPTIONS
 
 WORKDIR /fl_testbed
@@ -13,6 +12,7 @@ RUN apt update && apt install -y openssh-client git gcc \
     && install -m 0600 -d ~/.ssh \
     && ssh-keyscan -p 443 ssh.github.com >> ~/.ssh/known_hosts
 
+ARG COLEXT_COMMIT_HASH
 # Install the colext package
 RUN --mount=type=ssh python3 -m pip install \
     git+ssh://git@ssh.github.com:443/sands-lab/colext.git@${COLEXT_COMMIT_HASH}#egg=colext${INSTALL_OPTIONS}
