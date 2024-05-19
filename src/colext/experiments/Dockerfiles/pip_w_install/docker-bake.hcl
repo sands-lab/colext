@@ -19,6 +19,14 @@ variable "INHERITANCE_TARGET" {
   default = null
 }
 
+variable "PY38" {
+  default = true
+}
+
+variable "COLEXT_COMMIT_HASH" {
+  default = "sbc"
+}
+
 group "default" {
   targets = ["generic-cpu", "generic-gpu", "jetson", "jetson-nano"]
 }
@@ -27,6 +35,9 @@ target "prod-base" {
   ssh = ["default"]
   context = "${CONTEXT}"
   dockerfile = "${BAKE_FILE_DIR}/colext_general.Dockerfile"
+  args = {
+    COLEXT_COMMIT_HASH: COLEXT_COMMIT_HASH
+  }
 }
 
 target "test-base" {
@@ -37,7 +48,8 @@ target "test-base" {
 target "generic-cpu" {
   inherits = ["${INHERITANCE_TARGET}"]
   args = {
-    BASE_IMAGE: "python:3.8.10-slim-buster",
+    // BASE_IMAGE: "python:3.8.10-slim-buster",
+    BASE_IMAGE: PY38 ? "python:3.8.10-slim-buster" : "python:3.10.14-bullseye",
     INSTALL_OPTIONS: "",
     BUILD_TYPE: "generic-cpu"
   }
@@ -74,7 +86,8 @@ target "jetson" {
   inherits = ["${INHERITANCE_TARGET}"]
   args = {
     // BASE_IMAGE: "dustynv/pytorch:2.0-r35.4.1",
-    BASE_IMAGE: "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3",
+    // BASE_IMAGE: "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3",
+    BASE_IMAGE: PY38 ? "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3" : "flserver:5000/colext/jetson-ox:latest",
     INSTALL_OPTIONS: "[jetson]",
     BUILD_TYPE: "jetson"
   }

@@ -1,11 +1,13 @@
-from pathlib import Path
 import os
-import yaml
+import json
+from importlib.metadata import distribution
 import sys
+from pathlib import Path
+from typing import Dict
+import yaml
 from python_on_whales import docker
 from jinja2 import Environment, FileSystemLoader
 # from typing import TypeAlias
-from typing import Dict
 
 from colext.common.logger import log
 from colext.experiments.db_utils import DBUtils
@@ -53,6 +55,13 @@ class SBCDeploymentHandler:
 
         context = user_code_path
         inheritance_target = "prod-base"
+        py38 = str(config_dict["code"]["python_version"] == "3.8")
+
+        # Get CoLExT commit and pass it to the dockerfile to ensure we use the same version
+        direct_url_info = json.loads(distribution("colext").read_text("direct_url.json"))
+        colext_commit = direct_url_info["vcs_info"]["commit_id"] if "vcs_info" in direct_url_info else "sbc"
+        log.info(f"Using colext commit: {colext_commit}")
+
         if test_env:
             inheritance_target = "test-base"
             # Testing assumes code from /colext/user_code_example
@@ -77,6 +86,8 @@ class SBCDeploymentHandler:
                                 "PROJECT_NAME": project_name,
                                 "CONTEXT": context,
                                 "INHERITANCE_TARGET": inheritance_target,
+                                "PY38": py38,
+                                "COLEXT_COMMIT_HASH": colext_commit,
                                 "BAKE_FILE_DIR": self.hcl_file_dir
                             },
                             push=True)

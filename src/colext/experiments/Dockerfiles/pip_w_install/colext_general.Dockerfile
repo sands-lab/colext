@@ -2,6 +2,7 @@ ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
 ARG BUILD_TYPE
+ARG COLEXT_COMMIT_HASH
 ARG INSTALL_OPTIONS
 
 WORKDIR /fl_testbed
@@ -14,7 +15,7 @@ RUN apt update && apt install -y openssh-client git gcc \
 
 # Install the colext package
 RUN --mount=type=ssh python3 -m pip install \
-    git+ssh://git@ssh.github.com:443/sands-lab/colext.git@sbc#egg=colext${INSTALL_OPTIONS}
+    git+ssh://git@ssh.github.com:443/sands-lab/colext.git@${COLEXT_COMMIT_HASH}#egg=colext${INSTALL_OPTIONS}
 
 # Dockerfile assumes the context is set to the user's code path
 COPY ./requirements.txt ./user_code/

@@ -1,7 +1,7 @@
+import time
 from dataclasses import dataclass
 from colext.experiments.db_utils import DBUtils
 from colext.experiments.sbc_deployer import SBCDeploymentHandler
-import time
 
 # ClientConfig: TypeAlias = Dict[str, str]
 @dataclass
