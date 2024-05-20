@@ -15,17 +15,17 @@ from colext.common.utils import get_colext_env_var_or_exit
 def MonitorFlwrClient(FlwrClientClass):
     """ Decorator that monitors flwr clients """
     # If we're not under the FL testbed environment, don't make any modifications to the class
-    COLEXT_ENV = os.getenv("COLEXT_ENV", 0) 
+    COLEXT_ENV = os.getenv("COLEXT_ENV", 0)
     if not COLEXT_ENV:
         log.debug(f"Decorator used outside of COLEXT_ENV environment. Not decorating.")
         return FlwrClientClass
-        
+
     log.debug(f"Decorating user Flower client class with Monitor class")
     class _MonitorFlwrClient(FlwrClientClass):
         def __init__(self, *args, **kwargs):
             log.debug("init function")
             super().__init__(*args, **kwargs)
-            
+
             self.client_DB_id = get_colext_env_var_or_exit("COLEXT_CLIENT_DB_ID")
             self.client_id = int(get_colext_env_var_or_exit("COLEXT_CLIENT_ID"))
 
@@ -33,10 +33,10 @@ def MonitorFlwrClient(FlwrClientClass):
             self.metric_mgr.start_metric_gathering()
             self.monitor_mgr: MonitorManager = MonitorManager(self.metric_mgr.get_hw_metric_queue())
             self.monitor_mgr.start_monitoring()
-            
+
             # Replace this, we might be able to do it if the server tells us this is the last round
             atexit.register(self.clean_up)
-        
+
         def clean_up(self):
             log.debug("Cleaning up monitoring process")
             self.monitor_mgr.stop_monitoring()
@@ -67,9 +67,8 @@ def MonitorFlwrClient(FlwrClientClass):
 
         def fit(self, parameters, config):
             log.debug("fit function")
-            # client_in_round_id = config["COLEXT_CLIENT_IN_ROUND_MAP"][self.client_DB_id]
-            client_in_round_id = config.get(f"COLEXT_CIR_MAP_{self.client_DB_id}")
-            
+            client_in_round_id = config[f"COLEXT_CIR_MAP_{self.client_DB_id}"]
+
             start_fit_time = datetime.now(timezone.utc)
             fit_result = super().fit(parameters, config)
             end_fit_time = datetime.now(timezone.utc)
@@ -78,9 +77,8 @@ def MonitorFlwrClient(FlwrClientClass):
 
         def evaluate(self, parameters, config):
             log.debug("evaluate function")
-            # client_in_round_id = config["COLEXT_CLIENT_IN_ROUND_MAP"][self.client_DB_id]
-            client_in_round_id = config.get(f"COLEXT_CIR_MAP_{self.client_DB_id}")
-            
+            client_in_round_id = config[f"COLEXT_CIR_MAP_{self.client_DB_id}"]
+
             start_eval_time = datetime.now(timezone.utc)
             eval_result = super().evaluate(parameters, config)
             end_eval_time = datetime.now(timezone.utc)
