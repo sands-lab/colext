@@ -14,11 +14,11 @@ from flwr.server.client_proxy import ClientProxy
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
 def MonitorFlwrStrategy(FlwrStrategy):
-    COLEXT_ENV = os.getenv("COLEXT_ENV", 0) 
+    COLEXT_ENV = os.getenv("COLEXT_ENV", 0)
     if not COLEXT_ENV:
         log.debug(f"Decorator used outside of COLEXT_ENV environment. Not decorating.")
         return FlwrStrategy
-    
+
     log.debug(f"Decorating user Flower server class with Monitor class")
     class _MonitorFlwrStrategy(FlwrStrategy):
         def __init__(self, *args, **kwargs):
@@ -39,24 +39,24 @@ def MonitorFlwrStrategy(FlwrStrategy):
                     VALUES (%s, CURRENT_TIMESTAMP, %s, %s) returning round_id"
             data = (str(server_round), str(self.JOB_ID), stage)
             cursor.execute(sql, data)
-            ROUND_ID = cursor.fetchone()[0]
+            round_id = cursor.fetchone()[0]
             self.DB_CONNECTION.commit()
             cursor.close()
 
-            return ROUND_ID
-        
+            return round_id
+
         def record_end_round(self, server_round: int, round_type: str):
             cursor = self.DB_CONNECTION.cursor()
 
             sql = """
-                    UPDATE rounds SET end_time = CURRENT_TIMESTAMP 
+                    UPDATE rounds SET end_time = CURRENT_TIMESTAMP
                     WHERE round_number = %s AND job_id = %s AND stage = %s
                 """
             data = (str(server_round), str(self.JOB_ID), round_type)
             cursor.execute(sql, data)
             self.DB_CONNECTION.commit()
             cursor.close()
-        
+
         def get_client_db_id(self, client_proxy: ClientProxy) -> int:
             ip_address = re.search(r'ipv4:(\d+\.\d+\.\d+\.\d+):\d+', client_proxy.cid.__str__()).group(1)
             if ip_address is None:
@@ -76,7 +76,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             cursor = self.DB_CONNECTION.cursor()
 
             # For some reason flwr decided to have all FitIns point to a single dataclass
-            # This prevents specifying a different config per client 
+            # This prevents specifying a different config per client
             # Maybe it's related to the strategy?
             # base_config, base_fit_ins = client_instructions[0]
             # client_instructions = [(c_proxy, copy.deepcopy(fit_ins)) for (c_proxy, fit_ins) in client_instructions]
@@ -89,7 +89,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
                 """
             for proxy, fit_ins in client_instructions:  # First (ClientProxy, FitIns) pair
                 client_db_id = self.get_client_db_id(proxy)
-                
+
                 cur_client_state = "AVAILABLE"
                 data = (client_db_id, str(round_id), cur_client_state)
                 cursor.execute(sql, data)
@@ -100,14 +100,14 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.DB_CONNECTION.commit()
             cursor.close()
 
-            return client_instructions 
-    
+            return client_instructions
+
         # ====== Flower functions ======
 
         def configure_fit(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, FitIns]]:
             """Configure the next round of training."""
             log.debug("configure_fit function")
-            
+
             round_id = self.record_start_round(server_round, "FIT")
             client_instructions = super().configure_fit(server_round, parameters, client_manager)
             self.configure_clients_in_round(client_instructions, round_id)
@@ -125,19 +125,22 @@ def MonitorFlwrStrategy(FlwrStrategy):
             """Configure the next round of evaluation."""
             log.debug("configure_evaluate function")
 
-            round_id = self.record_start_round(server_round, "EVAL")
             client_instructions = super().configure_evaluate(server_round, parameters, client_manager)
-            self.configure_clients_in_round(client_instructions, round_id)
+            if client_instructions:
+                round_id = self.record_start_round(server_round, "EVAL")
+                self.configure_clients_in_round(client_instructions, round_id)
+            else:
+                log.debug(f"No client instructions. Evaluation won't happen! {client_instructions=}")
 
             return client_instructions
 
-        def aggregate_evaluate(self, server_round: int, results: List[Tuple[ClientProxy, EvaluateRes]], 
+        def aggregate_evaluate(self, server_round: int, results: List[Tuple[ClientProxy, EvaluateRes]],
                                failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]) -> Tuple[Optional[float], Dict[str, Scalar]]:
             """Aggregate evaluation results."""
             log.debug("aggregate_evaluate function")
             self.record_end_round(server_round, "EVAL")
             return super().aggregate_evaluate(server_round, results, failures)
-        
+
         # Not used
         # def initialize_parameters(self, client_manager: ClientManager):
         #     """Initialize the (global) model parameters."""
