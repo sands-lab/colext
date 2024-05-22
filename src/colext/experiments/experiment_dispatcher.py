@@ -1,10 +1,10 @@
 import argparse
-import os
-import yaml
-import sys
 import logging
-from .experiment_manager import ExperimentManager
+import os
+import sys
+import yaml
 from colext.common.logger import log
+from .experiment_manager import ExperimentManager
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
@@ -13,15 +13,15 @@ def get_args():
     parser.add_argument('-t', '--test_env', default=False, action='store_true', help="Test deployment in test environment.")
     parser.add_argument('-v', '--verify_only', default=False, action='store_true', help="Only verify if deployment is feasible.")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true', help="Wait for experiment to finish.")
+    # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
     args = parser.parse_args()
 
     return args
 
 def read_config(config_file):
-    print(f"Trying to read CoLExT configuration file from '{config_file}'")
-
     try:
+        print(f"Trying to read CoLExT configuration file from '{config_file}'")
         with open(config_file, "r") as stream:
             config_dict = yaml.safe_load(stream)
     except OSError as os_err:
@@ -31,10 +31,7 @@ def read_config(config_file):
         print(f"Error parsing configuration file: {yaml_err}")
         sys.exit(1)
 
-    if "devices" not in config_dict:
-        print("Please specify at least one device to act as a client")
-        sys.exit(1)
-
+    # Apply defaults
     if "path" not in config_dict["code"]:
         default_path = os.path.dirname(os.path.realpath(config_file))
         config_dict["code"]["path"] = default_path
@@ -45,7 +42,14 @@ def read_config(config_file):
         config_dict["code"]["python_version"] = default_py_version
         print(f"Could not find 'code.python_version' in config file. Assuming {default_py_version}")
 
-    # Validate python version
+    monitoring_defaults = {"live_metrics": True, "push_interval": 10, "scrapping_interval": 0.3} # intervals are in seconds
+    config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
+
+    # Validate
+    if "devices" not in config_dict:
+        print("Please specify at least one device to act as a client")
+        sys.exit(1)
+
     valid_python_versions = ["3.8", "3.10"]
     if config_dict["code"]["python_version"] not in valid_python_versions:
         print(f"code.python_version can  only be set to {valid_python_versions}")
@@ -60,18 +64,24 @@ def read_config(config_file):
         n_clients += dev["count"]
     config_dict["n_clients"] = n_clients
 
-    # Apply default monitoring details
-    monitoring_defaults = {"live_metrics": True, "push_interval": 10, "scrapping_interval": 0.3} # intervals are in seconds
-    config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
-
     print("CoLExT configuration read successfully")
     return config_dict
 
-DASHBOARD_URL = ("http://localhost:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/colext-dashboard?"
-                 "orgId=1&from=now-5m&to=now&refresh=5s&var-clientid=All")
+def print_dashboard_url(extra_grafana_vars: dict  = None):
+    DASHBOARD_URL_BASE = ("http://localhost:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/colext-dashboard?"
+                          "orgId=1&from=now-5m&to=now&refresh=5s")
+
+    extra_grafana_vars = [f"&var-{k}={v}" for k, v in extra_grafana_vars.items()]
+    dashboard_url = DASHBOARD_URL_BASE + "".join(extra_grafana_vars)
+
+    print("Job logs and metrics are available on the Grafana dashboard:")
+    print(dashboard_url)
+    print("You may need to create an SSH tunnel to see the dashboard:")
+    print("ssh -L 3000:localhost:3000 -N flserver")
+
 def launch_experiment():
     log.setLevel(logging.DEBUG)
-    print("Starting experiment manager")
+    print("Preparing to launch CoLExT")
 
     args = get_args()
     config_dict = read_config(args.config_file)
@@ -88,17 +98,19 @@ def launch_experiment():
 
     job_id = e_manager.launch_experiment()
 
+    print("\n")
     print(f"Launched experiment with {job_id=}")
-    print(f"Job logs and metrics are available on the Grafana dashboard:\n{DASHBOARD_URL}&var-jobid={job_id}")
-    print("You may need to create an SSH tunnel to see the dashboard:")
-    print("ssh -L 3000:localhost:3000 -N flserver")
-    print("\nExperiment running...")
 
+    grafana_vars = {
+        "jobid": job_id,
+        "clientid": "All",
+    }
+    print_dashboard_url(grafana_vars)
+
+    print("\nExperiment running...")
     if args.wait_for_experiment:
+        print("Waiting for experiment")
         e_manager.wait_for_job(job_id)
         print("Experiment complete.")
     else:
-        print("Command will exit but experiment is still running. ")
-
-    # if args.collect_metrics:
-    #     print(f"Collecting metrics to...")
+        print("Command will exit but experiment is still running.")
