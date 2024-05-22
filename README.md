@@ -100,7 +100,7 @@ echo "include-system-site-packages=false" >> $CONDA_PREFIX/pyvenv.cfg
 python3 -m pip install git+ssh://git@github.com/sands-lab/colext.git@sbc#egg=colext
 
 # Fetch latest changes
-python3 -m pip install -U -I git+ssh://git@github.com/sands-lab/colext.git@sbc
+python3 -m pip install --force-reinstall git+ssh://git@github.com/sands-lab/colext.git@sbc
 ```
 
 ## How it works
@@ -148,9 +148,20 @@ AttributeError: 'NoneType' object has no attribute 'group'
 docker login
 specify which address the fl server expects to use
 
-## Known issues:
-sudo modprobe nf_conntrack
+# Porting poetry projects
+Convert poetry dependencies to requirements.txt
+```
+# Prevent poetry resolver from being stuck watiting for a keyring we don't need
+export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+poetry export --without-hashes -f requirements.txt --output requirements.txt
+```
 
+## Limitations:
+`tensorflow` package does not work with LattePandas.
+Since LP are x86 machines, tensorflow build from PiPy expects them to have support for avx instructions, but they do not.
+
+# Known issues:
+sudo modprobe nf_conntrack
 
 # Considering supporting conda-lock
 Conda-lock fixes the conda environment to the specific os and platform
