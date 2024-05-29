@@ -2,26 +2,26 @@ project: colext_example # project name should not have spaces
 job_name: "SOTA FL experiment"
 
 code:
-  # Path can be omited if colext_config.yaml is in the root folder of the project
-  path: "/home/faustiar/colext/user_code_example"
+  python_version: "3.10"
   client:
     entrypoint: "client.py"
     args: "--flserver_address=${COLEXT_SERVER_ADDRESS} --tiny_rounds"
 
   server:
     entrypoint: "server.py"
-    args: "--num_clients=${COLEXT_N_CLIENTS} --num_rounds=3"
+    args: "--num_clients=${COLEXT_N_CLIENTS} --num_rounds=1"
 
 devices:
   - { device_type: JetsonAGXOrin,  count: 1 }
   - { device_type: JetsonOrinNano, count: 1 }
   - { device_type: LattePandaDelta3, count: 1 }
   - { device_type: OrangePi5B, count: 1 }
-  # - { device_type: JetsonNano, count: 1 }
-  # - { device_type: JetsonXavierNX, count: 1 }
+  - { device_type: JetsonNano, count: 1 }
+  - { device_type: JetsonXavierNX, count: 1 }
 
 # Monitoring defaults
 # monitoring:
 #   live_metrics: True # True/False
 #   push_interval: 10 # in seconds
 #   scrapping_interval: 0.3 # in seconds
+#   measure_self: False # True/False

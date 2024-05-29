@@ -39,12 +39,12 @@ sleep 3  # Sleep for 3s to give the server enough time to start
 for i in `seq 0 $((num_clients - 1))`; do
     echo "Starting client $i"
     export COLEXT_CLIENT_ID=$i
-    python client.py > ${log_folder}/client_${i}.out 2>&1 &
+    python client.py --tiny_rounds > ${log_folder}/client_${i}.out 2>&1 &
 
     if [ "$i" -eq 0 ]; then
         # Delay start of next client
         # For some reason if 2 clients connect at the same time, the system won't start
-        sleep 4 
+        sleep 4
     fi
 done
 

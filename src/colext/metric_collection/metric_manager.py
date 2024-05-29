@@ -21,9 +21,9 @@ class StageTimings:
 
 class MetricManager():
     def __init__(self, finish_event: multiprocessing.Event, st_metric_queue: multiprocessing.Queue) -> None:
-        self.live_metrics = get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS") == "True"
+        self.live_metrics = bool(get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS"))
         self.push_metrics_interval = float(get_colext_env_var_or_exit("COLEXT_MONITORING_PUSH_INTERVAL"))
-        measure_self = float(get_colext_env_var_or_exit("COLEXT_MONITORING_MEASURE_SELF"))
+        measure_self = bool(get_colext_env_var_or_exit("COLEXT_MONITORING_MEASURE_SELF"))
         log.info(f"Live metrics: {self.live_metrics}")
         log.info(f"Push metrics interval: {self.push_metrics_interval}")
 

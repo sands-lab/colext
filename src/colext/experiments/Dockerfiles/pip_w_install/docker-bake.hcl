@@ -27,6 +27,10 @@ variable "COLEXT_COMMIT_HASH" {
   default = "sbc"
 }
 
+variable "TEST_REL_DIR" {
+  default = null
+}
+
 group "default" {
   targets = ["generic-cpu", "generic-gpu", "jetson", "jetson-nano"]
 }
@@ -43,6 +47,9 @@ target "prod-base" {
 target "test-base" {
   context = "${CONTEXT}"
   dockerfile = "${BAKE_FILE_DIR}/colext_test.Dockerfile"
+    args = {
+      TEST_REL_DIR: TEST_REL_DIR
+  }
 }
 
 target "generic-cpu" {

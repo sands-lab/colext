@@ -53,6 +53,7 @@ class SBCDeploymentHandler:
         project_name = config_dict["project"]
         user_code_path = Path(config_dict["code"]["path"])
 
+        extra_vars = {}
         context = user_code_path
         inheritance_target = "prod-base"
         py38 = str(config_dict["code"]["python_version"] == "3.8")
@@ -64,9 +65,11 @@ class SBCDeploymentHandler:
 
         if test_env:
             inheritance_target = "test-base"
-            # Testing assumes code from /colext/user_code_example
-            # We need to set context to /colext so we can copy the package
-            context = os.path.dirname(user_code_path)
+            # Testing assumes code from /colext/examples/<folder>
+            # We need to go up two levels to set the context to /colext so we can copy the package
+            context = user_code_path.parents[1]
+            test_rel_dir = user_code_path.parts[-2:]
+            extra_vars["TEST_REL_DIR"] = Path(*test_rel_dir)
             assert os.path.isdir(os.path.join(context, "src", "colext")), \
                 f"Testing package. Expected to find src/colext dir in '{context}'"
 
@@ -88,7 +91,8 @@ class SBCDeploymentHandler:
                                 "INHERITANCE_TARGET": inheritance_target,
                                 "PY38": py38,
                                 "COLEXT_COMMIT_HASH": colext_commit,
-                                "BAKE_FILE_DIR": self.hcl_file_dir
+                                "BAKE_FILE_DIR": self.hcl_file_dir,
+                                ** extra_vars
                             },
                             push=True)
 
