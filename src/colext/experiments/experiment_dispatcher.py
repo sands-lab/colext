@@ -42,7 +42,12 @@ def read_config(config_file):
         config_dict["code"]["python_version"] = default_py_version
         print(f"Could not find 'code.python_version' in config file. Assuming {default_py_version}")
 
-    monitoring_defaults = {"live_metrics": True, "push_interval": 10, "scrapping_interval": 0.3} # intervals are in seconds
+    monitoring_defaults = {
+        "live_metrics": True,
+        "push_interval": 10,
+        "scrapping_interval": 0.3,
+        "measure_self": False,
+    } # intervals are in seconds
     config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
 
     # Validate

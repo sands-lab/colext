@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 import psutil
-from .scrapper_base import ScrapperBase, ProcessMetrics
+from .scraper_base import ScraperBase, ProcessMetrics
 
-class PSUtilScrapper(ScrapperBase):
+class PSUtilScrapper(ScraperBase):
     """
-        Base scrapper using psutil.
-        This scrapper does not collect power consumption or GPU utilization.
+        Base scraper using psutil.
+        This scraper does not collect power consumption or GPU utilization.
     """
-    def __init__(self, pid, collection_interval_s):
+    def __init__(self, pid:int , collection_interval_s: float):
         super().__init__(pid, collection_interval_s)
         self.proc = psutil.Process(pid)
 
@@ -28,9 +28,9 @@ class PSUtilScrapper(ScrapperBase):
         self.total_bytes_recv += n_bytes_rcvd
         self.prev_net_stat = current_net_stat
 
-        time = datetime.now(timezone.utc)
-        time_between_scrapes = (time - self.last_scrape_time).total_seconds()
-        self.last_scrape_time = time
+        current_time = datetime.now(timezone.utc)
+        time_between_scrapes = (current_time - self.last_scrape_time).total_seconds()
+        self.last_scrape_time = current_time
 
         net_usage_out = round(n_bytes_sent / 1024 / 1024 / time_between_scrapes, 5) # MB/s
         net_usage_in  = round(n_bytes_rcvd / 1024 / 1024 / time_between_scrapes, 5) # MB/s
@@ -38,6 +38,6 @@ class PSUtilScrapper(ScrapperBase):
         power_mw = 0
         gpu_util = 0
         p_metrics = ProcessMetrics(
-                        time, cpu_percent, memory_usage, power_mw, gpu_util,
+                        current_time, cpu_percent, memory_usage, power_mw, gpu_util,
                         self.total_bytes_sent, self.total_bytes_recv, net_usage_out, net_usage_in)
         return p_metrics

@@ -1,14 +1,14 @@
 # import jtop
-from .scrapper_base import ProcessMetrics
-from .psutil_scrapper import PSUtilScrapper
+from .scraper_base import ProcessMetrics
+from .psutil_scraper import PSUtilScrapper
 from datetime import datetime, timezone
 import psutil
 from jtop import jtop
 from colext.common.logger import log
 import time
 
-class JetsonScrapper(PSUtilScrapper):
-    def __init__(self, pid, collection_interval_s):
+class JetsonScraper(PSUtilScrapper):
+    def __init__(self, pid: int, collection_interval_s: float):
         super().__init__(pid, collection_interval_s)
 
         # For some reason jetson.gpu returns a list of gpus. We only have 1 so we query it's name and cache it here
@@ -25,6 +25,7 @@ class JetsonScrapper(PSUtilScrapper):
         # 0.15 (magic number) is roughly the time psutils takes to run
         # jtop provides metrics at half of the speed we want
         interval = (collection_interval_s - 0.15) / 2
+        log.debug(f"jtop interval = {interval}")
         self.jetson = jtop(interval)
         self.jetson.start()
 
@@ -34,8 +35,7 @@ class JetsonScrapper(PSUtilScrapper):
         end_ps_m_time = time.time()
         log.debug(f"psutil time = {end_ps_m_time - start_ps_m_time}")
 
-        # jetson.ok is needed when you start jtop using with
-        # Otherwise we risk trying to get stats in an inconsistent state
+        # jetson.ok is needed to avoid getting stats in an inconsistent state
         # jetson.ok blocks until ready to retrieve new metrics
         # https://rnext.it/jetson_stats/reference/jtop.html#jtop.jtop.ok
         start_jtop_m_time = time.time()
@@ -56,6 +56,6 @@ class JetsonScrapper(PSUtilScrapper):
 
     # If we don't close the jtop connection, the jtop service may crash
     def __del__(self):
-        log.debug(f"Closing jtop connection")
+        log.debug("Closing jtop connection")
         self.jetson.close()
-        log.debug(f"jtop connection closed")
+        log.debug("jtop connection closed")

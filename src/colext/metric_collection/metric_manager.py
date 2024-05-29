@@ -1,39 +1,47 @@
-from dataclasses import dataclass
 from datetime import datetime
-import queue
+import os
 import time
+import queue
 import multiprocessing
-import threading
-import psycopg
+from dataclasses import dataclass
 from psycopg_pool import ConnectionPool
 
-from colext.common.utils import get_colext_env_var_or_exit
 from colext.common.logger import log
-from .client_monitor.scrapper.scrapper_base import ProcessMetrics
+from colext.common.utils import get_colext_env_var_or_exit
+from .hw_scraper.hw_scraper import HWScraper
+from .hw_scraper.scraper.scraper_base import ProcessMetrics
 
 @dataclass
 class StageTimings:
     """ Class to keep track of stage(fit/eval) start and end timings"""
+    cir_id: int
     stage: str
     start_time: datetime
     end_time: datetime
 
 class MetricManager():
-    def __init__(self) -> None:
-        # TODO Pass this variables as parameters to metric manager
+    def __init__(self, finish_event: multiprocessing.Event, st_metric_queue: multiprocessing.Queue) -> None:
         self.live_metrics = get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS") == "True"
         self.push_metrics_interval = float(get_colext_env_var_or_exit("COLEXT_MONITORING_PUSH_INTERVAL"))
+        measure_self = float(get_colext_env_var_or_exit("COLEXT_MONITORING_MEASURE_SELF"))
         log.info(f"Live metrics: {self.live_metrics}")
         log.info(f"Push metrics interval: {self.push_metrics_interval}")
 
-        self.hw_metric_queue = multiprocessing.Queue()
+        self.st_metrics = []
+        self.st_metric_queue = st_metric_queue
         self.hw_metrics = []
-
+        self.hw_metric_queue = queue.Queue()
         self.total_hw_metric_count = 0
-        self.metric_push_th = threading.Thread(target=self.capture_metrics, daemon=True)
-        self.finish_event = threading.Event()
 
-        self.CLIENT_DB_ID = get_colext_env_var_or_exit("COLEXT_CLIENT_DB_ID")
+        self.finish_event = finish_event
+        pid = os.getppid()
+        if measure_self:
+            pid = os.getpid()
+        self.hw_scraper = HWScraper(pid, self.hw_metric_queue)
+        self.hw_scraper.start_scraping()
+
+        self.client_db_id = get_colext_env_var_or_exit("COLEXT_CLIENT_DB_ID")
+        # Pool required because we might be trying to push hw metrics + round metrics at the same time
         self.db_pool = self.create_db_pool()
 
     def create_db_pool(self):
@@ -41,52 +49,46 @@ class MetricManager():
         return ConnectionPool(DB_CONNECTION_INFO, open=True, min_size=2, max_size=2)
 
     def start_metric_gathering(self):
-        log.debug("Start metric monitoring.")
-        self.metric_push_th.start()
+        log.debug("Start metric gathering.")
 
-    def capture_metrics(self):
-        while(self.finish_event.is_set() is False):
+        while self.finish_event.is_set() is False:
             time.sleep(self.push_metrics_interval)
             self.collect_available_metrics()
             if self.live_metrics:
-                self.push_current_hw_metrics()
-
-    def get_hw_metric_queue(self) -> multiprocessing.Queue:
-        return self.hw_metric_queue
-
-    def record_metric(self, hw_metrics: ProcessMetrics):
-        self.hw_metrics.append(hw_metrics)
+                self.push_current_metrics()
 
     def collect_available_metrics(self):
-        log.debug("Collecting available metrics in the queue.")
-        while(True):
-            try:
-                hw_metrics = self.hw_metric_queue.get_nowait()
-                self.record_metric(hw_metrics)
-            except queue.Empty:
-                log.debug("Metric queue is empty. Stopping.")
-                break
+        log.debug("Collecting available metrics in queues.")
+        while not self.hw_metric_queue.empty():
+            hw_metric: ProcessMetrics = self.hw_metric_queue.get()
+            self.hw_metrics.append(hw_metric)
+
+        while not self.st_metric_queue.empty():
+            st_metric: StageTimings = self.st_metric_queue.get()
+            self.st_metrics.append(st_metric)
 
     def stop_metric_gathering(self) -> None:
         log.info("Shutting down metric manager.")
-        if self.live_metrics:
-            log.info("Waiting for background thread to finish. Max 15sec.")
-            self.finish_event.set()
-            self.metric_push_th.join(timeout=15)
-            if self.metric_push_th.is_alive():
-                log.error("Thread is still alive... Ignoring it")
 
+        self.hw_scraper.stop_scraping()
         self.collect_available_metrics()
-        self.push_current_hw_metrics()
-        log.info(f"Nr of metrics pushed = {self.total_hw_metric_count}.")
+        self.push_current_metrics()
 
+        log.info("Metric manager stopped.")
+        log.info(f"Nr of HW metrics pushed = {self.total_hw_metric_count}.")
+
+    def push_current_metrics(self):
+        self.push_current_hw_metrics()
+        self.push_current_st_metrics()
 
     def push_current_hw_metrics(self):
+        """ Pushes currently collected HW metrics and clears the vector holding them. """
+
         if len(self.hw_metrics) == 0:
-            log.debug(f"No HW metrics to push.")
+            log.debug("No HW metrics to push.")
             return
 
-        log.info(f"Pushing {len(self.hw_metrics)} HW metrics from client {self.CLIENT_DB_ID} to DB")
+        log.debug(f"Pushing {len(self.hw_metrics)} HW metrics from client {self.client_db_id} to DB")
 
         sql = """
                 INSERT INTO fl_testbed_logging.device_measurements
@@ -99,7 +101,7 @@ class MetricManager():
         formatted_metrics = [
             {
                 'time': m.time,
-                'client_id': self.CLIENT_DB_ID,
+                'client_id': self.client_db_id,
                 'cpu_util': m.cpu_percent,
                 'mem_util': m.memory_usage,
                 'gpu_util': m.gpu_util,
@@ -118,8 +120,12 @@ class MetricManager():
         self.total_hw_metric_count += len(self.hw_metrics)
         self.hw_metrics.clear()
 
-    def push_stage_timings(self, stage, cir_id: int, stage_start_time: datetime, stage_end_time: datetime):
-        log.info(f"Pushing stage timings for cir_id = {cir_id} stage = {stage}")
+    def push_current_st_metrics(self):
+        if len(self.st_metrics) == 0:
+            log.debug("No Stage timings metrics to push.")
+            return
+
+        log.debug(f"Pushing {len(self.st_metrics)} stage timings from client {self.client_db_id} to DB")
 
         sql = """
                 UPDATE clients_in_round
@@ -127,6 +133,9 @@ class MetricManager():
                 WHERE cir_id = %s
               """
 
-        data = (stage_start_time, stage_end_time, cir_id)
+        formatted_metrics = [ (st.start_time, st.end_time, st.cir_id) for st in self.st_metrics]
+
         with self.db_pool.connection() as conn:
-            conn.execute(sql, data)
+            with conn.cursor() as cur:
+                cur.executemany(sql, formatted_metrics)
+        self.st_metrics.clear()

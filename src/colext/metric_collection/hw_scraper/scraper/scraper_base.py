@@ -19,8 +19,8 @@ class ProcessMetrics:
     # temperature: int # jtop.temperature.temp
     # fan_speed: int # jtop.fan.speed
 
-class ScrapperBase(ABC):
-    def __init__(self, pid, collection_interval_s) -> None:
+class ScraperBase(ABC):
+    def __init__(self, pid: int, collection_interval_s: float) -> None:
         self.monitor_pid = pid
 
     def scrape_process_metrics(self) -> ProcessMetrics:

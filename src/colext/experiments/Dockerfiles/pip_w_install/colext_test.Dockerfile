@@ -6,7 +6,7 @@ ARG INSTALL_OPTIONS
 WORKDIR /fl_testbed
 
 RUN apt update && apt install -y git gcc
-RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools
+RUN python3 -m pip install --no-cache-dir --upgrade pip==24.0 setuptools==69.5.1
 
 # DOCKER file assumes the context is set to root of the fltb project
 # Install requirements first

@@ -4,11 +4,11 @@ import psutil
 import pyRAPL
 import time
 from colext.common.logger import log
-from .scrapper_base import ProcessMetrics
-from .psutil_scrapper import PSUtilScrapper
+from .scraper_base import ProcessMetrics
+from .psutil_scraper import PSUtilScrapper
 
-class LatteScrapper(PSUtilScrapper):
-    def __init__(self, pid, collection_interval_s):
+class LatteScraper(PSUtilScrapper):
+    def __init__(self, pid: int, collection_interval_s: float):
         super().__init__(pid, collection_interval_s)
         pyRAPL.setup()
         self.p_meter = pyRAPL.Measurement('colext_measurements')

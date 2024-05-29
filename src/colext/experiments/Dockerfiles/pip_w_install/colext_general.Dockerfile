@@ -6,7 +6,7 @@ ARG INSTALL_OPTIONS
 
 WORKDIR /fl_testbed
 
-RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools
+RUN python3 -m pip install --no-cache-dir --upgrade pip==24.0 setuptools==69.5.1
 # Based in https://medium.com/@tonistiigi/build-secrets-and-ssh-forwarding-in-docker-18-09-ae8161d066
 RUN apt update && apt install -y openssh-client git gcc \
     && install -m 0600 -d ~/.ssh \
