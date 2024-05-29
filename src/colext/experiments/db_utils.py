@@ -27,6 +27,16 @@ class DBUtils:
         cursor.execute(sql, data)
         cursor.close()
 
+    def check_if_job_exists(self, job_id: int) -> bool:
+        cursor = self.DB_CONNECTION.cursor()
+        sql = "SELECT 1 FROM jobs WHERE job_id = %s"
+        data = (job_id,)
+        cursor.execute(sql, data)
+        job_record = cursor.fetchone()
+        cursor.close()
+
+        return job_record is not None
+
     def get_current_available_clients(self, device_types: tuple) -> str:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
@@ -69,13 +79,14 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT client_number, time, cpu_util, mem_util, gpu_util, power_consumption,
+                (SELECT client_number AS client_id, time, cpu_util, mem_util, gpu_util, power_consumption,
                         n_bytes_sent, n_bytes_rcvd, net_usage_out, net_usage_in
                     FROM clients
                     JOIN device_measurements USING (client_id)
                     JOIN jobs USING (job_id)
                     JOIN devices USING(device_id)
-                    WHERE jobs.job_id = %s)
+                    WHERE jobs.job_id = %s
+                    ORDER BY client_number, time)
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)
@@ -105,7 +116,7 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT client_number AS client_id,device_code AS device_name, device_name AS device_type
+                (SELECT client_number AS client_id, device_code AS device_name, device_name AS device_type
                     FROM clients
                         JOIN devices USING(device_id)
                     WHERE job_id = %s
@@ -123,7 +134,7 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT client_number, round_number, stage,
+                (SELECT client_number AS client_id, round_number, stage,
                         cir.start_time, cir.end_time
                     FROM clients_in_round as cir
                         JOIN rounds USING(round_id)

@@ -108,8 +108,8 @@ def MonitorFlwrStrategy(FlwrStrategy):
             """Configure the next round of training."""
             log.debug("configure_fit function")
 
-            round_id = self.record_start_round(server_round, "FIT")
             client_instructions = super().configure_fit(server_round, parameters, client_manager)
+            round_id = self.record_start_round(server_round, "FIT")
             self.configure_clients_in_round(client_instructions, round_id)
 
             return client_instructions
@@ -118,8 +118,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
                           failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]]) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
             """Aggregate training results."""
             log.debug("aggregate_fit function")
+            aggregate_fit_result = super().aggregate_fit(server_round, results, failures)
             self.record_end_round(server_round, "FIT")
-            return super().aggregate_fit(server_round, results, failures)
+            return aggregate_fit_result
 
         def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
             """Configure the next round of evaluation."""

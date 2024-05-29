@@ -32,8 +32,8 @@ class PSUtilScrapper(ScraperBase):
         time_between_scrapes = (current_time - self.last_scrape_time).total_seconds()
         self.last_scrape_time = current_time
 
-        net_usage_out = round(n_bytes_sent / 1024 / 1024 / time_between_scrapes, 5) # MB/s
-        net_usage_in  = round(n_bytes_rcvd / 1024 / 1024 / time_between_scrapes, 5) # MB/s
+        net_usage_out = round(n_bytes_sent / time_between_scrapes, 5) # B/s
+        net_usage_in  = round(n_bytes_rcvd / time_between_scrapes, 5) # B/s
 
         power_mw = 0
         gpu_util = 0

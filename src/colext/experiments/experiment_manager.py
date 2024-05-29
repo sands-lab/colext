@@ -39,6 +39,10 @@ class ExperimentManager():
 
     def retrieve_metrics(self, job_id):
         """ Retrieve client metrics for job_id """
+        # Make sure job id exists
+        if not self.db_utils.check_if_job_exists(job_id):
+            raise JobNotFoundException
+
         with open(f"colext_{job_id}_hw_metrics.csv", "wb") as metric_writer:
             self.db_utils.get_hw_metrics(job_id, metric_writer)
 
@@ -50,3 +54,6 @@ class ExperimentManager():
 
         with open(f"colext_{job_id}_client_info.csv", "wb") as metric_writer:
             self.db_utils.get_client_info(job_id, metric_writer)
+
+class JobNotFoundException(ValueError):
+    """Could not find the job in db"""
