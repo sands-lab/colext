@@ -14,7 +14,7 @@ class KubernetesUtils:
         MICROK8S_CONFIG_FILE = "/var/snap/microk8s/current/credentials/client.config"
         kubernetes.config.load_kube_config(config_file = MICROK8S_CONFIG_FILE)
         return kubernetes.client.ApiClient(), kubernetes.client.CoreV1Api()
-    
+
     def create_from_yaml(self, yaml_file):
         kubernetes.utils.create_from_yaml(self.k8s_api, yaml_file)
 
@@ -36,17 +36,18 @@ class KubernetesUtils:
                         if e.status == 404:
                             log.info(f"Pod {pod_name} was successfully deleted")
                             pod_names_to_delete.remove(pod_name)
-                            break
+                            continue
                         else:
                             log.error(f"Unexpected error while checking pod status for pod {pod_name}")
-                
-                time.sleep(4) 
-            
+                            break
+
+                time.sleep(4)
+
             log.info(f"All pods deleted")
 
     def delete_fl_service(self):
         services = self.k8s_core_v1.list_namespaced_service(FL_NAMESPACE).items
-        services_to_delete = [service.metadata.name for service in services 
+        services_to_delete = [service.metadata.name for service in services
                               if service.metadata.name.startswith(FL_SERVICE_PREFIX)]
 
         for service_name in services_to_delete:
@@ -64,11 +65,11 @@ class KubernetesUtils:
                         break
                     else:
                         log.error(f"Unexpected error while checking service status for service {service_name}")
-            
+
             time.sleep(4)
-        
+
         log.info(f"All services deleted")
-        
+
     def wait_for_pods(self, label_selectors):
         # Get current pods
         pods = self.k8s_core_v1.list_namespaced_pod(FL_NAMESPACE, label_selector=label_selectors).items
@@ -84,7 +85,7 @@ class KubernetesUtils:
                     if container_statuses is None:
                         log.info(f"Could not read container_status yet. Ignoring pod {pod_name} for this iteration.")
                         continue
-                    
+
                     client_container_state = container_statuses[0].state
                     if client_container_state.terminated is not None:
                         if client_container_state.terminated.reason == "Completed":
@@ -92,7 +93,7 @@ class KubernetesUtils:
                         else:
                             log.error(f"{pod_name} terminated with reason different than 'Completed'. Reason: {client_container_state.terminated.reason}")
                         pod_names_to_wait.remove(pod_name)
-                        break
+                        continue
                 except kubernetes.client.rest.ApiException as e:
                     all_pods_completed = False
                     if e.status == 404:
@@ -101,7 +102,7 @@ class KubernetesUtils:
                         log.error(f"Unexpected error while checking pod status for pod {pod_name}. Error: {e}")
                     pod_names_to_wait.remove(pod_name)
                     break
-            
+
             time.sleep(4)
 
         if all_pods_completed:
