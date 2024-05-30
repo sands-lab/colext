@@ -139,8 +139,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
                                failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]) -> Tuple[Optional[float], Dict[str, Scalar]]:
             """Aggregate evaluation results."""
             log.debug("aggregate_evaluate function")
+            aggregate_eval_result = super().aggregate_evaluate(server_round, results, failures)
             self.record_end_round(server_round, "EVAL")
-            return super().aggregate_evaluate(server_round, results, failures)
+            return aggregate_eval_result
 
         # Not used
         # def initialize_parameters(self, client_manager: ClientManager):
