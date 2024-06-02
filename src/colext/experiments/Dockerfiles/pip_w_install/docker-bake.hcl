@@ -94,7 +94,11 @@ target "jetson" {
   args = {
     // BASE_IMAGE: "dustynv/pytorch:2.0-r35.4.1",
     // BASE_IMAGE: "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3",
-    BASE_IMAGE: PY38 ? "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3" : "flserver:5000/colext/jetson-ox:latest",
+    BASE_IMAGE: (
+      PY38 ?
+      "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3" :
+      "flserver:5000/colext/jetson-ox:latest"
+    )
     INSTALL_OPTIONS: "[jetson]",
     BUILD_TYPE: "jetson"
   }
@@ -105,7 +109,11 @@ target "jetson" {
 target "jetson-nano" {
   inherits = ["jetson"]
   args = {
-    BASE_IMAGE: "flserver:5000/colext/jetson-nano:torch1.10-r32.7.1-py38",
+    BASE_IMAGE: (
+      PY38 ?
+      "flserver:5000/colext/jetson-nano:torch1.10-r32.7.1-py38" :
+      "flserver:5000/colext/jetson-nano:torch1.10-r32.7.1-py310"
+    )
   }
   tags = ["${REGISTY}/${PROJECT_NAME}/jetson-nano:latest"]
 }
