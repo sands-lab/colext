@@ -5,4 +5,7 @@ user_code_example/data
 __pycache__
 dist
 *.csv
+logs
+data
 build
+torch_wheels
