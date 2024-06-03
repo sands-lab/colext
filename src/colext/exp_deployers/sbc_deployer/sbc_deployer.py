@@ -7,22 +7,21 @@ from typing import Dict
 import yaml
 from python_on_whales import docker
 from jinja2 import Environment, FileSystemLoader
-# from typing import TypeAlias
 
 from colext.common.logger import log
-from colext.experiments.db_utils import DBUtils
-from colext.experiments.kubernetes_utils import KubernetesUtils
 from colext.common.vars import REGISTY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH
+from colext.exp_deployers.deployer_base import DeployerBase
+from .kubernetes_utils import KubernetesUtils
 
+# from typing import TypeAlias
 # JobConfig: TypeAlias = Dict[str, str]
 
-class SBCDeploymentHandler:
-    def __init__(self, config, test_env) -> None:
-        self.config = config
-        self.test_env = test_env
-
+class SBCDeployer(DeployerBase):
+    """Deployer for SBC devices"""
+    def __init__(self, config, test_env=False) -> None:
+        # Creates db_utils and saves init parameters in self
+        super().__init__(config, test_env)
         self.k_utils = KubernetesUtils()
-        self.db_utils = DBUtils()
 
         # Get k8s templates
         dirname = os.path.dirname(__file__)
@@ -30,24 +29,14 @@ class SBCDeploymentHandler:
         jinja_env = Environment(loader=FileSystemLoader(config_path))
         self.client_template = jinja_env.get_template("client_pod.yaml.jinja")
         self.server_template = jinja_env.get_template("server.yaml.jinja")
-        # Configs will be populated once we know the job_id
-        self.server_pod_config = {}
-        self.client_pod_configs = [{}]
-        # Get server service
         self.server_service_path = os.path.join(dirname, 'microk8s/server_service.yaml')
 
         # Get Docker bake file dir
         parent_dir = Path(__file__).parent.resolve()
-        self.hcl_file_dir = os.path.join(parent_dir, "Dockerfiles", "pip_w_install")
+        self.hcl_file_dir = os.path.join(parent_dir, "Dockerfiles", "pip")
 
-    def validate_feasibility(self):
-        """Validate that experiment can be deployed"""
+    def prepare_deployment(self):
         self.containerize_app(self.config, self. test_env)
-        return True
-
-    def prepare_deployment(self, job_id):
-        self.server_pod_config = self.prepare_server_for_launch(job_id, self.config)
-        self.client_pod_configs = self.prepare_clients_for_launch(job_id, self.config)
 
     def containerize_app(self, config_dict, test_env):
         project_name = config_dict["project"]
@@ -96,7 +85,13 @@ class SBCDeploymentHandler:
                             },
                             push=True)
 
-    def prepare_server_for_launch(self, job_id, config):
+    def clear_prev_experiment(self) -> None:
+        log.info("Clearing previous experiment")
+        self.k_utils.delete_fl_service()
+        self.k_utils.delete_experiment_pods()
+
+    def prepare_server_for_launch(self, job_id):
+        config = self.config
         server_pod_config = self.get_base_pod_config("Server", config)
 
         server_pod_config["job_id"] = job_id
@@ -107,14 +102,16 @@ class SBCDeploymentHandler:
         return server_pod_config
 
     FL_SERVER_ADDRESS = "fl-server-svc:80"
-    def prepare_clients_for_launch(self, job_id, config):
+    def prepare_clients_for_launch(self, job_id: int) -> list:
+        config = self.config
+
         client_types_to_generate = config["client_types_to_generate"]
-        curr_available_devices_by_type = self.get_available_devices_by_type(client_types_to_generate)
+        available_devices_by_type = self.get_available_devices_by_type(client_types_to_generate)
 
         pod_configs = []
         for client_i, client_type in enumerate(client_types_to_generate):
             pod_config = self.get_base_pod_config(client_type, config)
-            (dev_id, dev_hostname) = self.get_device_hostname_by_type(curr_available_devices_by_type, client_type)
+            (dev_id, dev_hostname) = self.get_device_hostname_by_type(available_devices_by_type, client_type)
 
             pod_config["job_id"] = job_id
             pod_config["n_clients"] = config["n_clients"]
@@ -122,7 +119,7 @@ class SBCDeploymentHandler:
             pod_config["pod_name"] = f"client-{client_i}"
             pod_config["entrypoint"] = config["code"]["client"]["entrypoint"]
             pod_config["entrypoint_args"] = config["code"]["client"]["args"]
-            pod_config["client_db_id"] = self.db_utils.register_client(client_i, dev_id, job_id)
+            pod_config["client_db_id"] = self.register_client_in_db(client_i, dev_id, job_id)
             pod_config["dev_type"] = client_type
             pod_config["device_hostname"] = dev_hostname
             pod_config["server_address"] = self.FL_SERVER_ADDRESS
@@ -146,7 +143,7 @@ class SBCDeploymentHandler:
         "OrangePi5B":       "generic-cpu-arm",
     }
 
-    def get_image_for_device_type(self, dev_type):
+    def get_image_for_device_type(self, dev_type: str):
         return self.IMAGE_BY_DEV_TYPE[dev_type]
 
     def get_base_pod_config(self, dev_type, config: Dict[str, str]):
@@ -160,46 +157,36 @@ class SBCDeploymentHandler:
 
         return pod_config
 
-    def clear_prev_experiment(self) -> None:
-        log.info("Clearing previous experiment")
-        self.k_utils.delete_fl_service()
-        self.k_utils.delete_experiment_pods()
-
-    def deploy_setup(self) -> None:
-        """ Launch experiment in kubernetes cluster
+    def deploy_setup(self, job_id: int) -> None:
+        """
+            Launch experiment in kubernetes cluster
             Prepares and deployes client pods and fl service
         """
+
+        self.clear_prev_experiment()
+
         log.info(f"Deploying FL server and service")
-        server_pod_dict = yaml.safe_load(self.server_template.render(self.server_pod_config))
+        server_pod_config = self.prepare_server_for_launch(job_id)
+        server_pod_dict = yaml.safe_load(self.server_template.render(server_pod_config))
         self.k_utils.create_from_dict(server_pod_dict)
         self.k_utils.create_from_yaml(self.server_service_path)
 
         log.debug(f"Deploying Client pods")
-        for pod_config in self.client_pod_configs:
+        client_pod_configs = self.prepare_clients_for_launch(job_id)
+        for pod_config in client_pod_configs:
             # log.debug(f"Deploying Client pod = {pod_config}")
             client_pod_dict = yaml.safe_load(self.client_template.render(pod_config))
             self.k_utils.create_from_dict(client_pod_dict)
 
-    def get_available_devices_by_type(self, client_types):
-        clients = self.db_utils.get_current_available_clients(client_types)
-        available_devices_by_type = {}
-        for (dev_id, dev_hostname, dev_type) in clients:
-            if dev_type not in available_devices_by_type:
-                available_devices_by_type[dev_type] = [(dev_id, dev_hostname)]
-            else:
-                available_devices_by_type[dev_type].append((dev_id, dev_hostname))
-
-        return available_devices_by_type
-
-    def get_device_hostname_by_type(self, curr_available_devices_by_type, device_type):
+    def get_device_hostname_by_type(self, available_devices_by_type, device_type):
         try:
-            (dev_id, dev_hostname) = curr_available_devices_by_type[device_type].pop()
+            (dev_id, dev_hostname) = available_devices_by_type[device_type].pop()
         except IndexError:
             log.error(f"Not enough {device_type}s available for the request.")
             sys.exit(1)
 
         return (dev_id, dev_hostname)
 
-    def wait_for_job(self, job_id):
+    def wait_for_devices(self, job_id):
         """ Wait for all pods with label colext-job-id """
         self.k_utils.wait_for_pods(f"colext-job-id={job_id}")

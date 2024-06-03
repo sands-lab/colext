@@ -2,7 +2,7 @@ import sys
 import argparse
 import logging
 from colext.common.logger import log
-from .experiment_manager import ExperimentManager, JobNotFoundException
+from colext.exp_deployers.db_utils import DBUtils, JobNotFoundException
 
 def get_args():
     parser = argparse.ArgumentParser(description='Retrieve metrics from CoLExt')
@@ -19,9 +19,9 @@ def retrieve_metrics():
 
     print("Retrieving metrics")
     job_id = args.job_id
-    e_manager = ExperimentManager({}, False)
+    db = DBUtils()
     try:
-        e_manager.retrieve_metrics(job_id)
+        db.retrieve_metrics(job_id)
     except JobNotFoundException:
         print(f"Could not find job with id {job_id}")
         sys.exit(1)

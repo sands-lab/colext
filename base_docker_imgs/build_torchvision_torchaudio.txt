@@ -1,0 +1,24 @@
+# Assumes pytorch dependencies have been installed before
+git clone --recursive --branch release/0.17 https://github.com/pytorch/vision.git
+cd vision
+python3.10 setup.py bdist_wheel
+# Wheel will be located in /dist
+# Super fast install
+
+
+git clone --recursive --branch release/2.2 https://github.com/pytorch/audio.git
+cd audio
+python3.10 setup.py bdist_wheel
+# Wheel will be located in /dist
+# Takes a few minutes to install
+
+
+# nvidia jetson nano
+# package needs to be installed before python with pyenv for torchvision:
+sudo apt install liblzma-dev
+# required for torchaudio
+python3.10 -m pip install pysoundfile
+export CUDACXX=/usr/local/cuda/bin/nvcc
+source pytorch/exports.sh
+installed cmake3.19-aarch64
+Trouble with _GLIBCXX_USE_CXX11_ABI

@@ -85,24 +85,25 @@ def train(net, trainloader, epochs):
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     for _ in range(epochs):
-        chunk = 0
-        # for images, labels in tqdm(trainloader):
-        for images, labels in trainloader:
+        step = 0
+        for images, labels in tqdm(trainloader):
+        # for images, labels in trainloader:
             optimizer.zero_grad()
             criterion(net(images.to(DEVICE)), labels.to(DEVICE)).backward()
             optimizer.step()
 
-            if tiny_rounds:
-                chunk += 1
-                if chunk > 100:
-                    break
+            if step > max_step_count:
+                break
+            else:
+                step += 1
+
 
 def test(net, testloader):
     """Validate the model on the test set."""
     criterion = torch.nn.CrossEntropyLoss()
     correct, loss = 0, 0.0
     with torch.no_grad():
-        chunk = 0
+        step = 0
         # for images, labels in tqdm(testloader):
         for images, labels in testloader:
             outputs = net(images.to(DEVICE))
@@ -110,10 +111,10 @@ def test(net, testloader):
             loss += criterion(outputs, labels).item()
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
 
-            if tiny_rounds:
-                chunk += 1
-                if chunk > 100:
-                    break
+            if step > max_step_count:
+                break
+            else:
+                step += 1
 
     accuracy = correct / len(testloader.dataset)
     return loss, accuracy
@@ -164,7 +165,7 @@ def get_args():
                     description='Starts the FL client')
 
     parser.add_argument('--flserver_address', type=str, default="127.0.0.1:8080", help="FL server address ip:port")
-    parser.add_argument('--tiny_rounds', default=False, action='store_true', help="Make training and evaluation rounds very small")
+    parser.add_argument('--max_step_count', default=3000, type=int, help="Configure number of steps for train and test")
     args = parser.parse_args()
 
     return args
@@ -173,7 +174,7 @@ if __name__ == '__main__':
     args = get_args()
 
     flserver_address = args.flserver_address
-    tiny_rounds = args.tiny_rounds
+    max_step_count = args.max_step_count
 
     # Start Flower client
     fl.client.start_numpy_client(

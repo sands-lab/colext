@@ -56,6 +56,9 @@ class JetsonScraper(PSUtilScrapper):
 
     # If we don't close the jtop connection, the jtop service may crash
     def __del__(self):
-        log.debug("Closing jtop connection")
-        self.jetson.close()
-        log.debug("jtop connection closed")
+        if self.jetson:
+            log.info("Closing jtop connection")
+            self.jetson.close()
+            log.info("jtop connection closed")
+        else:
+            log.info("jtop connection was never established!")

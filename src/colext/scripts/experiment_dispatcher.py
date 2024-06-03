@@ -4,14 +4,14 @@ import os
 import sys
 import yaml
 from colext.common.logger import log
-from .experiment_manager import ExperimentManager
+from colext.exp_deployers import get_deployer
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
 
     parser.add_argument('-c', '--config_file', type=str, default="./colext_config.yaml", help="Path to CoLExT config file.")
     parser.add_argument('-t', '--test_env', default=False, action='store_true', help="Test deployment in test environment.")
-    parser.add_argument('-v', '--verify_only', default=False, action='store_true', help="Only verify if deployment is feasible.")
+    parser.add_argument('-p', '--prepare_only', default=False, action='store_true', help="Only prepare experiment for launch.")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true', help="Wait for experiment to finish.")
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
@@ -42,6 +42,10 @@ def read_config(config_file):
         config_dict["code"]["python_version"] = default_py_version
         print(f"Could not find 'code.python_version' in config file. Assuming {default_py_version}")
 
+    if "deployer" not in config_dict:
+        default_deployer = "sbc"
+        config_dict["deployer"] = default_deployer
+
     monitoring_defaults = {
         "live_metrics": True,
         "push_interval": 10,
@@ -58,6 +62,11 @@ def read_config(config_file):
     valid_python_versions = ["3.8", "3.10"]
     if config_dict["code"]["python_version"] not in valid_python_versions:
         print(f"code.python_version can  only be set to {valid_python_versions}")
+        sys.exit(1)
+
+    valid_deployers = ["sbc", "local_py"]
+    if config_dict["deployer"] not in valid_deployers:
+        print(f"deployer can  only be set to {valid_deployers}")
         sys.exit(1)
 
     # TODO Support specifying device type + count
@@ -91,18 +100,15 @@ def launch_experiment():
     args = get_args()
     config_dict = read_config(args.config_file)
 
-    e_manager = ExperimentManager(config_dict, args.test_env)
+    Deployer = get_deployer(config_dict["deployer"])
+    deployer = Deployer(config_dict, args.test_env)
 
-    if args.verify_only:
-        feasible = e_manager.validate_feasibility()
-        if feasible:
-            print("Setup is feasible")
-        else:
-            print("Setup is not feasible")
-        sys.exit(0)
+    if args.prepare_only:
+        deployer.prepare_deployment()
+        print("Colext launch invoked as prepare only. Exiting.")
+        return
 
-    job_id = e_manager.launch_experiment()
-
+    job_id = deployer.start()
     print("\n")
     print(f"Launched experiment with {job_id=}")
 
@@ -115,7 +121,7 @@ def launch_experiment():
     print("\nExperiment running...")
     if args.wait_for_experiment:
         print("Waiting for experiment")
-        e_manager.wait_for_job(job_id)
+        deployer.wait_for_job(job_id)
         print("Experiment complete.")
     else:
         print("Command will exit but experiment is still running.")

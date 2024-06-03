@@ -1,6 +1,5 @@
 # import jtop
 from datetime import datetime, timezone
-import psutil
 import pyRAPL
 import time
 from colext.common.logger import log

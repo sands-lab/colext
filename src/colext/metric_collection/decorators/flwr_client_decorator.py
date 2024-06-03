@@ -52,6 +52,7 @@ def MonitorFlwrClient(FlwrClientClass):
             log.debug("get_properties function")
             colext_properties_dict = {}
             if "COLEXT_CLIENT_DB_ID" in config:
+                log.info(f"Announcing {self.client_db_id=} to server")
                 colext_properties_dict["COLEXT_CLIENT_DB_ID"] = self.client_db_id
 
             og_properties = super().get_properties(config)

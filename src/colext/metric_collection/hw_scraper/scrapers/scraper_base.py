@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -23,5 +23,6 @@ class ScraperBase(ABC):
     def __init__(self, pid: int, collection_interval_s: float) -> None:
         self.monitor_pid = pid
 
+    @abstractmethod
     def scrape_process_metrics(self) -> ProcessMetrics:
-        raise NotImplementedError
+        pass

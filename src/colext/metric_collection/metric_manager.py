@@ -8,8 +8,8 @@ from psycopg_pool import ConnectionPool
 
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
-from .hw_scraper.hw_scraper import HWScraper
-from .hw_scraper.scraper.scraper_base import ProcessMetrics
+from .hw_scraper.hw_scraper_base import HWScraper
+from .hw_scraper.scrapers.scraper_base import ProcessMetrics
 
 @dataclass
 class StageTimings:

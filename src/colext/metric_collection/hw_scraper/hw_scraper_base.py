@@ -5,8 +5,8 @@ import threading
 
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
-from .scraper.psutil_scraper import PSUtilScrapper
-from .scraper.scraper_base import ProcessMetrics, ScraperBase
+from .scrapers.psutil_scraper import PSUtilScrapper
+from .scrapers.scraper_base import ProcessMetrics, ScraperBase
 
 class HWScraper():
     def __init__(self, pid: int, metric_queue: queue.Queue) -> None:
@@ -20,7 +20,7 @@ class HWScraper():
 
         self.finish_event = threading.Event()
         # scraping_loop_th is interrupted using the finish_event
-        self.scraping_loop_th = threading.Thread(target=self.scraping_loop)
+        self.scraping_loop_th = threading.Thread(target=self.scraping_loop, daemon=True)
 
     def start_scraping(self) -> None:
         self.scraping_loop_th.start()
@@ -55,10 +55,10 @@ class HWScraper():
 
         scrapper_agent = PSUtilScrapper
         if "Jetson" in dev_type:
-            from .scraper.jetson_scraper import JetsonScraper
+            from .scrapers.jetson_scraper import JetsonScraper
             scrapper_agent = JetsonScraper
         elif "LattePanda" in dev_type:
-            from .scraper.latte_scraper import LatteScraper
+            from .scrapers.latte_scraper import LatteScraper
             scrapper_agent = LatteScraper
 
         return scrapper_agent

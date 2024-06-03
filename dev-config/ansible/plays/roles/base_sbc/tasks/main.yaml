@@ -40,4 +40,4 @@
 # Disable default graphical interface
 - name: Temporarily disable graphical interface (lost with reboot)
   ansible.builtin.shell:
-    cmd: sudo init 3
+    cmd: sudo init 3 # multi-user.target

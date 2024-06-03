@@ -1,3 +1,5 @@
+# syntax=docker.io/docker/dockerfile:1.7-labs
+# Required for COPY --exclude
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
@@ -26,5 +28,5 @@ RUN if [ "$BUILD_TYPE" = 'jetson' ]; then \
     fi
 RUN --mount=type=ssh python3 -m pip install --no-cache-dir -r ./user_code/requirements.txt
 
-COPY . ./user_code
+COPY --exclude=colext_config.yaml . ./user_code
 WORKDIR /fl_testbed/user_code

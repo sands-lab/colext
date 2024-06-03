@@ -58,7 +58,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
             cursor.close()
 
         def get_client_db_id(self, client_proxy: ClientProxy) -> int:
-            ip_address = re.search(r'ipv4:(\d+\.\d+\.\d+\.\d+):\d+', client_proxy.cid.__str__()).group(1)
+            log.info(f"Getting DB ID for client_proxy with cid = {client_proxy.cid}")
+
+            ip_address = re.search(r'ipv4:(\d+\.\d+\.\d+\.\d+:\d+)', client_proxy.cid).group(1)
             if ip_address is None:
                 log.error("Could not parse IP for client. Client IP = {ip_address}")
 

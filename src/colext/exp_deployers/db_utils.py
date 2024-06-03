@@ -1,7 +1,5 @@
-import logging
+from typing import Tuple, BinaryIO
 import psycopg
-from psycopg.rows import dict_row
-log = logging.getLogger(__name__)
 
 class DBUtils:
     def __init__(self) -> None:
@@ -11,7 +9,7 @@ class DBUtils:
         DB_CONN_INFO = "host=flserver dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
         return psycopg.connect(DB_CONN_INFO, autocommit=True)
 
-    def create_job(self) -> str:
+    def create_job(self) -> int:
         cursor = self.DB_CONNECTION.cursor()
         sql = "INSERT INTO jobs(start_time, user_id) VALUES (CURRENT_TIMESTAMP, 1) returning job_id"
         cursor.execute(sql)
@@ -20,7 +18,7 @@ class DBUtils:
 
         return job_id
 
-    def finish_job(self, job_id) -> str:
+    def finish_job(self, job_id: int):
         cursor = self.DB_CONNECTION.cursor()
         sql = "UPDATE jobs SET end_time = CURRENT_TIMESTAMP WHERE job_id = %s"
         data = (job_id,)
@@ -37,7 +35,7 @@ class DBUtils:
 
         return job_record is not None
 
-    def get_current_available_clients(self, device_types: tuple) -> str:
+    def get_current_available_clients(self, device_types: Tuple[int, str, str]) -> str:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 SELECT device_id, device_code AS hostname, device_name
@@ -50,32 +48,19 @@ class DBUtils:
 
         return db_devices
 
-    def register_clients(self, job_id, clients_to_register):
-        cursor = self.DB_CONNECTION.cursor(row_factory=dict_row)
-        sql = "INSERT INTO clients (client_number, job_id, device_id) values (%s, %s, %s)"
-        cursor.executemany(sql, clients_to_register)
-
-        sql = "SELECT client_number,client_id FROM clients WHERE job_id = %s"
-        data = (job_id,)
-        cursor.execute(sql, data)
-        registered_clients = cursor.fetchall()
-        cursor.close()
-
-        return registered_clients
-
-    def register_client(self, client_i, dev_id, job_id):
+    def register_client(self, client_id: int, dev_id: int, job_id: int) -> str:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 INSERT INTO clients (client_number, device_id, job_id)
                 VALUES (%s, %s, %s) RETURNING client_id
             """
-        cursor.execute(sql, (client_i, dev_id, job_id))
+        cursor.execute(sql, (client_id, dev_id, job_id))
         client_id = cursor.fetchone()[0]
         cursor.close()
 
-        return client_id
+        return str(client_id)
 
-    def get_hw_metrics(self, job_id, metric_writer):
+    def get_hw_metrics(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
@@ -96,7 +81,7 @@ class DBUtils:
 
         cursor.close()
 
-    def get_round_timestamps(self, job_id, metric_writer):
+    def get_round_timestamps(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
@@ -112,7 +97,7 @@ class DBUtils:
 
         cursor.close()
 
-    def get_client_info(self, job_id, metric_writer):
+    def get_client_info(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
@@ -130,7 +115,7 @@ class DBUtils:
 
         cursor.close()
 
-    def get_client_round_timings(self, job_id, metric_writer):
+    def get_client_round_timings(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
@@ -149,3 +134,24 @@ class DBUtils:
                 metric_writer.write(data)
 
         cursor.close()
+
+    def retrieve_metrics(self, job_id: int):
+        """ Retrieve client metrics for job_id """
+        # Make sure job id exists
+        if not self.check_if_job_exists(job_id):
+            raise JobNotFoundException
+
+        with open(f"colext_{job_id}_hw_metrics.csv", "wb") as metric_writer:
+            self.get_hw_metrics(job_id, metric_writer)
+
+        with open(f"colext_{job_id}_round_timestamps.csv", "wb") as metric_writer:
+            self.get_round_timestamps(job_id, metric_writer)
+
+        with open(f"colext_{job_id}_client_round_timings.csv", "wb") as metric_writer:
+            self.get_client_round_timings(job_id, metric_writer)
+
+        with open(f"colext_{job_id}_client_info.csv", "wb") as metric_writer:
+            self.get_client_info(job_id, metric_writer)
+
+class JobNotFoundException(ValueError):
+    """Could not find the job in DB"""

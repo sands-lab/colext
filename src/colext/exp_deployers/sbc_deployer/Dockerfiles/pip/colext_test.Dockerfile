@@ -1,3 +1,5 @@
+# syntax=docker.io/docker/dockerfile:1.7-labs
+# Required for COPY --exclude
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
@@ -26,7 +28,7 @@ RUN python3 -m pip install --no-cache-dir -r ./requirements.txt
 # Copy rest of test code
 COPY $TEST_REL_DIR/ test_code/
 # Copy and install fltb package
-COPY . .
+COPY --exclude=colext_config.yaml  . .
 RUN python3 -m pip install .${INSTALL_OPTIONS}
 
 WORKDIR /fl_testbed/test_code
