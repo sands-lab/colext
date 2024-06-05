@@ -72,7 +72,9 @@ spec:
         path: /run/jtop.sock
         type: Socket
     {% endif %}
-  restartPolicy: Never
+  {# restartPolicy: Never #}
+  restartPolicy: OnFailure
+  backoffLimit: 1
   imagePullSecrets:
     - name: regcred
   nodeSelector:
