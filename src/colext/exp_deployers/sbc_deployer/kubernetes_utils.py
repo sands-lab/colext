@@ -2,6 +2,7 @@ import time
 import kubernetes
 from typing import Tuple
 from colext.common.logger import log
+from enum import Enum
 
 FL_NAMESPACE = "default"
 FL_SERVICE_PREFIX = "fl-server-svc"
@@ -70,42 +71,71 @@ class KubernetesUtils:
 
         log.info(f"All services deleted")
 
+
+    class _PodCompletionStatus(Enum):
+        COMPLETED = 1
+        UNAVAILABLE = 2
+        ERROR = 3
+
+    def check_if_pod_completed(self, pod_name):
+        try:
+            container_statuses = self.k8s_core_v1.read_namespaced_pod_status(pod_name, FL_NAMESPACE).status.container_statuses
+            if container_statuses is None:
+                log.debug(f"Could not read container_status yet. Ignoring pod {pod_name}.")
+                return self._PodCompletionStatus.UNAVAILABLE
+
+            client_container_state = container_statuses[0].state
+            if client_container_state.terminated is not None:
+                if client_container_state.terminated.reason == "Completed":
+                    log.info(f"{pod_name} terminated successfully.")
+                    return self._PodCompletionStatus.COMPLETED
+                else:
+                    log.error(f"{pod_name} terminated with reason different than 'Completed'. Reason: {client_container_state.terminated.reason}")
+                    return self._PodCompletionStatus.ERROR
+            else:
+                return self._PodCompletionStatus.UNAVAILABLE
+
+        except kubernetes.client.rest.ApiException as e:
+            if e.status == 404:
+                log.error(f"{pod_name} pod was deleted while waiting for it. Removing it from the waiting list.")
+            else:
+                log.error(f"Unexpected error while checking pod status for pod {pod_name}. Error: {e}")
+            return self._PodCompletionStatus.ERROR
+
     def wait_for_pods(self, label_selectors):
-        # Get current pods
         pods = self.k8s_core_v1.list_namespaced_pod(FL_NAMESPACE, label_selector=label_selectors).items
         pod_names_to_wait = [pod.metadata.name for pod in pods]
 
+        server_timeout = 10*60 # 10 min
         all_pods_completed = True
+        server_end_time = None
         log.info(f"Found {len(pod_names_to_wait)} running pods.")
-        log.info(f"Waiting for pods to complete.")
+        log.info("Waiting for pods to complete.")
         while pod_names_to_wait:
             for pod_name in pod_names_to_wait:
-                try:
-                    container_statuses = self.k8s_core_v1.read_namespaced_pod_status(pod_name, FL_NAMESPACE).status.container_statuses
-                    if container_statuses is None:
-                        log.info(f"Could not read container_status yet. Ignoring pod {pod_name} for this iteration.")
-                        continue
+                pod_status = self.check_if_pod_completed(pod_name)
 
-                    client_container_state = container_statuses[0].state
-                    if client_container_state.terminated is not None:
-                        if client_container_state.terminated.reason == "Completed":
-                            log.info(f"{pod_name} terminated successfully.")
-                        else:
-                            log.error(f"{pod_name} terminated with reason different than 'Completed'. Reason: {client_container_state.terminated.reason}")
-                        pod_names_to_wait.remove(pod_name)
-                        continue
-                except kubernetes.client.rest.ApiException as e:
+                if pod_status == self._PodCompletionStatus.UNAVAILABLE:
+                    continue
+
+                pod_names_to_wait.remove(pod_name)
+                if pod_name == "fl-server":
+                    server_end_time = time.time()
+
+                if pod_status == self._PodCompletionStatus.ERROR:
                     all_pods_completed = False
-                    if e.status == 404:
-                        log.error(f"{pod_name} pod was deleted while waiting for it. Removing it from the waiting list.")
-                    else:
-                        log.error(f"Unexpected error while checking pod status for pod {pod_name}. Error: {e}")
-                    pod_names_to_wait.remove(pod_name)
-                    break
+
+            if server_end_time and time.time() - server_end_time > server_timeout:
+                log.info("Clients are still running but server has finished %s min ago. Setup might be stuck. Finishing job.", \
+                         round(server_timeout/60, 2))
+                all_pods_completed = False
+                # break outer loop
+                pod_names_to_wait.clear()
+                continue
 
             time.sleep(4)
 
         if all_pods_completed:
-            log.info(f"All pods completed successfully.")
+            log.info("All pods completed successfully.")
         else:
-            log.info(f"Not all pods finished successfully. An error occured during the job.")
+            log.info("Not all pods finished successfully. An error occured during the job.")
