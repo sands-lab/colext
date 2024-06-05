@@ -1,7 +1,7 @@
 import subprocess
 import os
 from pathlib import Path
-import sys
+import time
 
 from colext.common.logger import log
 from colext.exp_deployers.deployer_base import DeployerBase
@@ -36,9 +36,14 @@ class LocalDeployer(DeployerBase):
         log.info(f"{server_launch_cmd=}")
         self.server_proc = subprocess.Popen(server_launch_cmd, shell=True, env=server_env,
                                         stdout=server_log_handle, stderr=server_log_handle)
+        log.info("Waiting 3 sec for server startup")
+        time.sleep(3)
         log.info("Deploying clients")
         log.info(f"{client_launch_cmd=}")
         for c_id in range(self.config["n_clients"]):
+            if c_id == 0:
+                time.sleep(3) # weird flower bug
+
             client_log_path = logs_dir.joinpath(f"client_{c_id}.out")
             client_log_handle = open(client_log_path, 'w', encoding='UTF-8')
             self.log_file_handles.append(client_log_handle)
