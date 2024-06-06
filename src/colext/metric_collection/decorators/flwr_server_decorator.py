@@ -45,14 +45,16 @@ def MonitorFlwrStrategy(FlwrStrategy):
 
             return round_id
 
-        def record_end_round(self, server_round: int, round_type: str):
+        def record_end_round(self, server_round: int, round_type: str, accuracy: float = None):
             cursor = self.DB_CONNECTION.cursor()
 
             sql = """
-                    UPDATE rounds SET end_time = CURRENT_TIMESTAMP
+                    UPDATE rounds
+                    SET end_time = CURRENT_TIMESTAMP,
+                        accuracy = %s
                     WHERE round_number = %s AND job_id = %s AND stage = %s
                 """
-            data = (str(server_round), str(self.JOB_ID), round_type)
+            data = (accuracy, str(server_round), str(self.JOB_ID), round_type)
             cursor.execute(sql, data)
             self.DB_CONNECTION.commit()
             cursor.close()
@@ -142,7 +144,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
             """Aggregate evaluation results."""
             log.debug("aggregate_evaluate function")
             aggregate_eval_result = super().aggregate_evaluate(server_round, results, failures)
-            self.record_end_round(server_round, "EVAL")
+            _, metrics = aggregate_eval_result
+            log.debug(f"{aggregate_eval_result=}")
+            self.record_end_round(server_round, "EVAL", metrics.get("accuracy"))
             return aggregate_eval_result
 
         # Not used
