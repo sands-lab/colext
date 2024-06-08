@@ -1,5 +1,7 @@
 prune deployment
 prune tests
 prune build
-prune user_code_example
+prune examples
+prune dev-config
+prune base_docker_imgs
 prune .git

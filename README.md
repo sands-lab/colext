@@ -39,15 +39,31 @@ Create colext_config.yaml
 |  COLEXT_MONITORING_PUSH_INTERVAL  | Interval between metric push to DB                                  |
 | COLEXT_MONITORING_SCRAPE_INTERVAL | Interval between HW metric scraping                                 |
 
+## Install package
+```bash
+# Create a conda/virtual environment with python 3.8.
+mamba create -n colext_env_user python=3.8
+# To isolate pip from system site-packages you might need to run:
+echo "include-system-site-packages=false" >> $CONDA_PREFIX/pyvenv.cfg
+
+# Fetch latest changes
+# Note: Requires access to private colext repo
+python3 -m pip install --force-reinstall git+ssh://git@github.com/sands-lab/colext.git@sbc
+```
+
+# colext_config.yaml
+## Excluding files from colext containerization
+Files can be excluded by having a .dockerignore file at the root of the project
+For details on .dockerignore, check the [docker documentation](https://docs.docker.com/reference/dockerfile/#dockerignore-file).
+
+
 ## Available client types
-- JetsonAGXOrin
-- JetsonOrinNano
-
-## Limitations
-Currently only supports pytorch version 2.0
-This is being imposed by the base image being used for the jetson docker image.
-
-# Local development
+- JetsonAGXOrin: 2
+- JetsonOrinNano: 4
+- JetsonXavierNX: 2
+- JetsonNano: 6
+- OrangePi5B: 8
+- LattePandaDelta3: 6
 
 ## Connect to flserver
 Currently development happens inside the flserver machine.
@@ -86,21 +102,6 @@ This allows you to use your private ssh key from your local machine without copy
 ssh-add -l # list keys in local agent
 # if your key is not listed add it
 ssh-add # add keys to agent
-```
-
-## Install package
-```bash
-# Create a conda/virtual environment with python 3.9.
-mamba create -n colext_env_user python=3.9
-# To isolate pip from system site-packages you might need to run:
-echo "include-system-site-packages=false" >> $CONDA_PREFIX/pyvenv.cfg
-
-# Install the package locally with the --editable flag.
-# Note: Requires access to private colext repo
-python3 -m pip install git+ssh://git@github.com/sands-lab/colext.git@sbc#egg=colext
-
-# Fetch latest changes
-python3 -m pip install --force-reinstall git+ssh://git@github.com/sands-lab/colext.git@sbc
 ```
 
 ## How it works
@@ -157,8 +158,19 @@ poetry export --without-hashes -f requirements.txt --output requirements.txt
 ```
 
 ## Limitations:
-`tensorflow` package does not work with LattePandas.
-Since LP are x86 machines, tensorflow build from PiPy expects them to have support for avx instructions, but they do not.
+- `tensorflow` package does not work with LattePandas.
+  Since LP are x86 machines, tensorflow build from PiPy expects them to have support for avx instructions, but they do not.
+- Currently only supports pytorch version 2.0
+  This is being imposed by the base image being used for the jetson docker image.
+
+
+# Local development
+
+## Install the package locally with the --editable flag.
+python3 -m pip install -e <root_dir>
+```
+$ colext_launch -t
+```
 
 # Known issues:
 sudo modprobe nf_conntrack
