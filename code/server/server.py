@@ -3,8 +3,12 @@ Derived from Flower Android example."""
 import subprocess
 
 from flwr.server import ServerConfig, start_server
-from flwr.server.strategy import FedAvgAndroid
 from flwr.server.client_manager import ClientManager
+
+from local_strategies.fedavg import FedAvg
+from local_strategies.fedadagrad import FedAdagrad
+from local_strategies.fedadam import FedAdam
+from local_strategies.fedyogi import FedYogi
 
 import psycopg2
 
