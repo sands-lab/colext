@@ -29,6 +29,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.DB_CONNECTION = self.create_db_connection()
             self.clients_ip_to_id = {}
 
+            # Temp variable to hold eval round id between evaluate and configure_evaluate
+            self.eval_round_id = None
+
         def create_db_connection(self):
             DB_CONNECTION_INFO = "host=10.0.0.100 dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
             return psycopg.connect(DB_CONNECTION_INFO)
@@ -45,22 +48,23 @@ def MonitorFlwrStrategy(FlwrStrategy):
 
             return round_id
 
-        def record_end_round(self, server_round: int, round_type: str, accuracy: float = None):
+        def record_end_round(self, server_round: int, round_type: str, dist_accuracy: float = None, srv_accuracy: float = None):
             cursor = self.DB_CONNECTION.cursor()
 
             sql = """
                     UPDATE rounds
                     SET end_time = CURRENT_TIMESTAMP,
-                        accuracy = %s
+                        dist_accuracy = %s,
+                        srv_accuracy = %s
                     WHERE round_number = %s AND job_id = %s AND stage = %s
                 """
-            data = (accuracy, str(server_round), str(self.JOB_ID), round_type)
+            data = (dist_accuracy, srv_accuracy, str(server_round), str(self.JOB_ID), round_type)
             cursor.execute(sql, data)
             self.DB_CONNECTION.commit()
             cursor.close()
 
         def get_client_db_id(self, client_proxy: ClientProxy) -> int:
-            log.info(f"Getting DB ID for client_proxy with cid = {client_proxy.cid}")
+            log.debug(f"Getting DB ID for client_proxy with cid = {client_proxy.cid}")
 
             ip_address = re.search(r'ipv4:(\d+\.\d+\.\d+\.\d+:\d+)', client_proxy.cid).group(1)
             if ip_address is None:
@@ -126,15 +130,25 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.record_end_round(server_round, "FIT")
             return aggregate_fit_result
 
+        def evaluate(self, server_round: int, parameters: Parameters):
+            """Evaluate the current model parameters."""
+            self.eval_round_id = self.record_start_round(server_round, "EVAL")
+            evaluate_result = super().evaluate(server_round, parameters)
+            log.debug(f"{evaluate_result=}")
+            # Handle case where evaluate_result is None
+            srv_eval_metrics = {}
+            if evaluate_result:
+                _, srv_eval_metrics = evaluate_result
+            self.record_end_round(server_round, "EVAL", srv_accuracy=srv_eval_metrics.get("accuracy"))
+            return evaluate_result
+
         def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
             """Configure the next round of evaluation."""
             log.debug("configure_evaluate function")
 
             client_instructions = super().configure_evaluate(server_round, parameters, client_manager)
-            if client_instructions:
-                round_id = self.record_start_round(server_round, "EVAL")
-                self.configure_clients_in_round(client_instructions, round_id)
-            else:
+            self.configure_clients_in_round(client_instructions, self.eval_round_id)
+            if not client_instructions:
                 log.debug(f"No client instructions. Evaluation won't happen! {client_instructions=}")
 
             return client_instructions
@@ -144,9 +158,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
             """Aggregate evaluation results."""
             log.debug("aggregate_evaluate function")
             aggregate_eval_result = super().aggregate_evaluate(server_round, results, failures)
-            _, metrics = aggregate_eval_result
+            _, dist_eval_metrics = aggregate_eval_result
             log.debug(f"{aggregate_eval_result=}")
-            self.record_end_round(server_round, "EVAL", metrics.get("accuracy"))
+            self.record_end_round(server_round, "EVAL", dist_accuracy=dist_eval_metrics.get("accuracy"))
             return aggregate_eval_result
 
         # Not used
@@ -154,10 +168,6 @@ def MonitorFlwrStrategy(FlwrStrategy):
         #     """Initialize the (global) model parameters."""
         #     log.debug("initialize_parameters function")
         #     return super().initialize_parameters(client_manager)
-        # def evaluate(self, parameters: Parameters):
-        #     """Evaluate the current model parameters."""
-        #     log.debug("evaluate function")
-        #     return super().evaluate(parameters)
 
         # ====== End Flower functions ======
     return _MonitorFlwrStrategy

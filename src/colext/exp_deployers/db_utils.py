@@ -85,8 +85,8 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT round_number, start_time, end_time, accuracy, stage
-                    from rounds
+                (SELECT round_number, start_time, end_time, dist_accuracy, srv_accuracy, stage
+                    FROM rounds
                     WHERE job_id = %s)
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """

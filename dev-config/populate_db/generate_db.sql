@@ -21,7 +21,8 @@ CREATE TABLE fl_testbed_logging.rounds (
     round_number integer,
     start_time timestamp with time zone,
     end_time timestamp with time zone,
-    accuracy decimal,
+    dist_accuracy decimal,
+    srv_accuracy decimal,
     stage varchar(50),
     job_id INT REFERENCES fl_testbed_logging.jobs(job_id)
 );
@@ -77,7 +78,7 @@ CREATE TABLE fl_testbed_logging.device_measurements (
     gpu_util decimal,
     battery_state decimal,
     power_consumption decimal,
-    
+
     n_bytes_sent decimal,
     n_bytes_rcvd decimal,
     net_usage_out decimal,
