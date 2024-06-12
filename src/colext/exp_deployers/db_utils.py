@@ -81,13 +81,14 @@ class DBUtils:
 
         cursor.close()
 
-    def get_round_timestamps(self, job_id: int, metric_writer: BinaryIO):
+    def get_round_metrics(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
                 (SELECT round_number, start_time, end_time, dist_accuracy, srv_accuracy, stage
                     FROM rounds
-                    WHERE job_id = %s)
+                    WHERE job_id = %s
+                    ORDER BY round_number, start_time)
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)
@@ -144,8 +145,8 @@ class DBUtils:
         with open(f"colext_{job_id}_hw_metrics.csv", "wb") as metric_writer:
             self.get_hw_metrics(job_id, metric_writer)
 
-        with open(f"colext_{job_id}_round_timestamps.csv", "wb") as metric_writer:
-            self.get_round_timestamps(job_id, metric_writer)
+        with open(f"colext_{job_id}_round_metrics.csv", "wb") as metric_writer:
+            self.get_round_metrics(job_id, metric_writer)
 
         with open(f"colext_{job_id}_client_round_timings.csv", "wb") as metric_writer:
             self.get_client_round_timings(job_id, metric_writer)

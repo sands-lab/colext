@@ -110,15 +110,15 @@ class LocalDeployer(DeployerBase):
         log.info("Waiting for server proc to finish")
         exit_code = self.server_proc.wait()
         if exit_code != 0:
-            log.error(f"Server process exited with error different than 0. Error = {e}")
+            log.error(f"Server process exited with error different than 0. Error = {exit_code}")
         else:
             log.info("Server finished successfully")
 
         log.info("Waiting for server proc to finish")
         exit_codes = [c_proc.wait() for c_proc in self.client_procs]
-        for i, e in enumerate(exit_codes):
-            if e != 0:
-                log.error(f"Client {i} exited with error different than 0. Error = {e}")
+        for i, exit_code in enumerate(exit_codes):
+            if exit_code != 0:
+                log.error(f"Client {i} exited with error different than 0. Error = {exit_code}")
             else:
                 log.info(f"Client {i} finished successfully")
 
