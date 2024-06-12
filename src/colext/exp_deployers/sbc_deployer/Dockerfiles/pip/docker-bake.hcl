@@ -97,7 +97,7 @@ target "jetson" {
     BASE_IMAGE: (
       PY38 ?
       "nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3" :
-      "flserver:5000/colext/jetson-ox:latest"
+      "flserver:5000/colext/jetson-ox:latest" # pytorch 2.2
     )
     INSTALL_OPTIONS: "[jetson]",
     BUILD_TYPE: "jetson"
@@ -112,7 +112,7 @@ target "jetson-nano" {
     BASE_IMAGE: (
       PY38 ?
       "flserver:5000/colext/jetson-nano:torch1.10-r32.7.1-py38" :
-      "flserver:5000/colext/jetson-nano:torch1.10-r32.7.1-py310"
+      "flserver:5000/colext/jetson-nano:torch1.13-r32.7.1-py310"
     )
   }
   tags = ["${REGISTY}/${PROJECT_NAME}/jetson-nano:latest"]
