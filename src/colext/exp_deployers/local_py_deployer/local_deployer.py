@@ -26,6 +26,8 @@ class LocalDeployer(DeployerBase):
         # Prepare logs
         logs_dir = Path(f"logs")
         os.makedirs(logs_dir, exist_ok=True)
+        # Clear previous logs
+
         self.log_file_handles = []
 
         log.info("Deploying server")
@@ -79,6 +81,7 @@ class LocalDeployer(DeployerBase):
             "COLEXT_SERVER_ADDRESS": "0.0.0.0:8080",
             "COLEXT_JOB_ID": str(job_id),
             "COLEXT_LOG_LEVEL": "DEBUG",
+            "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
 
             "COLEXT_DEVICE_TYPE": "FLServer", # clients run on the server
 
