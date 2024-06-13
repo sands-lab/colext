@@ -51,6 +51,9 @@ def MonitorFlwrStrategy(FlwrStrategy):
         def record_end_round(self, server_round: int, round_type: str, dist_accuracy: float = None, srv_accuracy: float = None):
             cursor = self.DB_CONNECTION.cursor()
 
+            dist_accuracy = to_float_or_None(dist_accuracy)
+            srv_accuracy = to_float_or_None(srv_accuracy)
+
             sql = """
                     UPDATE rounds
                     SET end_time = CURRENT_TIMESTAMP,
@@ -139,7 +142,8 @@ def MonitorFlwrStrategy(FlwrStrategy):
             srv_eval_metrics = {}
             if evaluate_result:
                 _, srv_eval_metrics = evaluate_result
-            self.record_end_round(server_round, "EVAL", srv_accuracy=srv_eval_metrics.get("accuracy"))
+
+            self.record_end_round(server_round, "EVAL", srv_accuracy=srv_eval_metrics["accuracy"])
             return evaluate_result
 
         def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:
@@ -171,3 +175,12 @@ def MonitorFlwrStrategy(FlwrStrategy):
 
         # ====== End Flower functions ======
     return _MonitorFlwrStrategy
+
+
+def to_float_or_None(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        if value is not None:
+            log.debug(f"Found accuracy metric but could not parse value as float. Value={value}. Ignoring.")
+        return None
