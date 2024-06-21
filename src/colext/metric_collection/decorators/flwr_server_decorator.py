@@ -143,7 +143,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             if evaluate_result:
                 _, srv_eval_metrics = evaluate_result
 
-            self.record_end_round(server_round, "EVAL", srv_accuracy=srv_eval_metrics["accuracy"])
+            self.record_end_round(server_round, "EVAL", srv_accuracy=srv_eval_metrics.get("accuracy"))
             return evaluate_result
 
         def configure_evaluate(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, EvaluateIns]]:

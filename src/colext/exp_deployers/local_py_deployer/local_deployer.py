@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 import os
 from pathlib import Path
@@ -25,8 +26,9 @@ class LocalDeployer(DeployerBase):
 
         # Prepare logs
         logs_dir = Path(f"logs")
-        os.makedirs(logs_dir, exist_ok=True)
         # Clear previous logs
+        shutil.rmtree(logs_dir, ignore_errors=True)
+        os.makedirs(logs_dir, exist_ok=True)
 
         self.log_file_handles = []
 

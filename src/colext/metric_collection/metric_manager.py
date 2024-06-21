@@ -21,9 +21,9 @@ class StageTimings:
 
 class MetricManager():
     def __init__(self, finish_event: multiprocessing.Event, st_metric_queue: multiprocessing.Queue) -> None:
-        self.live_metrics = bool(get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS"))
+        self.live_metrics = get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS") == "True"
         self.push_metrics_interval = float(get_colext_env_var_or_exit("COLEXT_MONITORING_PUSH_INTERVAL"))
-        measure_self = bool(get_colext_env_var_or_exit("COLEXT_MONITORING_MEASURE_SELF"))
+        measure_self = get_colext_env_var_or_exit("COLEXT_MONITORING_MEASURE_SELF") == "True"
         log.info(f"Live metrics: {self.live_metrics}")
         log.info(f"Push metrics interval: {self.push_metrics_interval}")
 
@@ -52,11 +52,18 @@ class MetricManager():
         log.debug("Start metric gathering.")
 
         while self.finish_event.is_set() is False:
-            time.sleep(self.push_metrics_interval)
+            start_m_time = time.time()
+
             self.collect_available_metrics()
             if self.live_metrics:
                 self.push_current_metrics()
 
+            stop_m_time = time.time()
+            remaining_time = self.push_metrics_interval - (stop_m_time - start_m_time)
+            remaining_time = max(remaining_time, 0)
+            time.sleep(remaining_time)
+
+    # @profile
     def collect_available_metrics(self):
         log.debug("Collecting available metrics in queues.")
         while not self.hw_metric_queue.empty():
