@@ -92,7 +92,7 @@ class LocalDeployer(DeployerBase):
 
             "COLEXT_MONITORING_LIVE_METRICS": str(self.config["monitoring"]["live_metrics"]),
             "COLEXT_MONITORING_PUSH_INTERVAL": str(self.config["monitoring"]["push_interval"]),
-            "COLEXT_MONITORING_SCRAPE_INTERVAL": str(self.config["monitoring"]["scrapping_interval"]),
+            "COLEXT_MONITORING_SCRAPE_INTERVAL": str(self.config["monitoring"]["scraping_interval"]),
             "COLEXT_MONITORING_MEASURE_SELF": str(self.config["monitoring"]["measure_self"]),
         }
 

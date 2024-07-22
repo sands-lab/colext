@@ -1,3 +1,5 @@
+# # torchvision, torchaudio compatibility https://pytorch.org/get-started/previous-versions/
+
 # Assumes pytorch dependencies have been installed before
 git clone --recursive --branch release/0.17 https://github.com/pytorch/vision.git
 cd vision

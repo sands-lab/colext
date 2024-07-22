@@ -6,6 +6,8 @@ __pycache__
 dist
 *.csv
 logs
+*.log
 data
 build
+*.pdf
 torch_wheels

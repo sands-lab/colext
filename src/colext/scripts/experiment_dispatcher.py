@@ -49,7 +49,7 @@ def read_config(config_file):
     monitoring_defaults = {
         "live_metrics": True,
         "push_interval": 10,
-        "scrapping_interval": 0.3,
+        "scraping_interval": 0.3,
         "measure_self": False,
     } # intervals are in seconds
     config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}

@@ -1,186 +1,319 @@
-# Collaborative Learning Experimentation Testbed (CoLExT)
-This repo contains the code devolped to depoly and interact with the Collaborative Learning Testbed.
-This work is being developed such that if your code can be deployed using the Flower interface, it can seamlessly be deployed in COLEXT.
+# CoLExT: Collaborative Learning Experimentation Testbed
+CoLExT is a testbed built for machine learning researchers to realistically execute and profile Federated Learning (FL) algorithms on real edge devices and smartphones. This repo contains the software library developed to seamlessly deploy and monitors code compatible with the [Flower](https://github.com/adap/flower) Frameworks.
+The testbed is currently hosted in the King Abdullah University of Science and Technology (KAUST).
 
-## Overview
-The repository contains two main sections:
-- dev-config: Collection of Ansible scripts used to perform the initial configuration setup of Smartphones/IoT devices
-- colext package: Used to deploy user code in the CoLExT.
+> [!WARNING]
+> CoLExT supports both SBC and Android deployments, but the Android deployment is not yet available on this repo.
 
-## Usage
-- Decorate + Read FL server address from env variable
-- Have a requirements.txt at the root folder
-Create colext_config.yaml
+<p align="center">
+  <img src="./images/CoLExT_schema.svg" alt="CoLExt Diagram" style="max-width: 600px;">
+</p>
+
+# Using CoLExT
+1. Access the CoLExT. How to [access CoLExT](#accessing-the-colext-server).
+1. Install the CoLExT package in a local Python environment, e.g. with venv.
+    ```Python
+    $ python3 -m venv .colext_env && source .colext_env/bin/activate
+
+    # Note: Requires access to private colext repo
+    (.colext_env)$ python3 -m pip install git+ssh://git@github.com/sands-lab/colext.git@sbc
+    ```
+1. In the FL code, import the `colext` decorators and wrap Flower's client and strategy classes. Note: If used outside of the testbed, these decorators do not modify the program behavior and thus can safely be included in the code in general.
+    ```Python
+    from colext import MonitorFlwrClient, MonitorFlwrStrategy
+
+    @MonitorFlwrClient
+    class FlowerClient(fl.client.NumPyClient):
+      [...]
+    @MonitorFlwrStrategy
+    class FlowerStrategy(flwr.server.strategy.Strategy):
+      [...]
+    ```
+1. Create a CoLExT configuration file `colext_config.yaml`. CoLExT exposes bash environment variables regarding the experiment. Remember to atleast pass the server address to the clients. Here's an example configuration file using SBC devices:
+    ```YAML
+    # colext_config.yaml
+    project: colext_example
+
+    code:
+      client:
+        # Assumes relative paths from the config file
+        entrypoint: "./src/client.py"
+        args: "--client_id=${COLEXT_CLIENT_ID} --server_addr=${COLEXT_SERVER_ADDRESS}"
+      server:
+        entrypoint: "./src/server.py"
+        args: "--n_clients=${COLEXT_N_CLIENTS} --n_rounds=3"
+    devices:
+      - { dev_type: LattePandaDelta3, count: 4 }
+      - { dev_type: OrangePi5B,  count: 2 }
+      - { dev_type: JetsonOrinNano, count: 4 }
+    monitoring:
+      scraping_interval: 0.3  # in seconds
+      push_to_db_interval: 10 # in seconds
+    ```
+
+1. Specify your Python dependencies using a `requirements.txt` file on the same directory as the CoLExT configuration file.
+1. Deploy, monitor the experiment in real time, and download the collected performance metrics as CSV files.
+
+    ```bash
+    # Execute in the dir with the colext_config.yaml
+    $ colext_launch_job
+    # Prints a job-id and a dashboard link
+
+    # After the job finishes, retrieve metrics for job-id as CSV files
+    $ colext_get_metrics --job_id <job-id>
+    ```
+
+Dashboard example:
+<p align="center">
+  <img src="./images/power_gpu_some_dev.png" alt="CoLExt Dashboard" style="max-width: 550px;">
+</p>
+
+Continue reading for more information on the above steps and check the tips section for the deployment type you're interested in:
+- [SBC deployment](#tips-for-sbc-deployment)
+- [Android deployment](#tips-for-android-deployment) (Not yet in this repo)
+
+# CoLExT configuration file (colext_config.yaml)
+This section describes the possible configuration options for the CoLExT configuration file.
+
+### Currently available devices
+```YAML
+# SBCs
+  - { device_type: JetsonAGXOrin,  count: 2 }
+  - { device_type: JetsonOrinNano, count: 4 }
+  - { device_type: JetsonXavierNX, count: 2 }
+  - { device_type: JetsonNano, count: 6 }
+  - { device_type: LattePandaDelta3, count: 6 }
+  - { device_type: OrangePi5B, count: 8 }
+# !!! Currently, this config file will not work with smartphones !!!
+# Smartphones
+  - { device_type: SamsungXCover6Pro, count: 3 }
+  - { device_type: SamsungGalaxyM54, count: 2 }
+  - { device_type: Xiaomi12, count: 2 }
+  - { device_type: XiaomiPocoX5Pro, count: 2 }
+  - { device_type: GooglePixel7, count: 5 }
+  - { device_type: AsusRogPhone6, count: 2 }
+  - { device_type: OnePlusNord2T5G, count: 2 }
+```
 
 ### Exposed environment variables
+CoLExT exposes several bash environment variables that are passed to the execution environment. These can be used as arguments in the `args` section of the client and server code by expanding the variables as `${ENV_VAR}`. See the [usage example](#using-colext) for an example.
 
-|      Client Vars      |                                                             |
-| :-------------------: | ----------------------------------------------------------- |
-| COLEXT_SERVER_ADDRESS | Server address (host:port)                                  |
-|   COLEXT_N_CLIENTS    | Number of clients                                           |
-|   COLEXT_CLIENT_ID    | ID of the client (0..n_clients)                             |
-|  COLEXT_DEVICE_TYPE   | Hardware type of the client as requested in the config file |
+|       Name       | Description                     |
+| :--------------: | ------------------------------- |
+|    COLEXT_CLIENT_ID     | ID of the client (0..n_clients) |
+|    COLEXT_N_CLIENTS     | Number of clients in experiment |
+|   COLEXT_DEVICE_TYPE    | Hardware type of the client     |
+|  COLEXT_SERVER_ADDRESS  | Server address (host:port)      |
+| COLEXT_DATA_HOME_FOLDER | Datasets path                   |
+| COLEXT_PYTORCH_DATASETS | Pytorch datasets caching path   |
 
-|      Server Vars      |                                                             |
-| :-------------------: | ----------------------------------------------------------- |
-|   COLEXT_N_CLIENTS    | Number of clients                                           |
+CoLExT also exposes the following variables which are ment to be used internally by the `colext` package.
+|       Name        | Description                               |
+| :------------------------: | ----------------------------------------- |
+|            COLEXT_ENV             | True if inside a CoLExT environment |
+|           COLEXT_JOB_ID           | Experiment job ID                         |
+|        COLEXT_CLIENT_DB_ID        | Unique client ID on the database          |
+|  COLEXT_MONITORING_LIVE_METRICS   | True if metrics are pushed in real-time   |
+|  COLEXT_MONITORING_PUSH_INTERVAL  | Interval between metric push to DB        |
+| COLEXT_MONITORING_SCRAPE_INTERVAL | Interval between HW metric scraping       |
 
-|        Dataset Vars        |                  |
-| :---------------------: | ---------------- |
-| COLEXT_DATA_HOME_FOLDER | Datasets path    |
-| COLEXT_PYTORCH_DATASETS | Pytorch datasets |
-
-|           Internal Vars           |                                                                     |
-| :-------------------------------: | ------------------------------------------------------------------- |
-|           COLEXT_JOB_ID           | Experiment job id                                                   |
-|            COLEXT_ENV             | Presence of this variable identifies COLEXT environment             |
-|        COLEXT_CLIENT_DB_ID        | Unique client ID on the database                                    |
-|  COLEXT_MONITORING_LIVE_METRICS   | Indicates if metrics are periodically sent to DB or only at the end |
-|  COLEXT_MONITORING_PUSH_INTERVAL  | Interval between metric push to DB                                  |
-| COLEXT_MONITORING_SCRAPE_INTERVAL | Interval between HW metric scraping                                 |
-
-## Install package
-```bash
-# Create a conda/virtual environment with python 3.8.
-mamba create -n colext_env_user python=3.8
-# To isolate pip from system site-packages you might need to run:
-echo "include-system-site-packages=false" >> $CONDA_PREFIX/pyvenv.cfg
-
-# Fetch latest changes
-# Note: Requires access to private colext repo
-python3 -m pip install --force-reinstall git+ssh://git@github.com/sands-lab/colext.git@sbc
+### Performance monitoring options
+```YAML
+monitoring:
+  live_metrics: True # True/False : True if metrics are pushed in real-time
+  push_interval: 10 # in seconds  : Metric buffer time before pushing metrics to the DB
+  scraping_interval: 0.3 # in seconds : Interval between metric scraping
 ```
 
-# colext_config.yaml
-## Excluding files from colext containerization
-Files can be excluded by having a .dockerignore file at the root of the project
-For details on .dockerignore, check the [docker documentation](https://docs.docker.com/reference/dockerfile/#dockerignore-file).
+### Python version and deployers
+Deployers:
+- sbc (default) - Deployer for SBC experiments. It's the default deployer.
+- local_py - Deployer that launches a local experiment. Clients and the server are launched in the CoLExT server.
+- android (pending merge) - This deployer has been developed but needs to be merged here.
 
-
-## Available client types
-- JetsonAGXOrin: 2
-- JetsonOrinNano: 4
-- JetsonXavierNX: 2
-- JetsonNano: 6
-- OrangePi5B: 8
-- LattePandaDelta3: 6
-
-## Connect to flserver
-Currently development happens inside the flserver machine.
-The flserver is part of an isolated KAUST network due to RC3 concerns.
-
-To access the flserver, provide your public ssh key and kaust username.
-Then add this config to your local .ssh/config
+Python versions: 3.8 | 3.10
 ```
+deployer: local_py
+code:
+  python_version: "3.10"
+```
+
+# Collected metrics
+### Summary data
+Coming soon...
+
+### Algorithm level and per client metrics per FIT/EVAL stages:
+- Round start timestamp - Recorded by FL server
+- Round end timestamp - Recorded by FL server
+- Round evaluation accuracy - Automatically retrieved from Flower's evaluation functions
+  - srv_accuracy - Server side global model evaluation
+  - dist_accuracy - Result of aggregation of evaluate results from the clients
+- Per client round start timestamp
+- Per client round end timestamp
+
+### HW metrics:
+- CPU Utilization (%) - Percentage over 100%, indicates multiple cores being used
+- GPU Utilization (%)
+- Memory Utilization (Bytes) - The memory reported is the [RSS memory](https://en.wikipedia.org/wiki/Resident_set_size).
+- Number of bytes received (Bytes)
+- Number of bytes sent (Bytes)
+- Upload bandwidth usage (Bytes/s)
+- Download bandwidth usage (Bytes/s)
+- Power consumption (Watts) - Reported power differs between devices
+  - Nvidia Jetsons: Entire board power consumption
+  - LattePandas: CPU power consumption
+  - OrangePis: Can be measured using High Voltage Power Meter
+
+### CSV files obtained:
+After calling `colext_get_metrics --job_id <job-id>`, csv files prepended with `colext_<job_id>_` are downloaded to the current directory.
+Here are the headers for each csv:
+- client_info.csv - client_id, device_name, device_type
+- client_round_timings.csv - client_id, round_number, stage, start_time, end_time
+- hw_metrics.csv - client_id, time, cpu_util, mem_util, gpu_util, power_consumption, n_bytes_sent, n_bytes_rcvd, net_usage_out, net_usage_in
+- round_metrics.csv - round_number, start_time, end_time, dist_accuracy, srv_accuracy, stage
+
+# Tips for SBC deployment
+The SBC deployment containerizes user code and deploys it using Kubernetes.
+Before starting the deployment process, it's recommended to make sure that a local deployment is working as expected.
+
+Once this is verified, check the containarization is working as expected by running the CoLExT launch job command in the "prepare" mode. This mode will perform checks and containerize the application making sure all the dependencies can be installed in the container.
+```Bash
+# Prepares app for deployment
+$ colext_launch_job -p
+```
+
+### Excluding files from CoLExT containerization
+Files can be excluded from the automatic containarization by using a `.dockerignore` file on the same directory as the `colext_config.yaml`. For details on `.dockerignore`, check the [docker documentation](https://docs.docker.com/reference/dockerfile/#dockerignore-file).
+
+### Debugging
+Once the code is successfully deployed to CoLExT, it can be useful to debug issues using the Kubernetes CLI. In our deployment we're using Microk8s with an alias to kubectl we called `mk`. Here are the most useful commands:
+```Bash
+# See current pods deployed in the cluster
+$ mk get pods -o wide
+# See and (f)ollow the logs of a specific pod
+$ mk logs <pod_name> -f
+# Read logs of a failed pod
+$ mk logs <pod_name> -p
+```
+
+### Porting Poetry projects
+Currently, CoLExT does not work with dependencies specified by Poetry. These can easily be converted to the supported requirements.txt format with these commands:
+```
+# Prevents Poetry resolver from being stuck watiting for a keyring we don't need
+export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+poetry export --without-hashes -f requirements.txt --output requirements.txt
+```
+
+# Tips for Android deployment
+Coming soon...
+
+# Accessing the CoLExT server
+Currently, the CoLExT server is located inside KAUST under restricted network conditions.
+To reach the CoLExT server, two steps of indirection are required.
+This makes the current access to CoLExT a bit tricky. We will improve this aspect soon.
+
+Current setup:
+First the user must be able to connect to the KAUST VPN. Available only on request. This request will create a KAUST user account.
+Once connected to the KAUST VPN, the user must use the SSH configuration below to reach the CoLExT server.
+To authenticate into the CoLExT server, please provide a public SSH key and KAUST username to your CoLExT contact point.
+
+SSH Configuration:
+```
+# Add to ~/.ssh/config
 Host flserver
     Hostname 10.68.213.7
     ProxyJump 10.68.186.140
     ForwardAgent yes
 ```
+
 Test connection to flserver:
 ```bash
 ssh <username>@flserver
 ```
 
-## Access to Github repo using ssh authentication
-Before installing the package, you need to be able to access the github repo.
-The flserver network does not allow outgoing communication through port 22, blocking the default ssh port.
-However, we can communicate using port 443 using this trick:
-https://docs.github.com/en/authentication/troubleshooting-ssh/using-ssh-over-the-https-port
-
-Add this to your .ssh/config inside the flserver (not in your local machine)
-```
-Host github.com
-  Hostname ssh.github.com
-  Port 443
-  User git
-```
-
-You may also want to add your ssh key to the ssh agent in your local machine.
-This allows you to use your private ssh key from your local machine without copying it to the flserver.
+Next, you will need to get access to this (currently private) GitHub repo inside the CoLExT server.
+To do this, be sure you have an [SSH key associated with your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) and add it to your ssh agent in your local machine. This allows you to use your private ssh key located in your local machine without copying it to the CoLExT server.
+To add the key, disconnect from the CoLExT server if you were connected, and run the commands below from your local machine.
+After that, connect to the CoLExT server with SSH and the SSH agent will allow you to pull this repo from GitHub.
 ```bash
-ssh-add -l # list keys in local agent
-# if your key is not listed add it
+# On your local machine
+ssh-add -l # list keys in local SSH agent
+# if your key is not listed, add it
 ssh-add # add keys to agent
+ssh-add -l # confirm the key was added
+# connect to CoLExT server
+ssh <username>@flserver
+ssh-add -l # confirm the key is available SSH agent
+```
+If you're just getting started, continue reading the next step in the [using colext section](#using-colext).
+
+
+# Developing the CoLExT package
+Install the CoLExT package locally with the --editable flag.
+```bash
+$ python3 -m pip install -e <root_dir>
+```
+Useful:
+- Experiment with launching an example using the local deployer
+  ```YAML
+  # colext_config.yaml
+  deployer: local_py
+  ```
+- Prepare the deployment only by launching the job with the prepare flag:
+  ```Bash
+  $ colext_launch -p
+  ```
+
+### Repo overview
+```
+.
+├── src/colext/     # Python package used to deploy user code and interact with results
+│   ├── scripts/    # Folder with CoLExT CLI commands: launch_job + get_metrics
+├── examples/       # Example of Flower code integrations with CoLExT
+├── plotting/       # Ploting related code
+├── colext_setup/   # CoLExT setup automation
+│   ├── ansible/            # Ansible playbooks that perform the initial configuration of SBC devices
+│   ├── db_setup/           # DB schema and initial DB populate file
+│   ├── base_docker_imgs/   # Base docker images used when containerizing the code
 ```
 
-## How it works
-It will start by containerizing the App.
-It then deploys it to the Kubernetes cluster.
-Decorators obtain performance measurements, gathered on the DB.
-Grafana dashboard plots the results.
-
-# Testbed detailed configuration:
+# Testbed configuration notes (private):
 https://www.notion.so/Device-first-time-setup-9d8c3d1256be476a9fc3642742b59d17
 
+### Maximizing jetson performance
+Jetson clocks - maxes clocks and turns off dynamic voltage and frequency scaling (DVFS). Can be disabled with [jetson_stats](https://rnext.it/jetson_stats/reference/jetson_clocks.html#jtop.core.jetson_clocks.JetsonClocks).
 
-# Maximizing jetson performance
-Jetson clocks - I think it turns off dynamic voltage and frequency scaling (DVFS)
-https://rnext.it/jetson_stats/reference/jetson_clocks.html#jtop.core.jetson_clocks.JetsonClocks
-
-# Nvidia Power Model Tool (NVP) models
+### Nvidia Power Model Tool (NVP) models
 - [Orin models](https://docs.nvidia.com/jetson/archives/r35.4.1/DeveloperGuide/text/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html#supported-modes-and-power-efficiency)
 - [Xavier NX](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-325/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_jetson_xavier.html#wwpID0E0VO0HA)
 - [Nano](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-3273/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_nano.html#wwpID0E0FL0HA)
 
-
-Jetson power consumption:
-Total consumption.
+### Jetson power consumption measurements:
+Total SBC power consumption.
+```Python
+  power_mw = jetson.power["tot"]["power"]
 ```
-    power_mw = jetson.power["tot"]["power"]
-```
+AGX Orin, Orin Nano - can separate cpu and gpu power from SOC power
 
-Can separate cpu and gpu power in AGX Orin.
-Can seperate CPU and GPU from SOC power in Orin Nano.
-
-
-Fix this for flower 1.7:
-```
-    client_instructions = self.strategy.configure_fit(
-  File "/usr/local/lib/python3.9/site-packages/colext/metric_collection/decorators/flwr_server_decorator.py", line 108, in configure_fit
-    self.configure_clients_in_round(client_instructions, round_id)
-  File "/usr/local/lib/python3.9/site-packages/colext/metric_collection/decorators/flwr_server_decorator.py", line 86, in configure_clients_in_round
-    client_db_id = self.get_client_db_id(proxy)
-  File "/usr/local/lib/python3.9/site-packages/colext/metric_collection/decorators/flwr_server_decorator.py", line 65, in get_client_db_id
-    ip_address = re.search(r'ipv4:(\d+\.\d+\.\d+\.\d+):\d+', client_proxy.cid.__str__()).group(1)
-AttributeError: 'NoneType' object has no attribute 'group'
-```
-
-docker login
-specify which address the fl server expects to use
-
-# Porting poetry projects
-Convert poetry dependencies to requirements.txt
-```
-# Prevent poetry resolver from being stuck watiting for a keyring we don't need
-export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
-poetry export --without-hashes -f requirements.txt --output requirements.txt
-```
-
-## Limitations:
+# Limitations:
+- Currently CoLExT only directly supports FL code using the Flower framework 1.5 + 1.6.
 - `tensorflow` package does not work with LattePandas.
-  Since LP are x86 machines, tensorflow build from PiPy expects them to have support for avx instructions, but they do not.
-- Currently only supports pytorch version 2.0
-  This is being imposed by the base image being used for the jetson docker image.
+  Tensorflow builds from PiPy for x86 arch expect them to have support for avx instructions, but the LattePandas do not have them.
+- Currently Nvidia Jetsons defaults to supporting Pytorch 2.2.0. Except Jetson Nanos, that only support up to Pytorch 1.13.
+  Additional Pytorch versions can be supported upon request.
+- Currently only Python version 3.8 and 3.10 are supported.
 
+## POTENTIAL FUTURE UPDATES
+- Support more recent versions of Flower >= 1.7
+- A new way of using Flwr client-server - Super link + Super node
+- Official Docker support for the new deployment option
+- flwr new templates for Apple MLX, ... "
+  - Add or Android template as one of these templates?
 
-# Local development
-
-## Install the package locally with the --editable flag.
-python3 -m pip install -e <root_dir>
-```
-$ colext_launch -t
-```
-
-# Known issues:
-sudo modprobe nf_conntrack
-
-# Considering supporting conda-lock
-Conda-lock fixes the conda environment to the specific os and platform
+### Consider supporting conda-lock
+Alternative to requirements.txt.
+Conda-lock grounds the conda environment to the specific os and platform
 ```
 conda env export --from-history | egrep -v "^(name|prefix): " > environment.yaml
 conda-lock -f environment.yml -p linux-64 -p linux-aarch64
 ```
-
-https://github.com/canonical/microk8s/issues/2110
-https://github.com/tekn0ir/toe

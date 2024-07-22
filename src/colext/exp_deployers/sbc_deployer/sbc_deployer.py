@@ -125,7 +125,7 @@ class SBCDeployer(DeployerBase):
             pod_config["server_address"] = self.FL_SERVER_ADDRESS
             pod_config["monitoring_live_metrics"] = config["monitoring"]["live_metrics"]
             pod_config["monitoring_push_interval"] = config["monitoring"]["push_interval"]
-            pod_config["monitoring_scrape_interval"] = config["monitoring"]["scrapping_interval"]
+            pod_config["monitoring_scrape_interval"] = config["monitoring"]["scraping_interval"]
             pod_config["monitoring_measure_self"] = config["monitoring"]["measure_self"]
 
             pod_configs.append(pod_config)

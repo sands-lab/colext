@@ -1,4 +1,4 @@
-flwr~=1.5.0
+flwr~=1.6.0
 tqdm~=4.66.1
 # --extra-index-url https://download.pytorch.org/whl/cu116
 torch

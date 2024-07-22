@@ -19,7 +19,7 @@ def collect_job_metrics(job_details):
         if result.returncode != 0:
             print(f"ERROR: Could not collect job metrics for job_id = {job_id}")
             os.rmdir(job_metric_dir)
-    
+
     job_data = read_job_metrics(job_details, job_metric_dir)
 
     return job_data
@@ -88,8 +88,10 @@ def clip_data(round_metrics, cr_timings, hw_metrics, job_details):
     cr_timings = cr_timings[cr_timings["round_number"] <= max_round]
 
     # Only consider FIT data for now
-    # pb for EVAL part will be wrong so we only do fit
+    # pb for EVAL part will be wrong so we only do FIT
     cr_timings = cr_timings[cr_timings["stage"] == "FIT"]
+
+    round_metrics = round_metrics[round_metrics["stage"] == "FIT"]
 
     # Clip HW measurements to start at first round and finish at last round
     start_time = round_metrics["start_time"].min()
@@ -97,7 +99,7 @@ def clip_data(round_metrics, cr_timings, hw_metrics, job_details):
     hw_metrics = hw_metrics[(hw_metrics["time"] > start_time) & (hw_metrics["time"] < end_time)].copy()
     # hw_metrics = hw_metrics.groupby("client_id").apply(reset_network_counts_to_min).reset_index(drop=True)
 
-    return cr_timings, hw_metrics
+    return cr_timings, hw_metrics, round_metrics
 
 def adjust_hw_units(hw_metrics):
     hw_metrics["mem_util"] = hw_metrics["mem_util"] / 1024 / 1024 # MiB
@@ -127,6 +129,9 @@ def compute_cr_additional_cols(cr_timings, hw_metrics, round_metrics, job_detail
     cr_timings = collect_energy_metrics_client_rounds(cr_timings, hw_metrics, round_metrics)
     cr_timings['EDP (J*s)'] = cr_timings['Energy training (J)'] * cr_timings['Training time (s)']
 
+    # Add round time to cr_timings
+    cr_timings = cr_timings.merge(round_metrics[['round_number', 'Round time (s)']], on='round_number')
+
     data_batches = job_details.get("data_batches")
     epochs = job_details.get("epochs", 1)
     if data_batches:
@@ -148,12 +153,14 @@ def read_job_metrics(job_details, job_metric_dir):
     hw_metrics: DataFrame = pd.read_csv(f"{path_prefix}_hw_metrics.csv")
     hw_metrics["time"] = pd.to_datetime(hw_metrics["time"], format='ISO8601')
 
-    cr_timings, hw_metrics = clip_data(round_metrics, cr_timings, hw_metrics, job_details)
+    cr_timings, hw_metrics, round_metrics = clip_data(round_metrics, cr_timings, hw_metrics, job_details)
 
     # Compute energy from power
     hw_metrics = hw_metrics.groupby('client_id').apply(comp_comulative_energy_hw_metrics).reset_index(drop=True)
     # add_round_and_stage_to_hw_metrics(hw_metrics, round_metrics)
     adjust_hw_units(hw_metrics)
+
+    round_metrics['Round time (s)'] = (round_metrics['end_time'] - round_metrics['start_time']).dt.total_seconds()
 
     cr_timings = compute_cr_additional_cols(cr_timings, hw_metrics, round_metrics, job_details)
 
@@ -198,9 +205,9 @@ def plot_cir_metrics(df, job_details, row="device_type", order=None, save_file=N
     cols = [row, "stage"]
 
     if cols_per_batch:
-        cols += ["Training time pb (s)", "Energy pb (J)", 'EDP pb (Normalized)']
+        cols += ["Training time pb (s)", "Energy pb (J)", 'EDP pb (N)']
     else:
-        cols += ["Training time (s)", "Energy training (J)", "Energy in round (J)", 'EDP (Normalized)']
+        cols += ["Training time (s)", "Energy training (J)", "Energy in round (J)", 'EDP (N)']
 
     df = df[cols]
     df_long = pd.melt(df, id_vars=id_vars, var_name='metric')
@@ -217,8 +224,8 @@ def plot_cir_metrics(df, job_details, row="device_type", order=None, save_file=N
     plt.tight_layout()
     if save_file:
         g.figure.savefig(save_file)
-    # if show:
-    #     g.figure.show()
+    if show:
+        g.figure.show()
 
 def full_algo_plot(cr_timings, job_details, show=True):
     exp_name = job_details['exp_name']
@@ -230,51 +237,100 @@ def full_algo_plot(cr_timings, job_details, show=True):
     # row = "device_type"
     # mean_edp_by_dev_type = cr_timings.groupby(row)['EDP (J*s)'].mean()
     # min_mean_edp = mean_edp_by_dev_type.min()
-    # cr_timings['EDP (Normalized)'] = cr_timings.groupby('stage')['EDP (J*s)'].transform(lambda x: x / min_mean_edp)
+    # cr_timings['EDP (N)'] = cr_timings.groupby('stage')['EDP (J*s)'].transform(lambda x: x / min_mean_edp)
     # plot_cir_metrics(cr_timings, job_details, row=row)
 
     # 2 Plot
     row = "device_name"
     mean_edp_by_dev_name = cr_timings.groupby(row)['EDP (J*s)'].mean()
     min_mean_edp = mean_edp_by_dev_name.min()
-    cr_timings['EDP (Normalized)'] = cr_timings.groupby('stage')['EDP (J*s)'].transform(lambda x: x / min_mean_edp)
+    cr_timings['EDP (N)'] = cr_timings.groupby('stage')['EDP (J*s)'].transform(lambda x: x / min_mean_edp)
     plot_cir_metrics(cr_timings, job_details, row=row, save_file=f"{plots_dir}/per_dev.pdf", show=show)
 
     # 3 Plot
     row = "device_type"
     mean_edp = cr_timings.groupby(row)['EDP pb (J*s)'].mean()
     min_mean_edp = mean_edp.min()
-    cr_timings['EDP pb (Normalized)'] = cr_timings.groupby('client_id')['EDP pb (J*s)'].transform(lambda x: x / min_mean_edp)
+    cr_timings['EDP pb (N)'] = cr_timings.groupby('client_id')['EDP pb (J*s)'].transform(lambda x: x / min_mean_edp)
     plot_cir_metrics(cr_timings, job_details, row=row, cols_per_batch=True, save_file=f"{plots_dir}/pb_per_dev_type.pdf", show=show)
 
     # 4 Plot
     row = "device_name"
     mean_edp = cr_timings.groupby(row)['EDP pb (J*s)'].mean()
     min_mean_edp = mean_edp.min()
-    cr_timings['EDP pb (Normalized)'] = cr_timings.groupby('client_id')['EDP pb (J*s)'].transform(lambda x: x / min_mean_edp)
+    cr_timings['EDP pb (N)'] = cr_timings.groupby('client_id')['EDP pb (J*s)'].transform(lambda x: x / min_mean_edp)
     plot_cir_metrics(cr_timings, job_details, row=row, cols_per_batch=True, save_file=f"{plots_dir}/pb_per_dev.pdf", show=show)
 
-def cmp_algorithms_by_cir(cir_list, row, save_file=None):
-    if row == "device_name":
-        cols = ["Algorithm", row, "Training time (s)", "Energy training (J)", "EDP (J*s)"]
-    elif row == "device_type":
-        cols = ["Algorithm", row, "Training time pb (s)", "Energy pb (J)", "EDP pb (Normalized)"]
+def cmp_algorithms_by_cir(cir_list, row, perb=False, N=True, save_file=None):
+    cols = []
+    if perb:
+        cols = ["Training time pb (s)", "Energy pb (J)", "EDP pb (J*s)"]
     else:
-        raise ValueError(f"Row as {row} is not implemented")
+        cols = ["Training time (s)", "Energy training (J)", "EDP (J*s)"]
 
     df = pd.concat(cir_list, axis=0, ignore_index=True)
 
-    mean_edp = df.groupby(['device_name', 'Algorithm'])['EDP pb (J*s)'].mean()
-    min_mean_edp = mean_edp.min()
-    df['EDP pb (Normalized)'] = df.groupby('client_id')['EDP pb (J*s)'].transform(lambda x: x / min_mean_edp)
+    if N:
+        n_columns = len(cols)
+        for i in range(n_columns):
+            col_name = cols[i]
+            min_mean = df.groupby([row, 'Algorithm'])[col_name].mean().min()
+            N_col_name = re.sub(r'\(.*\)', '(N)', col_name)
+            df[N_col_name] = df.groupby('client_id')[col_name].transform(lambda x: x / min_mean)
+            cols[i] = N_col_name
 
+    cols += ["Algorithm", row]
     df = df[cols]
     df_long = pd.melt(df, id_vars=[row, "Algorithm"], var_name='metric')
-    g = sns.catplot(x="value", y=row, col="metric", hue='Algorithm', data=df_long,
-                    kind="bar", sharex=False, height=2.5, aspect=0.805)
+    # g = sns.catplot(x="value", y=row, col="metric", hue='Algorithm', data=df_long,
+    g = sns.catplot(x="value", y='Algorithm', col="metric", hue=row, data=df_long,
+                    kind="bar", sharex=False, height=2.15, aspect=0.82, col_wrap=2)
+                    # kind="bar", sharex=False, height=3, aspect=0.905, col_wrap=2)
     g.set_axis_labels("", "")
     g.set_titles(col_template="{col_name}")
-    # sns.move_legend(g, title="", loc="upper right", bbox_to_anchor=(1.01, 0.75), frameon=True)
+    # for i, ax in enumerate(g.axes[0]):
+    #     if i == 2:
+    #         continue
+    #     ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+
+    if row == "device_type":
+        title = "Device Type"
+    # sns.move_legend(g, loc="center left", handlelength=0.7, bbox_to_anchor=(1.0, 0.5), frameon=True)
+    # sns.move_legend(g, loc="lower left", handlelength=0.7, frameon=True, mode = "expand", ncol=len(df.device_type))
+    # sns.move_legend(g, loc="upper center", title=title, handlelength=0.7, frameon=True, ncol=len(df.device_type), bbox_to_anchor=(0.5,0.05))
+    sns.move_legend(g, loc="lower right", title=title, frameon=True, bbox_to_anchor=(0.95,0.09))
     plt.tight_layout()
     if save_file:
-        g.figure.savefig(save_file)
+        g.figure.savefig(save_file, bbox_inches='tight')
+    plt.show()
+
+def comp_algorithms_by_round_metrics(df_list, save_file=None):
+    df = pd.concat(df_list, axis=0, ignore_index=True)
+    df["Energy in round (J)"] = df.groupby(['Algorithm', 'round_number'])["Energy in round (J)"].transform('sum')
+    cols = ["Round time (s)", "Energy in round (J)"]
+
+    n_columns = len(cols)
+    for i in range(n_columns):
+        col_name = cols[i]
+        min_mean = df.groupby(['Algorithm'])[col_name].mean().min()
+        N_col_name = re.sub(r'\(.*\)', '(N)', col_name)
+        df[N_col_name] = df.groupby('client_id')[col_name].transform(lambda x: x / min_mean)
+        cols[i] = N_col_name
+
+
+    cols += ["Algorithm"]
+    df = df[cols]
+    print(df.groupby('Algorithm').describe())
+
+    df_long = pd.melt(df, id_vars=["Algorithm"], var_name='metric')
+    g = sns.catplot(x="value", y='Algorithm', col="metric", hue='Algorithm',
+                kind='bar', order=["Moon (L)", "Moon (L+O)", "Fedprox (L)"], data=df_long,
+                height=2, aspect=1.5)
+    g.set_axis_labels("", "")
+    g.set_titles(col_template="{col_name}")
+
+    if save_file:
+        g.figure.savefig(save_file, bbox_inches='tight')
+    plt.show()
+
+
