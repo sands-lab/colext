@@ -1,0 +1,2 @@
+[registry."flserver:5000"]
+  http = true

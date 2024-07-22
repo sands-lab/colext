@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ pod_name }}
+  labels:
+    colext-dev-type: client
+    colext-job-id: "{{ job_id }}"
+spec:
+  initContainers:
+  - name: wait-for-fl-server
+    image: busybox:1.28
+    command: ['sh', '-c',
+              "NC_ADDR=$(echo $COLEXT_SERVER_ADDRESS | sed 's/:/ /') && until nc -z -w 2 $NC_ADDR; do echo waiting for $COLEXT_SERVER_ADDRESS; done"]
+    env:
+      - name: COLEXT_SERVER_ADDRESS
+        value: "{{server_address}}"
+  containers:
+  - name: fl-client
+    image: {{ image }}
+    command: ["bash", "-c"]
+    args: ["python3 {{ entrypoint }} {{ entrypoint_args }}"]
+    env:
+      - name: COLEXT_ENV
+        value: "1"
+      - name: COLEXT_SERVER_ADDRESS
+        value: "{{server_address}}"
+      - name: COLEXT_JOB_ID
+        value: "{{ job_id }}"
+      - name: COLEXT_CLIENT_ID
+        value: "{{ client_id }}"
+      - name: COLEXT_N_CLIENTS
+        value: "{{ n_clients }}"
+      - name: COLEXT_CLIENT_DB_ID
+        value: "{{ client_db_id }}"
+      - name: COLEXT_DEVICE_TYPE
+        value: "{{ dev_type }}"
+
+      - name: COLEXT_MONITORING_LIVE_METRICS
+        value: "{{ monitoring_live_metrics }}"
+      - name: COLEXT_MONITORING_PUSH_INTERVAL
+        value: "{{ monitoring_push_interval }}"
+      - name: COLEXT_MONITORING_SCRAPE_INTERVAL
+        value: "{{ monitoring_scrape_interval }}"
+      - name: COLEXT_MONITORING_MEASURE_SELF
+        value: "{{ monitoring_measure_self }}"
+
+      - name: COLEXT_DATA_HOME_FOLDER
+        value: "/colext/datasets"
+      - name: COLEXT_PYTORCH_DATASETS
+        value: "/colext/pytorch_datasets"
+    volumeMounts:
+      - mountPath: /colext/datasets
+        name: colext-std-datasets
+      - mountPath: /colext/pytorch_datasets
+        name: colext-pytorch-datasets
+    {% if "Jetson" in dev_type %}
+      - mountPath: /run/jtop.sock
+        name: jtop-socket
+    {% endif %}
+  volumes:
+    - name: colext-std-datasets
+      hostPath:
+        path: {{ std_datasets_path }}
+        type: Directory
+    - name: colext-pytorch-datasets
+      hostPath:
+        path: {{ pytorch_datasets_path }}
+        type: Directory
+    {% if "Jetson" in dev_type %}
+    - name: jtop-socket
+      hostPath:
+        path: /run/jtop.sock
+        type: Socket
+    {% endif %}
+  {# restartPolicy: Never #}
+  restartPolicy: OnFailure
+  backoffLimit: 1
+  imagePullSecrets:
+    - name: regcred
+  nodeSelector:
+    kubernetes.io/hostname: {{ device_hostname }}

@@ -1,0 +1,51 @@
+#  sudo snap install microk8s --classic --channel=1.29
+# It seems this might be getting deprecated
+- name: Install microk8s
+  community.general.snap:
+    name: microk8s
+    classic: true
+    channel: 1.29
+
+- name: Add local user to microk8s group
+  ansible.builtin.user:
+    name: "{{ansible_user}}"
+    groups: microk8s
+    append: yes
+
+- name: Rest SSH connection to see new group
+  meta: reset_connection
+
+- name: Ensure microk8s is enabled and running
+  ansible.builtin.service:
+    name: snap.microk8s.daemon-kubelite
+    enabled: true
+    state: started
+
+- name: Configure private registry in microk8s
+  ansible.builtin.import_tasks: configure_private_registry.yaml
+
+- name: Configure containerd
+  ansible.builtin.import_tasks: configure_containerd.yaml
+  when: "'jetsons' in group_names"
+
+# Jetsons lack of ipset mod makes it impatible with Calico the default CNI: https://github.com/canonical/microk8s/issues/2110
+- name: Disable HA to support Flannel over Calico (jetsons don't like it)
+  become: false
+  ansible.builtin.shell:
+    cmd: "microk8s disable ha-cluster --force"
+  register: microk8s_output
+  failed_when:
+    - microk8s_output.rc != 0
+    - not ('This MicroK8s deployment is acting as a node in a cluster' in microk8s_output.stdout)
+
+- name: Leave current cluster and disable HA
+  become: false
+  ansible.builtin.shell:
+    cmd: "microk8s leave && microk8s disable ha-cluster --force"
+  when: "'This MicroK8s deployment is acting as a node in a cluster.' in microk8s_output"
+
+- name: Add SBC to kubernetes pool
+  become: false
+  ansible.builtin.shell:
+    cmd: "microk8s join {{microk8s.host}}/{{microk8s.token}}"
+  when: "'outOfNetwork' not in group_names"

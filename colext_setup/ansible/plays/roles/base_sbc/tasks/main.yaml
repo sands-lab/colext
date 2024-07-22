@@ -1,0 +1,43 @@
+- name: Configure access
+  ansible.builtin.import_tasks: configure_access.yaml
+
+- name: Configure hostname to match ansible inventory
+  # Note that this does not set /etc/hosts!
+  ansible.builtin.hostname:
+    name: "{{inventory_hostname}}"
+
+- name: Ensure /etc/hosts has correct hostname
+  ansible.builtin.replace:
+    path: /etc/hosts
+    after: '127\.0\.0\.1\s*localhost'
+    regexp: '127\.0\.1\.1\s*.*'
+    replace: '127.0.1.1\t{{inventory_hostname}}'
+
+- name: Configure NTP
+  ansible.builtin.import_tasks: configure_ntp.yaml
+
+- name: Install packages
+  ansible.builtin.import_tasks: install_packages.yaml
+
+- name: Install services
+  ansible.builtin.import_tasks: install_services.yaml
+
+- name: Configure HW for max performance
+  ansible.builtin.import_tasks: configure_hw.yaml
+
+- name: Configure datasets
+  ansible.builtin.import_tasks: configure_datasets.yaml
+
+- name: Check if reboot required
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Reboot if required
+  ansible.builtin.reboot:
+  when: reboot_required_file.stat.exists == true
+
+# Disable default graphical interface
+- name: Temporarily disable graphical interface (lost with reboot)
+  ansible.builtin.shell:
+    cmd: sudo init 3 # multi-user.target

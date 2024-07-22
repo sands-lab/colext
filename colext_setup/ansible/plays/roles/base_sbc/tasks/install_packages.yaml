@@ -1,0 +1,21 @@
+- name: Update and upgrade apt packages
+  ansible.builtin.apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400 # Keep cache for one day
+
+- name: "Install default packages"
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - snap          # Used to install microk8s
+    - selinux-utils # Microk8s uses it and the jetson OS does not come with it
+    - python3-pip
+
+
+- name: "Install Jtop"
+  ansible.builtin.pip:
+    name: "jetson-stats==4.2.7"
+    executable: pip3
+  when: "'jetsons' in group_names"

@@ -1,0 +1,5 @@
+Configured client as 10.0.0.100:3100
+Modified config to be a configmap and not a secret
+https://github.com/grafana/loki/issues/3519
+https://grafana.com/docs/loki/latest/send-data/promtail/configuration/
+Added section to 'extraRelabelConfigs' to capture colext pod labels

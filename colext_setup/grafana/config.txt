@@ -1,0 +1,1 @@
+Enabled anonymous users as viewers

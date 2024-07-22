@@ -1,0 +1,8 @@
+---
+- name: "Configure SBC"
+  hosts: devices
+  become: true
+  tasks:
+  - name: Disable graphical interface
+    ansible.builtin.shell:
+      cmd: sudo init 3 # multi-user.target
