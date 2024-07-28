@@ -178,11 +178,12 @@ def read_job_metrics(job_details, job_metric_dir):
         }
         cr_timings['device_type'] = cr_timings['device_type'].replace(mapping)
 
-    job_data = {}
-    job_data["client_info"] = client_info
-    job_data["cr_timings"] = cr_timings
-    job_data["hw_metrics"] = hw_metrics
-    job_data["round_metrics"] = round_metrics
+    job_data = {
+        "client_info": client_info,
+        "cr_timings": cr_timings,
+        "hw_metrics": hw_metrics,
+        "round_metrics": round_metrics
+    }
     return job_data
 
 def plot_hw_metrics(df, id_vars="device_type", save_name=None):

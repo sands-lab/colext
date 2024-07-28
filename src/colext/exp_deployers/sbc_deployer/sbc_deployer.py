@@ -49,7 +49,7 @@ class SBCDeployer(DeployerBase):
 
         # Get CoLExT commit and pass it to the dockerfile to ensure we use the same version
         direct_url_info = json.loads(distribution("colext").read_text("direct_url.json"))
-        colext_commit = direct_url_info["vcs_info"]["commit_id"] if "vcs_info" in direct_url_info else "sbc"
+        colext_commit = direct_url_info["vcs_info"]["commit_id"] if "vcs_info" in direct_url_info else "main"
         log.info(f"Using colext commit: {colext_commit}")
 
         if test_env:

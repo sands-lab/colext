@@ -38,7 +38,7 @@ def read_config(config_file):
         print(f"Could not find 'code.path' in config file. Assuming {default_path}")
 
     if "python_version" not in config_dict["code"]:
-        default_py_version = "3.8"
+        default_py_version = "3.10"
         config_dict["code"]["python_version"] = default_py_version
         print(f"Could not find 'code.python_version' in config file. Assuming {default_py_version}")
 

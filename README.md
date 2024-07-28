@@ -16,7 +16,8 @@ The testbed is hosted at the King Abdullah University of Science and Technology 
     $ python3 -m venv .colext_env && source .colext_env/bin/activate
 
     # Note: Requires access to private CoLExT repo
-    (.colext_env)$ python3 -m pip install git+ssh://git@github.com/sands-lab/colext.git@sbc
+    # The plotting extras is useful to automatically generate plots
+    (.colext_env)$ python3 -m pip install colext[plotting] git+ssh://git@github.com/sands-lab/colext.git
     ```
 1. In the FL code, import the `colext` decorators and wrap Flower's client and strategy classes.
    Note: If used outside of the testbed, these decorators do not modify the program behavior and thus can safely be included in the code in general.
@@ -133,11 +134,11 @@ Deployers:
 - local_py - Deployer that launches a local experiment. Clients and the server are launched in the CoLExT server.
 - android (pending merge) - This deployer has been developed but needs to be merged here.
 
-Python versions: 3.8 | 3.10
+Python versions: 3.8 | 3.10 (default).
 ```
 deployer: local_py
 code:
-  python_version: "3.10"
+  python_version: "3.8"
 ```
 
 # Collected metrics
@@ -187,7 +188,7 @@ The SBC deployment containerizes user code and deploys it using Kubernetes.
 Before starting the deployment process, it's recommended to make sure that a local deployment is working as expected.
 Local deployment can be used by changing the deployer to `local_py`. More information on setting the deployer [here](#python-version-and-deployers).
 
-Once this is verified, check the containarization is working as expected by running the `colext_launch_job` command in the "prepare" mode. 
+Once this is verified, check the containarization is working as expected by running the `colext_launch_job` command in the "prepare" mode.
 This mode will perform checks and containerize the application making sure all the dependencies can be installed in the container.
 ```Bash
 # Prepares app for deployment
@@ -244,6 +245,7 @@ $ ssh <username>@flserver
 
 Next, you will need access to this (currently private) GitHub repo inside the CoLExT server.
 To do this, be sure you have an [SSH key associated with your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) and add it to your ssh agent in your local machine. This allows you to use your private ssh key located in your local machine without copying it to the CoLExT server.
+
 To add the key, disconnect from the CoLExT server if you were connected, and run the commands below from your local machine.
 After that, connect to the CoLExT server with SSH, and the SSH agent will allow you to pull this repo from GitHub.
 ```bash
@@ -289,7 +291,7 @@ Useful:
 ```
 
 # Testbed configuration notes (private):
-https://www.notion.so/Device-first-time-setup-9d8c3d1256be476a9fc3642742b59d17
+[Notion page](https://www.notion.so/Device-first-time-setup-9d8c3d1256be476a9fc3642742b59d17)
 
 ### Maximizing jetson performance
 Jetson clocks - maxes clocks and turns off dynamic voltage and frequency scaling (DVFS). Can be disabled with [jetson_stats](https://rnext.it/jetson_stats/reference/jetson_clocks.html#jtop.core.jetson_clocks.JetsonClocks).

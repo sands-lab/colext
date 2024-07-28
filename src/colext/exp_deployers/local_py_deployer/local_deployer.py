@@ -25,7 +25,7 @@ class LocalDeployer(DeployerBase):
         client_launch_cmd, cli_env = self.prepare_clients(job_id)
 
         # Prepare logs
-        logs_dir = Path(f"logs")
+        logs_dir = Path("logs")
         # Clear previous logs
         shutil.rmtree(logs_dir, ignore_errors=True)
         os.makedirs(logs_dir, exist_ok=True)
