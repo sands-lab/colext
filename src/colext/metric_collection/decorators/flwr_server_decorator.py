@@ -138,10 +138,10 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.eval_round_id = self.record_start_round(server_round, "EVAL")
             evaluate_result = super().evaluate(server_round, parameters)
             log.debug(f"{evaluate_result=}")
-            # Handle case where evaluate_result is None
-            srv_eval_metrics = {}
             if evaluate_result:
                 _, srv_eval_metrics = evaluate_result
+            else:
+                srv_eval_metrics = {}
 
             self.record_end_round(server_round, "EVAL", srv_accuracy=srv_eval_metrics.get("accuracy"))
             return evaluate_result

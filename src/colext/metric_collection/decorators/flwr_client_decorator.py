@@ -8,7 +8,8 @@ from flwr.common import (Config, Scalar)
 
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
-from colext.metric_collection.metric_manager import MetricManager, StageTimings
+from colext.metric_collection.metric_manager import MetricManager
+from colext.metric_collection.typing import StageMetrics
 
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
@@ -77,7 +78,11 @@ def MonitorFlwrClient(FlwrClientClass):
             fit_result = super().fit(parameters, config)
             end_fit_time = datetime.now(timezone.utc)
 
-            st = StageTimings(client_in_round_id, "FIT", start_fit_time, end_fit_time)
+            num_examples = fit_result[1]
+            loss = fit_result[2].get("loss")
+            acc = fit_result[2].get("accuracy")
+            st = StageMetrics(client_in_round_id, "FIT",
+                              start_fit_time, end_fit_time, loss, num_examples, acc)
             self.stage_timings_queue.put(st)
 
             return fit_result
@@ -90,7 +95,11 @@ def MonitorFlwrClient(FlwrClientClass):
             eval_result = super().evaluate(parameters, config)
             end_eval_time = datetime.now(timezone.utc)
 
-            st = StageTimings(client_in_round_id, "EVAL", start_eval_time, end_eval_time)
+            loss = eval_result[0]
+            num_examples = eval_result[1]
+            acc = eval_result[2].get("accuracy")
+            st = StageMetrics(client_in_round_id, "EVAL",
+                              start_eval_time, end_eval_time, loss, num_examples, acc)
             self.stage_timings_queue.put(st)
 
             return eval_result

@@ -116,12 +116,13 @@ class DBUtils:
 
         cursor.close()
 
-    def get_client_round_timings(self, job_id: int, metric_writer: BinaryIO):
+    def get_client_round_metrics(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
                 (SELECT client_number AS client_id, round_number, stage,
-                        cir.start_time, cir.end_time
+                        cir.start_time, cir.end_time,
+                        loss, num_examples, accuracy
                     FROM clients_in_round as cir
                         JOIN rounds USING(round_id)
                         JOIN clients USING(client_id)
@@ -142,16 +143,16 @@ class DBUtils:
         if not self.check_if_job_exists(job_id):
             raise JobNotFoundException
 
-        with open(f"colext_{job_id}_hw_metrics.csv", "wb") as metric_writer:
+        with open("hw_metrics.csv", "wb") as metric_writer:
             self.get_hw_metrics(job_id, metric_writer)
 
-        with open(f"colext_{job_id}_round_metrics.csv", "wb") as metric_writer:
+        with open("round_metrics.csv", "wb") as metric_writer:
             self.get_round_metrics(job_id, metric_writer)
 
-        with open(f"colext_{job_id}_client_round_timings.csv", "wb") as metric_writer:
-            self.get_client_round_timings(job_id, metric_writer)
+        with open("client_round_metrics.csv", "wb") as metric_writer:
+            self.get_client_round_metrics(job_id, metric_writer)
 
-        with open(f"colext_{job_id}_client_info.csv", "wb") as metric_writer:
+        with open("client_info.csv", "wb") as metric_writer:
             self.get_client_info(job_id, metric_writer)
 
 class JobNotFoundException(ValueError):

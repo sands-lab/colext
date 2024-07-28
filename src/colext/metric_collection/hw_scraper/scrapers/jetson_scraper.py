@@ -31,7 +31,7 @@ class JetsonScraper(PSUtilScrapper):
 
     def scrape_process_metrics(self) -> ProcessMetrics:
         start_ps_m_time = time.time()
-        p_metrics = super().scrape_process_metrics()
+        p_metrics: ProcessMetrics = super().scrape_process_metrics()
         end_ps_m_time = time.time()
         log.debug(f"psutil time = {end_ps_m_time - start_ps_m_time}")
 
@@ -43,7 +43,7 @@ class JetsonScraper(PSUtilScrapper):
             log.error("jetson.ok returned false!")
 
         # Override psutils metrics
-        p_metrics.power_mw = self.jetson.power["tot"]["power"]
+        p_metrics.power_consumption = self.jetson.power["tot"]["power"]
         p_metrics.gpu_util = self.jetson.gpu[self.gpu_key]["status"]["load"]
 
         end_jtop_m_time = time.time()

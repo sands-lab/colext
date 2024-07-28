@@ -18,8 +18,8 @@ class PSUtilScrapper(ScraperBase):
 
     def scrape_process_metrics(self) -> ProcessMetrics:
         with self.proc.oneshot():
-            cpu_percent = self.proc.cpu_percent()
-            memory_usage = self.proc.memory_full_info().rss
+            cpu_util = self.proc.cpu_percent()
+            mem_util = self.proc.memory_full_info().rss
 
         current_net_stat = psutil.net_io_counters(nowrap=True)
         n_bytes_sent = current_net_stat.bytes_sent - self.prev_net_stat.bytes_sent
@@ -35,9 +35,9 @@ class PSUtilScrapper(ScraperBase):
         net_usage_out = round(n_bytes_sent / time_between_scrapes, 5) # B/s
         net_usage_in  = round(n_bytes_rcvd / time_between_scrapes, 5) # B/s
 
-        power_mw = 0
+        power_consumption = 0
         gpu_util = 0
         p_metrics = ProcessMetrics(
-                        current_time, cpu_percent, memory_usage, power_mw, gpu_util,
+                        current_time, cpu_util, gpu_util, mem_util, power_consumption,
                         self.total_bytes_sent, self.total_bytes_recv, net_usage_out, net_usage_in)
         return p_metrics

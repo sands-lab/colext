@@ -18,6 +18,7 @@ CoLExT now captures start-end time of rounds (FIT/EVAL) :+1:
 # DB Changelog
 fl_testbed_logging.clients_in_rounds -> fl_testbed_logging.clients_in_round
 fl_testbed_logging.rounds -> renamed accuracy to dist_accuracy + added srv_accuracy
+fl_testbed_logging.clients_in_round -> Added columns start_time, end_time, loss, sample_count, accuracy
 
 Can we remove client in round id? That id grows very fast. it's already 18k
     We can replace cir_id with three unique foreign keys (job_id, client_id, round_id)

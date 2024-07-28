@@ -15,7 +15,7 @@ class LatteScraper(PSUtilScrapper):
 
     def scrape_process_metrics(self) -> ProcessMetrics:
         start_ps_m_time = time.time()
-        p_metrics = super().scrape_process_metrics()
+        p_metrics: ProcessMetrics = super().scrape_process_metrics()
         end_ps_m_time = time.time()
         log.debug(f"psutil time = {end_ps_m_time - start_ps_m_time}")
 
@@ -23,7 +23,7 @@ class LatteScraper(PSUtilScrapper):
         energy_mj = self.p_meter.result.pkg[0] / 1.0e3
         interval_sec = self.p_meter.result.duration / 1.0e6
         # Override psutils metrics
-        p_metrics.power_mw = energy_mj / interval_sec
+        p_metrics.power_consumption = energy_mj / interval_sec
 
         timestamp = datetime.now(timezone.utc)
         p_metrics.time = timestamp

@@ -1,24 +1,15 @@
-from datetime import datetime
 import os
 import time
 import queue
 import multiprocessing
-from dataclasses import dataclass
 from psycopg_pool import ConnectionPool
+from dataclasses import asdict
 
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
+from colext.metric_collection.typing import StageMetrics
 from .hw_scraper.hw_scraper_base import HWScraper
 from .hw_scraper.scrapers.scraper_base import ProcessMetrics
-
-@dataclass
-class StageTimings:
-    """ Class to keep track of stage(fit/eval) start and end timings"""
-    cir_id: int
-    stage: str
-    start_time: datetime
-    end_time: datetime
-
 class MetricManager():
     def __init__(self, finish_event: multiprocessing.Event, st_metric_queue: multiprocessing.Queue) -> None:
         self.live_metrics = get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS") == "True"
@@ -27,7 +18,7 @@ class MetricManager():
         log.info(f"Live metrics: {self.live_metrics}")
         log.info(f"Push metrics interval: {self.push_metrics_interval}")
 
-        self.st_metrics = []
+        self.stage_metrics = []
         self.st_metric_queue = st_metric_queue
         self.hw_metrics = []
         self.hw_metric_queue = queue.Queue()
@@ -71,8 +62,8 @@ class MetricManager():
             self.hw_metrics.append(hw_metric)
 
         while not self.st_metric_queue.empty():
-            st_metric: StageTimings = self.st_metric_queue.get()
-            self.st_metrics.append(st_metric)
+            st_metric: StageMetrics = self.st_metric_queue.get()
+            self.stage_metrics.append(st_metric)
 
     def stop_metric_gathering(self) -> None:
         log.info("Shutting down metric manager.")
@@ -105,21 +96,8 @@ class MetricManager():
                         %(n_bytes_sent)s, %(n_bytes_rcvd)s, %(net_usage_out)s, %(net_usage_in)s);
                 """
 
-        formatted_metrics = [
-            {
-                'time': m.time,
-                'client_id': self.client_db_id,
-                'cpu_util': m.cpu_percent,
-                'mem_util': m.memory_usage,
-                'gpu_util': m.gpu_util,
-                'power_consumption': m.power_mw,
-                'n_bytes_sent': m.n_bytes_sent,
-                'n_bytes_rcvd': m.n_bytes_rcvd,
-                'net_usage_out': m.net_usage_out,
-                'net_usage_in': m.net_usage_in
-            }
-            for m in self.hw_metrics]
-
+        cid_dict = {'client_id': self.client_db_id}
+        formatted_metrics = [{**asdict(m), **cid_dict} for m in self.hw_metrics]
         with self.db_pool.connection() as conn:
             with conn.cursor() as cur:
                 cur.executemany(sql, formatted_metrics)
@@ -128,21 +106,22 @@ class MetricManager():
         self.hw_metrics.clear()
 
     def push_current_st_metrics(self):
-        if len(self.st_metrics) == 0:
+        if len(self.stage_metrics) == 0:
             log.debug("No Stage timings metrics to push.")
             return
 
-        log.debug(f"Pushing {len(self.st_metrics)} stage timings from client {self.client_db_id} to DB")
+        log.debug(f"Pushing {len(self.stage_metrics)} stage timings from client {self.client_db_id} to DB")
 
         sql = """
                 UPDATE clients_in_round
-                    SET start_time = %s, end_time = %s
-                WHERE cir_id = %s
+                    SET start_time = %(start_time)s, end_time = %(end_time)s,
+                        loss = %(loss)s, num_examples = %(num_examples)s, accuracy = %(accuracy)s
+                WHERE cir_id = %(cir_id)s
               """
 
-        formatted_metrics = [ (st.start_time, st.end_time, st.cir_id) for st in self.st_metrics]
+        formatted_metrics = [asdict(sm) for sm in self.stage_metrics]
 
         with self.db_pool.connection() as conn:
             with conn.cursor() as cur:
                 cur.executemany(sql, formatted_metrics)
-        self.st_metrics.clear()
+        self.stage_metrics.clear()
