@@ -163,10 +163,9 @@ def clean_up_cr(jd):
     cr_timings = collect_energy_metrics_client_rounds(cr_timings, hw_metrics, round_metrics)
     cr_timings['EDP (J*s)'] = cr_timings['Energy training (J)'] * cr_timings['Training time (s)']
 
-    epochs = 1
-    cr_timings['Training time ps (s)'] = cr_timings.apply(lambda row: row["Training time (s)"] / row["num_examples"] / epochs, axis=1)
-    cr_timings['Energy ps (J)'] = cr_timings.apply(lambda row: row["Energy training (J)"] / row["num_examples"] / epochs, axis=1)
-    cr_timings['EDP ps (J*s)'] = cr_timings['Training time ps (s)'] * cr_timings['Energy ps (J)']
+    cr_timings['Training time ps (ms)'] = cr_timings.apply(lambda row: row["Training time (s)"] / row["num_examples"] * 1000, axis=1)
+    cr_timings['Energy ps (mJ)'] = cr_timings.apply(lambda row: row["Energy training (J)"] / row["num_examples"] * 1000 , axis=1)
+    cr_timings['EDP ps (mJ*ms)'] = cr_timings['Training time ps (ms)'] * cr_timings['Energy ps (mJ)']
 
     # Add client device name and type
     cr_timings = cr_timings.join(client_info, on="client_id")
@@ -205,17 +204,17 @@ def plot_summary_data(summary_data):
     summary_data['EDP (N)'] = summary_data.groupby('stage')['EDP (J*s)'].transform(lambda x: x / min_mean_edp)
     plot_cir_metrics(summary_data, interest_cols, row=row, save_file="per_dev.pdf")
 
-    interest_cols = ["Training time ps (s)", "Energy ps (J)", "EDP ps (N)"]
+    interest_cols = ["Training time ps (ms)", "Energy ps (mJ)", "EDP ps (N)"]
     # 3 Plot
     row = "device_type"
-    mean_edp = summary_data.groupby(row)['EDP ps (J*s)'].mean()
+    mean_edp = summary_data.groupby(row)['EDP ps (mJ*ms)'].mean()
     min_mean_edp = mean_edp.min()
-    summary_data['EDP ps (N)'] = summary_data.groupby('client_id')['EDP ps (J*s)'].transform(lambda x: x / min_mean_edp)
-    plot_cir_metrics(summary_data, interest_cols, row=row, save_file="pb_per_dev_type.pdf")
+    summary_data['EDP ps (N)'] = summary_data.groupby('client_id')['EDP ps (mJ*ms)'].transform(lambda x: x / min_mean_edp)
+    plot_cir_metrics(summary_data, interest_cols, row=row, save_file="ps_per_dev_type.pdf")
 
     # 4 Plot
     row = "device_name"
-    mean_edp = summary_data.groupby(row)['EDP ps (J*s)'].mean()
+    mean_edp = summary_data.groupby(row)['EDP ps (mJ*ms)'].mean()
     min_mean_edp = mean_edp.min()
-    summary_data['EDP ps (N)'] = summary_data.groupby('client_id')['EDP ps (J*s)'].transform(lambda x: x / min_mean_edp)
-    plot_cir_metrics(summary_data, interest_cols, row=row, save_file="pb_per_dev.pdf")
+    summary_data['EDP ps (N)'] = summary_data.groupby('client_id')['EDP ps (mJ*ms)'].transform(lambda x: x / min_mean_edp)
+    plot_cir_metrics(summary_data, interest_cols, row=row, save_file="ps_per_dev.pdf")
