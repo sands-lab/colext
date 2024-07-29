@@ -232,7 +232,7 @@ To authenticate into the CoLExT server, please provide a public SSH key and KAUS
 SSH Configuration:
 ```
 # Add to ~/.ssh/config
-Host flserver
+Host colext
     Hostname 10.68.213.7
     ProxyJump 10.68.186.140
     ForwardAgent yes
@@ -240,7 +240,7 @@ Host flserver
 
 Test connection to CoLExT server:
 ```bash
-$ ssh <username>@flserver
+$ ssh <username>@colext
 ```
 
 Next, you will need access to this (currently private) GitHub repo inside the CoLExT server.
@@ -255,7 +255,7 @@ $ ssh-add -l # list keys in the SSH agent
 $ ssh-add # add keys to agent
 $ ssh-add -l # confirm the key was added
 # Connect to the CoLExT server
-$ ssh <username>@flserver
+$ ssh <username>@colext
 $ ssh-add -l # confirm the key is available in the SSH agent when connected to the CoLExT server
 ```
 If you're just getting started, continue reading the next step in the [using colext section](#using-colext).
