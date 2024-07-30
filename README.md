@@ -15,8 +15,7 @@ The testbed is hosted at the King Abdullah University of Science and Technology 
     ```Python
     $ python3 -m venv .colext_env && source .colext_env/bin/activate
 
-    # Note: Requires access to private CoLExT repo
-    # The plotting extras is useful to automatically generate plots
+    # The plotting extras automatically generatess metric plots
     (.colext_env)$ python3 -m pip install colext[plotting] git+ssh://git@github.com/sands-lab/colext.git
     ```
 1. In the FL code, import the `colext` decorators and wrap Flower's client and strategy classes.
@@ -134,7 +133,7 @@ Deployers:
 - local_py - Deployer that launches a local experiment. Clients and the server are launched in the CoLExT server.
 - android (pending merge) - This deployer has been developed but needs to be merged here.
 
-Python versions: 3.8 | 3.10 (default).
+Python versions: 3.10 (default) | 3.8.
 ```
 deployer: local_py
 code:
@@ -221,33 +220,35 @@ poetry export --without-hashes -f requirements.txt --output requirements.txt
 Coming soon...
 
 # Accessing the CoLExT server
-Currently, the CoLExT server is located inside KAUST under restricted network conditions.
-Two steps of indirection are required to reach the CoLExT server, making the current access to CoLExT a bit tricky. We will improve this aspect soon.
+Currently, the CoLExT server is not reachable through a public IP.
+To simplify the access to the server we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network.
 
-Current setup:
-First, the user must be able to connect to the KAUST VPN. Available only on request. This request will create a KAUST user account.
-Once connected to the KAUST VPN, the user must use the SSH configuration below to reach the CoLExT server.
-To authenticate into the CoLExT server, please provide a public SSH key and KAUST username to your CoLExT contact point.
+### Connect to CoLExT server:
+1. Share a public SSH key to your CoLExT contact point
+1. [Install ZeroTier](https://www.zerotier.com/download/).
+1. Share your ZeroTier device ID with your CoLExT contact point. The ID is displayed at instalation and can be retrieved later with:
+    ```
+    sudo zerotier-cli info | awk '{print $3}'
+    ```
+1. Add SSH config:
+    ```
+    # Add to ~/.ssh/config
+    Host colext
+        Hostname 10.244.96.246
+        ForwardAgent yes
+    ```
+1. Wait for your device to be added to the network
+1. Test connection to CoLExT server:
+    ```bash
+    # Confirm connectivity
+    $ ping 10.244.96.246
+    # Confirm ssh access
+    $ ssh <username>@colext
+    ```
 
-SSH Configuration:
-```
-# Add to ~/.ssh/config
-Host colext
-    Hostname 10.68.213.7
-    ProxyJump 10.68.186.140
-    ForwardAgent yes
-```
+Finally, to use CoLExT you will need access to this (currently private) GitHub repo inside the CoLExT server. To have access, be sure you have an [SSH key associated with your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) and add it to your ssh agent in your local machine. This allows you to use your private ssh key located in your local machine without copying it to the CoLExT server.
 
-Test connection to CoLExT server:
-```bash
-$ ssh <username>@colext
-```
-
-Next, you will need access to this (currently private) GitHub repo inside the CoLExT server.
-To do this, be sure you have an [SSH key associated with your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) and add it to your ssh agent in your local machine. This allows you to use your private ssh key located in your local machine without copying it to the CoLExT server.
-
-To add the key, disconnect from the CoLExT server if you were connected, and run the commands below from your local machine.
-After that, connect to the CoLExT server with SSH, and the SSH agent will allow you to pull this repo from GitHub.
+To add the key, disconnect from the CoLExT server if you were connected, and run the commands below from your local machine. After that, connect to the CoLExT server with SSH, and the SSH agent will allow you to pull this repo from GitHub.
 ```bash
 # On your local machine
 $ ssh-add -l # list keys in the SSH agent
@@ -256,10 +257,11 @@ $ ssh-add # add keys to agent
 $ ssh-add -l # confirm the key was added
 # Connect to the CoLExT server
 $ ssh <username>@colext
-$ ssh-add -l # confirm the key is available in the SSH agent when connected to the CoLExT server
+$ ssh-add -l # confirm the key is available in the CoLExT server
+# You should now be able to install the Python package
 ```
-If you're just getting started, continue reading the next step in the [using colext section](#using-colext).
 
+If you're just getting started, continue reading the next step in the [using colext section](#using-colext).
 
 # Developing the CoLExT package
 Install the CoLExT package locally with the --editable flag.
