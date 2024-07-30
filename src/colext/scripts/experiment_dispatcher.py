@@ -5,6 +5,7 @@ import sys
 import yaml
 from colext.common.logger import log
 from colext.exp_deployers import get_deployer
+from colext.exp_deployers.db_utils import DBUtils, ProjectNotFoundException
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
@@ -20,6 +21,8 @@ def get_args():
     return args
 
 def read_config(config_file):
+    db = DBUtils()
+
     try:
         print(f"Trying to read CoLExT configuration file from '{config_file}'")
         with open(config_file, "r") as stream:
@@ -55,18 +58,27 @@ def read_config(config_file):
     config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
 
     # Validate
+    if "project" not in config_dict:
+        print("Please specify the project name to associate this job with.")
+        sys.exit(1)
+    else:
+        project_name = config_dict['project']
+        if not db.project_exists(project_name):
+            print_err(f"Could not find project named {project_name}. Please use a valid project name.")
+            sys.exit(1)
+
     if "devices" not in config_dict:
-        print("Please specify at least one device to act as a client")
+        print_err("Please specify at least one device to act as a client")
         sys.exit(1)
 
     valid_python_versions = ["3.8", "3.10"]
     if config_dict["code"]["python_version"] not in valid_python_versions:
-        print(f"code.python_version can  only be set to {valid_python_versions}")
+        print_err(f"code.python_version can  only be set to {valid_python_versions}")
         sys.exit(1)
 
     valid_deployers = ["sbc", "local_py"]
     if config_dict["deployer"] not in valid_deployers:
-        print(f"deployer can  only be set to {valid_deployers}")
+        print_err(f"deployer can  only be set to {valid_deployers}")
         sys.exit(1)
 
     # TODO Support specifying device type + count
@@ -81,17 +93,18 @@ def read_config(config_file):
     print("CoLExT configuration read successfully")
     return config_dict
 
+def print_err(msg):
+    print(f"ERR: {msg}")
+
 def print_dashboard_url(extra_grafana_vars: dict  = None):
-    DASHBOARD_URL_BASE = ("http://localhost:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/colext-dashboard?"
-                          "orgId=1&from=now-5m&to=now&refresh=5s")
+    DASHBOARD_URL_BASE = ("http://colext:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/colext-dashboard?"
+                          "orgId=1&from=now-5m&to=now&refresh=10s")
 
     extra_grafana_vars = [f"&var-{k}={v}" for k, v in extra_grafana_vars.items()]
     dashboard_url = DASHBOARD_URL_BASE + "".join(extra_grafana_vars)
 
     print("Job logs and metrics are available on the Grafana dashboard:")
     print(dashboard_url)
-    print("You may need to create an SSH tunnel to see the dashboard:")
-    print("ssh -L 3000:localhost:3000 -N flserver")
 
 def launch_experiment():
     log.setLevel(logging.DEBUG)
@@ -113,14 +126,18 @@ def launch_experiment():
     print(f"Launched experiment with {job_id=}")
 
     grafana_vars = {
+        "project": config_dict["project"],
         "jobid": job_id,
+        "round_n": "All",
         "clientid": "All",
+        "show_stages": "True",
     }
     print_dashboard_url(grafana_vars)
 
     print("\nExperiment running...")
     if args.wait_for_experiment:
-        print("Waiting for experiment")
+        print("Waiting for experiment.")
+        print("Note that pods can take up to 10 minutes to start.")
         deployer.wait_for_job(job_id)
         print("Experiment complete.")
     else:

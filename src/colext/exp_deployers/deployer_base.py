@@ -25,7 +25,7 @@ class DeployerBase(ABC):
     def start(self):
         """ Start the deployment process """
         self.prepare_deployment()
-        job_id = self.db_utils.create_job()
+        job_id = self.db_utils.create_job(self.config)
         self.deploy_setup(job_id)
 
         return job_id

@@ -2,8 +2,8 @@ import os
 import time
 import queue
 import multiprocessing
-from psycopg_pool import ConnectionPool
 from dataclasses import asdict
+from psycopg_pool import ConnectionPool
 
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
@@ -54,7 +54,6 @@ class MetricManager():
             remaining_time = max(remaining_time, 0)
             time.sleep(remaining_time)
 
-    # @profile
     def collect_available_metrics(self):
         log.debug("Collecting available metrics in queues.")
         while not self.hw_metric_queue.empty():

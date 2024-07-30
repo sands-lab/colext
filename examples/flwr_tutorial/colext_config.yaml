@@ -1,12 +1,12 @@
 project: colext_example # project name should not have spaces
 job_name: "SOTA FL experiment"
 
-deployer: local_py
+# deployer: local_py
 code:
-  python_version: "3.10"
+  # python_version: "3.10"
   client:
     entrypoint: "client.py"
-    args: "--flserver_address=${COLEXT_SERVER_ADDRESS} --max_step_count=800"
+    args: "--flserver_address=${COLEXT_SERVER_ADDRESS} --max_step_count=200"
 
   server:
     entrypoint: "server.py"
@@ -15,14 +15,13 @@ code:
 devices:
   - { device_type: JetsonAGXOrin,  count: 2 }
   - { device_type: JetsonOrinNano, count: 2 }
-  # - { device_type: LattePandaDelta3, count: 1 }
-  # - { device_type: OrangePi5B, count: 1 }
-  # - { device_type: JetsonXavierNX, count: 1 }
-  # - { device_type: JetsonNano, count: 2 }
+  - { device_type: JetsonXavierNX, count: 2 }
+  # - { device_type: JetsonNano, count: 6 }
+  # - { device_type: LattePandaDelta3, count: 2 }
+  # - { device_type: OrangePi5B, count: 8 }
 
 # Monitoring defaults
 # monitoring:
 #   live_metrics: True # True/False
 #   push_interval: 10 # in seconds
 #   scraping_interval: 0.3 # in seconds
-#   measure_self: False # True/False

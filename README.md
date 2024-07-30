@@ -65,10 +65,16 @@ The testbed is hosted at the King Abdullah University of Science and Technology 
     $ colext_get_metrics --job_id <job-id>
     ```
 
-Dashboard example:
-<p align="center">
-  <img src="./images/power_gpu_some_dev.png" alt="CoLExt Dashboard" width="600">
-</p>
+    Dashboard example:
+    <p align="center">
+      <img src="./images/power_gpu_some_dev.png" alt="CoLExt Dashboard" width="600">
+    </p>
+
+1. To confirm the deployment is working, try launching an example:
+    ```bash
+      $ cd colext/examples/flwr_tutorial
+      $ colext_launch_job
+    ```
 
 Continue reading for more information on the above steps and check the tips section for the deployment type you're interested in:
 - [SBC deployment](#tips-for-sbc-deployment)
@@ -236,6 +242,11 @@ To simplify the access to the server we're using [ZeroTier](https://www.zerotier
     Host colext
         Hostname 10.244.96.246
         ForwardAgent yes
+    ```
+1. (Optional) Add the CoLExT server to the hosts file:
+    ```
+    # Add to /etc/hosts
+    10.244.96.246 colext
     ```
 1. Wait for your device to be added to the network
 1. Test connection to CoLExT server:

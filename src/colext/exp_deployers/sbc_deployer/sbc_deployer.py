@@ -178,6 +178,8 @@ class SBCDeployer(DeployerBase):
             client_pod_dict = yaml.safe_load(self.client_template.render(pod_config))
             self.k_utils.create_from_dict(client_pod_dict)
 
+        log.info(f"Experiment deployed. It can be canceled with 'mk delete pods --all'")
+
     def get_device_hostname_by_type(self, available_devices_by_type, device_type):
         try:
             (dev_id, dev_hostname) = available_devices_by_type[device_type].pop()

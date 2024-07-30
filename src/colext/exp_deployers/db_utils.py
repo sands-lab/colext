@@ -9,10 +9,38 @@ class DBUtils:
         DB_CONN_INFO = "host=flserver dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
         return psycopg.connect(DB_CONN_INFO, autocommit=True)
 
-    def create_job(self) -> int:
+    def project_exists(self, project_name) -> bool:
+        try:
+            self.get_project_id(project_name)
+            return True
+        except ProjectNotFoundException:
+            return False
+
+    def get_project_id(self, project_name) -> int:
         cursor = self.DB_CONNECTION.cursor()
-        sql = "INSERT INTO jobs(start_time, user_id) VALUES (CURRENT_TIMESTAMP, 1) returning job_id"
-        cursor.execute(sql)
+        sql = "SELECT project_id FROM projects WHERE project_name = %s"
+        data = (project_name,)
+        cursor.execute(sql, data)
+        record = cursor.fetchone()
+        cursor.close()
+
+        if record is None:
+            raise ProjectNotFoundException
+
+        return record[0]
+
+    # Passing config as we may want to store the entire config as part of the job
+    def create_job(self, config) -> int:
+        project_id = self.get_project_id(config['project'])
+
+        cursor = self.DB_CONNECTION.cursor()
+        sql = """
+                INSERT INTO jobs(start_time, user_id, project_id)
+                VALUES (CURRENT_TIMESTAMP, 1, %s)
+                returning job_id
+            """
+        data = (project_id,)
+        cursor.execute(sql, data)
         job_id = cursor.fetchone()[0]
         cursor.close()
 
@@ -25,7 +53,7 @@ class DBUtils:
         cursor.execute(sql, data)
         cursor.close()
 
-    def check_if_job_exists(self, job_id: int) -> bool:
+    def job_exists(self, job_id: int) -> bool:
         cursor = self.DB_CONNECTION.cursor()
         sql = "SELECT 1 FROM jobs WHERE job_id = %s"
         data = (job_id,)
@@ -140,7 +168,7 @@ class DBUtils:
     def retrieve_metrics(self, job_id: int):
         """ Retrieve client metrics for job_id """
         # Make sure job id exists
-        if not self.check_if_job_exists(job_id):
+        if not self.job_exists(job_id):
             raise JobNotFoundException
 
         with open("hw_metrics.csv", "wb") as metric_writer:
@@ -157,3 +185,6 @@ class DBUtils:
 
 class JobNotFoundException(ValueError):
     """Could not find the job in DB"""
+
+class ProjectNotFoundException(ValueError):
+    """Could not find the project in DB"""
