@@ -232,18 +232,19 @@ To simplify the access to the server we're using [ZeroTier](https://www.zerotier
 ### Connect to CoLExT server:
 1. Share a public SSH key to your CoLExT contact point
 1. [Install ZeroTier](https://www.zerotier.com/download/).
-1. Share your ZeroTier device ID with your CoLExT contact point. The ID is displayed at instalation and can be retrieved later with:
+1. Share your ZeroTier device ID with your CoLExT contact point. The ID is displayed at installation and can be retrieved later with:
     ```
     sudo zerotier-cli info | awk '{print $3}'
     ```
-1. Add SSH config:
+1. Add SSH config. Note you need to replace the username:
     ```
     # Add to ~/.ssh/config
     Host colext
+        Username <your_username>
         Hostname 10.244.96.246
-        ForwardAgent yes
+        ForwardAgent yes # Required to use local SSH keys in CoLExT
     ```
-1. (Optional) Add the CoLExT server to the hosts file:
+1. Add the CoLExT server to your hosts file.
     ```
     # Add to /etc/hosts
     10.244.96.246 colext
@@ -252,14 +253,14 @@ To simplify the access to the server we're using [ZeroTier](https://www.zerotier
 1. Test connection to CoLExT server:
     ```bash
     # Confirm connectivity
-    $ ping 10.244.96.246
+    $ ping colext
     # Confirm ssh access
-    $ ssh <username>@colext
+    $ ssh colext
     ```
 
-Finally, to use CoLExT you will need access to this (currently private) GitHub repo inside the CoLExT server. To have access, be sure you have an [SSH key associated with your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) and add it to your ssh agent in your local machine. This allows you to use your private ssh key located in your local machine without copying it to the CoLExT server.
+Finally, to use CoLExT, you will need access to this (currently private) GitHub repo inside the CoLExT server. To have access, be sure you have an [SSH key associated with your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) and add it to your SSH agent in your local machine. This allows you to use your private SSH key located on your local machine without copying it to the CoLExT server.
 
-To add the key, disconnect from the CoLExT server if you were connected, and run the commands below from your local machine. After that, connect to the CoLExT server with SSH, and the SSH agent will allow you to pull this repo from GitHub.
+To add the key, disconnect from the CoLExT server if you were connected, and run the commands below from your local machine.
 ```bash
 # On your local machine
 $ ssh-add -l # list keys in the SSH agent
@@ -267,7 +268,7 @@ $ ssh-add -l # list keys in the SSH agent
 $ ssh-add # add keys to agent
 $ ssh-add -l # confirm the key was added
 # Connect to the CoLExT server
-$ ssh <username>@colext
+$ ssh colext
 $ ssh-add -l # confirm the key is available in the CoLExT server
 # You should now be able to install the Python package
 ```
