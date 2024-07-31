@@ -230,13 +230,13 @@ Currently, the CoLExT server is not reachable through a public IP.
 To simplify the access to the server we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network.
 
 ### Connect to CoLExT server:
-1. Share a public SSH key to your CoLExT contact point
 1. [Install ZeroTier](https://www.zerotier.com/download/).
-1. Share your ZeroTier device ID with your CoLExT contact point. The ID is displayed at installation and can be retrieved later with:
+1. Get your ZeroTier device ID. The ID is displayed at installation and can be retrieved later with:
     ```
     sudo zerotier-cli info | awk '{print $3}'
     ```
-1. Add SSH config. Note you need to replace the username:
+1. Share your ZeroTier device ID and a public SSH key with your CoLExT contact point 
+1. Add an SSH config. Note that you need to replace the username:
     ```
     # Add to ~/.ssh/config
     Host colext
@@ -249,7 +249,7 @@ To simplify the access to the server we're using [ZeroTier](https://www.zerotier
     # Add to /etc/hosts
     10.244.96.246 colext
     ```
-1. Wait for your device to be added to the network
+1. Wait for your device to be added to the ZeroTier network
 1. Test connection to CoLExT server:
     ```bash
     # Confirm connectivity
