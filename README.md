@@ -10,7 +10,7 @@ The testbed is hosted at the King Abdullah University of Science and Technology 
 </p>
 
 # Using CoLExT
-1. Access the CoLExT. How to [access CoLExT](#accessing-the-colext-server).
+1. Access the CoLExT server. How to [access CoLExT](#accessing-the-colext-server).
 1. Install the CoLExT package in a local Python environment, e.g. with venv.
     ```Python
     $ python3 -m venv .colext_env && source .colext_env/bin/activate
