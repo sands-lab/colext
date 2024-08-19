@@ -19,7 +19,9 @@ data class Measurement(
     val battery_state: Float?,
     val power_consumption: Double,
     val gpuInfo: String,
-    val cpuInfo: String
+    val cpuInfo: String,
+    val downloaded_bytes: Long,
+    val uploaded_bytes: Long
 )
 
 @Entity

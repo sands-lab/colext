@@ -22,7 +22,7 @@ from flwr.common import (
 from flwr.server.client_proxy import ClientProxy
 
 
-class CustomClientConfigStrategy(FedAvgAndroid):
+class CustomClientConfigStrategy(FedAvg):
     JOB_ID: int
     FIT_ROUND_ID: int
     EVAL_ROUND_ID: int

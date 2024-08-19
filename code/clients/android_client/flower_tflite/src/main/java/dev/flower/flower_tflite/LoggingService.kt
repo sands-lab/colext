@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.TrafficStats
 import android.os.BatteryManager
 import android.os.Binder
 import android.os.HardwarePropertiesManager
@@ -97,6 +98,10 @@ class LoggingService: Service() {
 
         // Perform your background tasks on a separate thread here.
         val workerThread = Thread {
+
+            var baseRxBytes: Long = TrafficStats.getTotalRxBytes()
+            var baseTxBytes: Long = TrafficStats.getTotalTxBytes()
+
             while (measuring) {
 
                 // Get the device's CPU cores and frequency
@@ -192,9 +197,9 @@ class LoggingService: Service() {
 
                     val batteryManager = this.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
                     var powerCon = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW).toDouble() * voltage
-                    /* if (powerCon > 0) {
-                        powerCon /= 1000.0
-                    } */
+
+                    val newRxBytes: Long = TrafficStats.getTotalRxBytes()
+                    val newTxBytes: Long = TrafficStats.getTotalTxBytes()
 
                     if (batteryPct != null && voltage > 0) {
                         scope.launch {
@@ -207,7 +212,9 @@ class LoggingService: Service() {
                                     battery_state = batteryPct,
                                     power_consumption = powerCon,
                                     gpuInfo = gpuJSON.toString(),
-                                    cpuInfo = cpuJSON.toString()
+                                    cpuInfo = cpuJSON.toString(),
+                                    downloaded_bytes = (newRxBytes - baseRxBytes),
+                                    uploaded_bytes = (newTxBytes - baseTxBytes)
                                 )
                             )
                         }
@@ -347,8 +354,8 @@ class LoggingService: Service() {
 
         // INSERT MEASURES
         val insertQueryMeasurements = """
-        INSERT INTO fl_testbed_logging.device_measurements (time, cpu_util, mem_util, gpu_util, battery_state, power_consumption, client_id, cpu_info, gpu_info)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO fl_testbed_logging.device_measurements (time, cpu_util, mem_util, gpu_util, battery_state, power_consumption, client_id, cpu_info, gpu_info, downloaded_bytes, uploaded_bytes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         // Create a prepared statement
@@ -375,6 +382,9 @@ class LoggingService: Service() {
             gpuJson.type = "json"
             gpuJson.value = i.gpuInfo
             preparedStatementMeasurements.setObject(9, gpuJson)
+
+            preparedStatementMeasurements.setLong(10, i.downloaded_bytes);
+            preparedStatementMeasurements.setLong(11, i.uploaded_bytes);
 
             preparedStatementMeasurements.addBatch();
         }
