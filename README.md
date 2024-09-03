@@ -234,7 +234,7 @@ Currently, the CoLExT server is not reachable through a public IP. To enable acc
     ```
     sudo zerotier-cli info | awk '{print $3}'
     ```
-1. Share your ZeroTier device ID and a public SSH key with your CoLExT contact point 
+1. Share your ZeroTier device ID and a public SSH key with your CoLExT contact point
 1. Add an SSH config. Note that you need to replace the username:
     ```
     # Add to ~/.ssh/config
@@ -257,22 +257,9 @@ Currently, the CoLExT server is not reachable through a public IP. To enable acc
     $ ssh colext
     ```
 
-Finally, to use CoLExT, you will need access to this (currently private) GitHub repo inside the CoLExT server. To have access, be sure you have an [SSH key associated with your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) and add it to your SSH agent in your local machine. This allows you to use your private SSH key located on your local machine without copying it to the CoLExT server.
 
-To add the key, disconnect from the CoLExT server if you were connected, and run the commands below from your local machine.
-```bash
-# On your local machine
-$ ssh-add -l # list keys in the SSH agent
-# if your key is not listed, add it
-$ ssh-add # add keys to agent
-$ ssh-add -l # confirm the key was added
-# Connect to the CoLExT server
-$ ssh colext
-$ ssh-add -l # confirm the key is available in the CoLExT server
-# You should now be able to install the Python package
-```
-
-If you're just getting started, continue reading the next step in the [using colext section](#using-colext).
+At this point, if you're just getting started, continue reading the next step in the [using colext section](#using-colext).
+If you find issues connecting to CoLExT, reach out to your CoLExT concact point.
 
 # Developing the CoLExT package
 Install the CoLExT package locally with the --editable flag.
