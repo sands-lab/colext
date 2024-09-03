@@ -226,8 +226,7 @@ poetry export --without-hashes -f requirements.txt --output requirements.txt
 Coming soon...
 
 # Accessing the CoLExT server
-Currently, the CoLExT server is not reachable through a public IP.
-To simplify the access to the server we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network.
+Currently, the CoLExT server is not reachable through a public IP. To enable access to the server, we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network. This allows external users to interact with the server as if they were directly on the same private network.
 
 ### Connect to CoLExT server:
 1. [Install ZeroTier](https://www.zerotier.com/download/).

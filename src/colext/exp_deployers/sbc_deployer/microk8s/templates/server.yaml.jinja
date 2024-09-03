@@ -24,11 +24,17 @@ spec:
       - name: COLEXT_PYTORCH_DATASETS
         value: "/colext/pytorch_datasets"
 
+      - name: PGPASSFILE
+        value: /.pgpass
+
     volumeMounts:
-      - mountPath: /colext/datasets
-        name: colext-std-datasets
-      - mountPath: /colext/pytorch_datasets
-        name: colext-pytorch-datasets
+      - name: pgcreds
+        mountPath: /
+        readOnly: true
+      - name: colext-std-datasets
+        mountPath: /colext/datasets
+      - name: colext-pytorch-datasets
+        mountPath: /colext/pytorch_datasets
 
     ports:
       - containerPort: 8080
@@ -41,6 +47,9 @@ spec:
       failureThreshold: 10
 
   volumes:
+    - name: pgcreds
+      secret:
+        secretName: pgcreds-file
     - name: colext-std-datasets
       hostPath:
         path: {{ std_datasets_path }}

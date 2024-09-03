@@ -13,4 +13,18 @@
     key: "{{ lookup('file', item) }}"
   with_fileglob: "access_keys/*"
 
-# Change password?
+- name: Disable SSH Password auth
+  ansible.builtin.copy:
+    dest: "/etc/ssh/sshd_config.d/01-disable_passwd.conf"
+    content: |
+      PasswordAuthentication no
+  notify: Restart sshd
+  when: "'jn' not in inventory_hostname"
+
+- name: Disable SSH Password auth
+  ansible.builtin.lineinfile:
+    dest: "/etc/ssh/sshd_config"
+    insertafter: "#PasswordAuthentication yes"
+    line: "PasswordAuthentication no"
+  # notify: Restart sshd
+  when: "'jn' in inventory_hostname"

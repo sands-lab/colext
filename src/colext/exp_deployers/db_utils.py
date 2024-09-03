@@ -6,8 +6,8 @@ class DBUtils:
         self.DB_CONNECTION = self.create_db_connection()
 
     def create_db_connection(self):
-        DB_CONN_INFO = "host=flserver dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
-        return psycopg.connect(DB_CONN_INFO, autocommit=True)
+        # Connection string is read from env variable pointing to pgpassfile
+        return psycopg.connect(autocommit=True)
 
     def project_exists(self, project_name) -> bool:
         try:

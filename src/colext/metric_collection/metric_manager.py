@@ -36,8 +36,8 @@ class MetricManager():
         self.db_pool = self.create_db_pool()
 
     def create_db_pool(self):
-        DB_CONNECTION_INFO = "host=10.0.0.100 dbname=fl_testbed_db_copy user=faustiar_test_user password=faustiar_test_user"
-        return ConnectionPool(DB_CONNECTION_INFO, open=True, min_size=2, max_size=2)
+        # Connection string is read from env variable pointing to pgpassfile
+        return ConnectionPool(open=True, min_size=2, max_size=2)
 
     def start_metric_gathering(self):
         log.debug("Start metric gathering.")

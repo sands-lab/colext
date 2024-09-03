@@ -1,4 +1,5 @@
 - name: Configure access
+  tags: conf_access
   ansible.builtin.import_tasks: configure_access.yaml
 
 - name: Configure hostname to match ansible inventory
