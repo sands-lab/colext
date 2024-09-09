@@ -172,9 +172,9 @@ def run_server(db_conn, job_id, clients, server_ip, server_port):
     strategy = CustomClientConfigStrategy(
         fraction_fit=1.0,
         fraction_evaluate=1.0,
-        min_fit_clients=1,
-        min_evaluate_clients=1,
-        min_available_clients=1,
+        min_fit_clients=5,
+        min_evaluate_clients=5,
+        min_available_clients=5,
         evaluate_fn=None,
         on_fit_config_fn=fit_config,
         db_conn=db_conn,
@@ -186,7 +186,7 @@ def run_server(db_conn, job_id, clients, server_ip, server_port):
 
         start_server(
             server_address=f"{server_ip}:{server_port}",
-            config=ServerConfig(num_rounds=10),
+            config=ServerConfig(num_rounds=5),
             strategy=strategy,
         )
 

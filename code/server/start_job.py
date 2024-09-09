@@ -86,7 +86,8 @@ def main():
 
             threads = []
 
-            server_process = threading.Thread(target=run_server, args=(DB_CONNECTION, JOB_ID, CLIENTS, config_json["server_ip"], config_json["server_port"]))
+            server_process = threading.Thread(target=run_server, args=(
+            DB_CONNECTION, JOB_ID, CLIENTS, config_json["server_ip"], config_json["server_port"]))
             server_process.start()
 
             for c in db_clients:
@@ -106,13 +107,22 @@ def main():
             for c in db_clients:
                 print("Deploying an app to client: " + c[1])
                 thread = threading.Thread(target=deploy_app_to_device,
-                                          args=(c[1], ))
+                                          args=(c[1],))
                 thread.start()
                 threads.append(thread)
                 print("App deployed to client: " + c[1])
+                print("Starting an app")
 
             for thread in threads:
                 thread.join()
+
+            for c in db_clients:
+                subprocess.check_output(
+                    "adb -s " + c[
+                        1] + " shell am start -a android.intent.action.MAIN -n flwr.android_client/.MainActivity"
+                    , shell=True, text=True)
+                print("App started at " + c[1])
+                time.sleep(1)
 
             server_process.join()
 
@@ -158,7 +168,7 @@ def push_data_to_device(data, client_id, client_ip, partition_id):
 
         subprocess.check_output(
             "adb -s " + client_ip + " push --sync " + TEMP_FOLDER + "config_" + str(client_id) + "/fl_testbed/ "
-                                                                                      "/storage/emulated/0/Documents/"
+                                                                                                 "/storage/emulated/0/Documents/"
             , shell=True, text=True)
 
         subprocess.check_output("adb -s " + client_ip + " shell \'cat /storage/emulated/0/Documents/fl_testbed/app.apk "
@@ -190,11 +200,6 @@ def deploy_app_to_device(client_ip):
         , shell=True, text=True)
 
     time.sleep(1)
-
-    print("Starting an app")
-    subprocess.check_output(
-        "adb -s " + client_ip + " shell am start -a android.intent.action.MAIN -n flwr.android_client/.MainActivity"
-        , shell=True, text=True)
 
 
 def split_dataset_by_clients(source, dest, paths_file):
