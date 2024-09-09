@@ -255,7 +255,9 @@ class LoggingService: Service() {
                 start_time = startTime.toString(),
                 end_time = startTime.toString(),
                 epoch_number = epochNumber,
-                cir_id = cirID
+                cir_id = cirID,
+                accuracy = null,
+                loss = null
             ))[0]
         }
     }
@@ -279,11 +281,18 @@ class LoggingService: Service() {
 
     }
 
-    fun endEpoch(endTime: Timestamp){
+    fun endEpoch(endTime: Timestamp, loss: Float?, accuracy: Float?){
         CoroutineScope(Dispatchers.IO).launch {
             val insertedEpoch = epochDao.get(epochID)
             if (insertedEpoch != null) {
-                epochDao.updateEpoch(endTime.toString(), insertedEpoch.id)
+                if (accuracy != null) {
+                    Log.d(TAG, "endEpoch: ACCURACY: $accuracy LOSS: $loss")
+                    epochDao.updateEpochEval(endTime.toString(), insertedEpoch.id, accuracy, loss)
+                }
+                else {
+                    Log.d(TAG, "endEpoch: Train Epoch")
+                    epochDao.updateEpoch(endTime.toString(), insertedEpoch.id)
+                }
             }
         }
     }
@@ -305,8 +314,8 @@ class LoggingService: Service() {
 
         // SQL insert statement
         val insertQueryEpochs = """
-        INSERT INTO fl_testbed_logging.epochs (epoch_number, start_time, end_time, cir_id)
-        VALUES (?, ?, ?, ?) RETURNING epoch_id
+        INSERT INTO fl_testbed_logging.epochs (epoch_number, start_time, end_time, cir_id, accuracy, loss)
+        VALUES (?, ?, ?, ?, ?, ?) RETURNING epoch_id
         """
 
         val epochs = epochDao.get()
@@ -319,10 +328,16 @@ class LoggingService: Service() {
             preparedStatementEpochs.setTimestamp(2, start_time?.let { Timestamp(it) });
             preparedStatementEpochs.setTimestamp(3, end_time?.let { Timestamp(it) });
             preparedStatementEpochs.setInt(4, i.cir_id);
+            preparedStatementEpochs.setFloat(5, i.accuracy ?: -1.0f)
+            preparedStatementEpochs.setFloat(6, i.loss ?: -1.0f) // Default to 0.0f if loss is null
+
             // Execute the query to insert an epoch
+            Log.d(TAG, "Epoch query to be executed for cir_id: ${i.cir_id}")
             val epochResultSet = preparedStatementEpochs.executeQuery()
+            Log.d(TAG, "Epoch query was executed")
             if (epochResultSet.next()) {
                 val id = epochResultSet.getInt(1) // Get the inserted epoch ID
+                Log.d(TAG, "Epoch ID in PostgreSQL: $id")
                 // SQL insert statement
                 val insertQueryBatches = """
                     INSERT INTO fl_testbed_logging.batches (batch_number, start_time, end_time, loss, frwd_pass_time, bkwd_pass_time, opt_step_time, epoch_id)
@@ -357,12 +372,13 @@ class LoggingService: Service() {
         INSERT INTO fl_testbed_logging.device_measurements (time, cpu_util, mem_util, gpu_util, battery_state, power_consumption, client_id, cpu_info, gpu_info, downloaded_bytes, uploaded_bytes)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-
+        Log.d(TAG, "Starting measurements transfer.")
         // Create a prepared statement
         val preparedStatementMeasurements: PreparedStatement = connection.prepareStatement(insertQueryMeasurements)
 
         val measurements = measurementDao.get()
         for (i in measurements){
+            Log.d(TAG, "Measruement started.")
             val date = format.parse(i.time)
             val timestamp = date?.time
             preparedStatementMeasurements.setTimestamp(1, timestamp?.let { Timestamp(it) });
@@ -387,12 +403,15 @@ class LoggingService: Service() {
             preparedStatementMeasurements.setLong(11, i.uploaded_bytes);
 
             preparedStatementMeasurements.addBatch();
+            Log.d(TAG, "Measurement ended.")
         }
 
         // Execute the insert statement
         preparedStatementMeasurements.executeBatch()
+        Log.d(TAG, "Measurements executed.")
         // Close the prepared statement and the database connection
         preparedStatementMeasurements.close()
+        Log.d(TAG, "Measurements closed.")
 
         connection.close()
 

@@ -117,10 +117,13 @@ class FlowerServiceRunnable<X : Any, Y : Any>
         Log.d(TAG, "Handling EvaluateIns")
         callback("Handling Evaluate request from the server")
         val layers = message.evaluateIns.parameters.tensorsList
+        val cirID = message.evaluateIns.configMap.getOrDefault(
+            "CIR_ID", Scalar.newBuilder().setSint64(1).build()
+        )!!.sint64.toInt()
         assertIntsEqual(layers.size, flowerClient.layersSizes.size)
         val newWeights = weightsFromLayers(layers)
         flowerClient.updateParameters(newWeights.toTypedArray())
-        val (loss, accuracy) = flowerClient.evaluate()
+        val (loss, accuracy) = flowerClient.evaluate(cirID)
         callback("Test Accuracy after this round = $accuracy")
         return evaluateResAsProto(loss, sampleSize)
     }

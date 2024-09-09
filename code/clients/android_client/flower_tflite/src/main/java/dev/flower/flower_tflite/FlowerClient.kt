@@ -113,7 +113,7 @@ class FlowerClient<X : Any, Y : Any>(
                 loggingService?.startEpoch(tStart, count, cirID)
                 val losses = trainOneEpoch(batchSize)
                 val tEnd = Timestamp(System.currentTimeMillis())
-                loggingService?.endEpoch(tEnd)
+                loggingService?.endEpoch(tEnd, null, null)
                 Log.d("Epoch", "END")
                 Log.d(TAG, "Epoch $it: losses = $losses.")
                 count++
@@ -129,12 +129,16 @@ class FlowerClient<X : Any, Y : Any>(
      * Thread-safe, and block operations on [testSamples].
      * @return (loss, accuracy).
      */
-    fun evaluate(): Pair<Float, Float> {
+    fun evaluate(cirID: Int): Pair<Float, Float> {
+        val tStart = Timestamp(System.currentTimeMillis())
+        loggingService?.startEpoch(tStart, 0, cirID)
         val result = testSampleLock.read {
             val bottlenecks = testSamples.map { it.bottleneck }
             val logits = inference(spec.convertX(bottlenecks))
             spec.loss(testSamples, logits) to spec.accuracy(testSamples, logits)
         }
+        val tEnd = Timestamp(System.currentTimeMillis())
+        loggingService?.endEpoch(tEnd, result.first, result.second)
         Log.d(TAG, "Evaluate loss & accuracy: $result.")
         return result
     }

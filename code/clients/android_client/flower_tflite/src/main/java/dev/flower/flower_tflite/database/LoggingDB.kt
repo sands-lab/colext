@@ -30,7 +30,9 @@ data class Epoch(
     val start_time: String,
     val end_time: String,
     val epoch_number: Int,
-    val cir_id: Int
+    val cir_id: Int,
+    val accuracy: Float?,
+    val loss: Float?
 )
 
 @Entity
@@ -74,6 +76,9 @@ interface EpochDao {
 
     @Query("UPDATE epoch SET end_time = :cur_end_time WHERE id = :id")
     suspend fun updateEpoch(cur_end_time: String, id: Long)
+
+    @Query("UPDATE epoch SET end_time = :cur_end_time, accuracy = :accuracy, loss = :loss WHERE id = :id")
+    suspend fun updateEpochEval(cur_end_time: String, id: Long, accuracy: Float?, loss: Float?)
 }
 
 @Dao
