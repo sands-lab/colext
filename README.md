@@ -1,9 +1,14 @@
 # CoLExT: Collaborative Learning Experimentation Testbed
-CoLExT is a testbed built for machine learning researchers to realistically execute and profile Federated Learning (FL) algorithms on real edge devices and smartphones. This repo contains the software library developed to seamlessly deploy and monitor code compatible with the [Flower](https://github.com/adap/flower) Framework.
-The testbed is hosted at the King Abdullah University of Science and Technology (KAUST).
+CoLExT is a testbed built for machine learning researchers to realistically execute and profile Federated Learning (FL) algorithms on real edge devices and smartphones. 
+This repo contains the software library developed to seamlessly deploy and monitor FL experiments compatible with the [Flower](https://github.com/adap/flower) Framework.
+Consider checking the [CoLExT website](https://sands.kaust.edu.sa/project/colext/) for an overview of the project.
+
+CoLExT contains 20 smartphones and 28 Single Board Computers (SBC) and is hosted at the King Abdullah University of Science and Technology (KAUST). 
+If you’d like to experiment with CoLExT, please show your interest by filling out this [form](https://forms.gle/tpJJ1ehV3Zs1oCUv9).
+
 
 > [!WARNING]
-> CoLExT supports both SBC and Android deployments, but Android deployment is not yet available in this repo.
+> CoLExT supports both SBC and Android deployments; however, Android deployment is not yet available in this branch.
 
 <p align="center">
   <img src="./images/CoLExT_schema.svg" alt="CoLExt Diagram" width="600">
