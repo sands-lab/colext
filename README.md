@@ -6,7 +6,6 @@ Consider checking the [CoLExT website](https://sands.kaust.edu.sa/project/colext
 CoLExT contains 20 smartphones and 28 Single Board Computers (SBC) and is hosted at the King Abdullah University of Science and Technology (KAUST). 
 If you’d like to experiment with CoLExT, please show your interest by filling out this [form](https://forms.gle/tpJJ1ehV3Zs1oCUv9).
 
-
 > [!WARNING]
 > CoLExT supports both SBC and Android deployments; however, Android deployment is not yet available in this branch.
 
@@ -15,6 +14,7 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
 </p>
 
 # Using CoLExT
+**Note**: Requires prior approval. Please fill out the show of interest [form](https://forms.gle/tpJJ1ehV3Zs1oCUv9) if you're interested.
 1. Access the CoLExT server. How to [access CoLExT](#accessing-the-colext-server).
 1. Install the CoLExT package in a local Python environment, e.g. with venv.
     ```Python
@@ -231,7 +231,9 @@ poetry export --without-hashes -f requirements.txt --output requirements.txt
 Coming soon...
 
 # Accessing the CoLExT server
-Currently, the CoLExT server is not reachable through a public IP. To enable access to the server, we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network. This allows external users to interact with the server as if they were directly on the same private network.
+Currently, the CoLExT server is not reachable through a public IP. 
+To enable access to the server, we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network. 
+This allows external users to interact with the server as if they were directly on the same private network.
 
 ### Connect to CoLExT server:
 1. [Install ZeroTier](https://www.zerotier.com/download/).
