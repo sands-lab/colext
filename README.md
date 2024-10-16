@@ -111,24 +111,15 @@ This section describes the possible configuration options for the CoLExT configu
 ### Exposed environment variables
 CoLExT exposes several bash environment variables that are passed to the execution environment. These can be used as arguments in the `args` section of the client and server code by expanding the variables as `${ENV_VAR}`. See the [usage example](#using-colext) for an example.
 
-|       Name       | Description                     |
-| ---------------- | ------------------------------- |
-|    COLEXT_CLIENT_ID     | ID of the client (0..n_clients) |
-|    COLEXT_N_CLIENTS     | Number of clients in experiment |
-|   COLEXT_DEVICE_TYPE    | Hardware type of the client     |
-|  COLEXT_SERVER_ADDRESS  | Server address (host:port)      |
+| Name                    | Description                     |
+| ----------------------- | ------------------------------- |
+| COLEXT_CLIENT_ID        | ID of the client (0..n_clients) |
+| COLEXT_N_CLIENTS        | Number of clients in experiment |
+| COLEXT_DEVICE_TYPE      | Hardware type of the client     |
+| COLEXT_SERVER_ADDRESS   | Server address (host:port)      |
 | COLEXT_PYTORCH_DATASETS | Pytorch datasets caching path   |
-<!-- | COLEXT_DATA_HOME_FOLDER | Datasets path                   | -->
+| COLEXT_JOB_ID           | Experiment job ID               |
 
-CoLExT also exposes the following variables which are meant to be used internally by the `colext` package.
-|       Name        | Description                               |
-| -------------------------- | ----------------------------------------- |
-|            COLEXT_ENV             | True if inside a CoLExT environment |
-|           COLEXT_JOB_ID           | Experiment job ID                         |
-|        COLEXT_CLIENT_DB_ID        | Unique client ID on the database          |
-|  COLEXT_MONITORING_LIVE_METRICS   | True if metrics are pushed in real-time   |
-|  COLEXT_MONITORING_PUSH_INTERVAL  | Interval between metric push to DB        |
-| COLEXT_MONITORING_SCRAPE_INTERVAL | Interval between HW metric scraping       |
 
 ### Performance monitoring options
 ```YAML
@@ -160,8 +151,8 @@ Here are the contents for each CSV:
 - stage: Stage of the round: FIT or EVAL
 - start_time: Start of the round as measured by the FL server
 - end_time: End of the round as measured by the FL server
-- srv_accuracy: Evaluation of the server global model (Strategy evaluate result with dict key "accuracy")
-- dist_accuracy: Result of aggregation of 'evaluate' results from clients (Strategy aggregate_evaluate result with dict key "accuracy"))
+- srv_accuracy: Flwr strategy evaluate result with dict key "accuracy"
+- dist_accuracy: Flwr strategy aggregate_evaluate result with dict key "accuracy"
 
 ### client_info.csv
 - client_id: ID of the client
@@ -264,7 +255,6 @@ This allows external users to interact with the server as if they were directly 
     $ ssh colext
     ```
 
-
 At this point, if you're just getting started, continue reading the next step in the [using colext section](#using-colext).
 If you find issues connecting to CoLExT, reach out to your CoLExT concact point.
 
@@ -297,24 +287,6 @@ Useful:
 │   ├── base_docker_imgs/   # Base docker images used when containerizing the code
 ```
 
-# Testbed configuration notes (private):
-[Notion page](https://www.notion.so/Device-first-time-setup-9d8c3d1256be476a9fc3642742b59d17)
-
-### Maximizing jetson performance
-Jetson clocks - maxes clocks and turns off dynamic voltage and frequency scaling (DVFS). Can be disabled with [jetson_stats](https://rnext.it/jetson_stats/reference/jetson_clocks.html#jtop.core.jetson_clocks.JetsonClocks).
-
-### Nvidia Power Model Tool (NVP) models
-- [Orin models](https://docs.nvidia.com/jetson/archives/r35.4.1/DeveloperGuide/text/SD/PlatformPowerAndPerformance/JetsonOrinNanoSeriesJetsonOrinNxSeriesAndJetsonAgxOrinSeries.html#supported-modes-and-power-efficiency)
-- [Xavier NX](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-325/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_jetson_xavier.html#wwpID0E0VO0HA)
-- [Nano](https://docs.nvidia.com/jetson/archives/l4t-archived/l4t-3273/#page/Tegra%20Linux%20Driver%20Package%20Development%20Guide/power_management_nano.html#wwpID0E0FL0HA)
-
-### Jetson power consumption measurements:
-Total SBC power consumption.
-```Python
-  power_mw = jetson.power["tot"]["power"]
-```
-AGX Orin, Orin Nano - can separate CPU and GPU power from SOC power
-
 # Limitations:
 - Currently, CoLExT only directly supports FL code using the Flower framework 1.5 + 1.6.
 - `tensorflow` package does not work with LattePandas.
@@ -322,17 +294,3 @@ AGX Orin, Orin Nano - can separate CPU and GPU power from SOC power
 - Currently, Nvidia Jetsons defaults to supporting Pytorch 2.2.0. Except for Jetson Nanos, which only support up to Pytorch 1.13.
   Additional Pytorch versions can be supported upon request.
 - Currently, only Python version 3.8 and 3.10 are supported.
-
-# POTENTIAL FUTURE UPDATES
-- Support more recent versions of Flower >= 1.7
-- Support the new way of using Flwr client-server - Super link + Super node
-- Look into the official Docker support for the new Flwr deployment option
-- Add our Android template template as a Flwr template
-
-### Consider supporting conda-lock
-Alternative to requirements.txt.
-Conda-lock grounds the conda environment to the specific os and platform
-```
-conda env export --from-history | egrep -v "^(name|prefix): " > environment.yaml
-conda-lock -f environment.yml -p linux-64 -p linux-aarch64
-```
