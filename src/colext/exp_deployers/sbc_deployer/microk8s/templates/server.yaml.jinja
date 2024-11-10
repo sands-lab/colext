@@ -24,13 +24,18 @@ spec:
       - name: COLEXT_PYTORCH_DATASETS
         value: "/colext/pytorch_datasets"
 
+      - name: PGHOSTADDR
+        value: 10.0.0.100
+      - name: PGDATABASE
+        value: colext_db
+      - name:  PGUSER
+        value: colext_user
       - name: PGPASSFILE
-        value: /.pgpass
+        value: /pgcreds/.pgpass
 
     volumeMounts:
       - name: pgcreds
-        mountPath: /
-        readOnly: true
+        mountPath: /pgcreds
       - name: colext-std-datasets
         mountPath: /colext/datasets
       - name: colext-pytorch-datasets
@@ -50,6 +55,7 @@ spec:
     - name: pgcreds
       secret:
         secretName: pgcreds-file
+        defaultMode: 0400
     - name: colext-std-datasets
       hostPath:
         path: {{ std_datasets_path }}

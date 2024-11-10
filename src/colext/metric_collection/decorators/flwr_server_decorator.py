@@ -33,7 +33,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.eval_round_id = None
 
         def create_db_connection(self):
-            # Connection string is read from env variable pointing to pgpassfile
+            # DB parameters are read from env variables
             return psycopg.connect()
 
         def record_start_round(self, server_round: int, stage: str):

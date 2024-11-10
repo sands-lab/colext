@@ -28,7 +28,7 @@
   ansible.builtin.import_tasks: configure_containerd.yaml
   when: "'jetsons' in group_names"
 
-Jetsons lack of ipset mod makes it impatible with Calico the default CNI: https://github.com/canonical/microk8s/issues/2110
+# Jetsons lack of ipset mod makes it impatible with Calico the default CNI: https://github.com/canonical/microk8s/issues/2110
 - name: Disable HA to support Flannel over Calico (jetsons don't like it)
   become: false
   ansible.builtin.shell:

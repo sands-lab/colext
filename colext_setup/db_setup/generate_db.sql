@@ -10,7 +10,8 @@ CREATE TABLE users (
 
 CREATE TABLE projects (
     project_id SERIAL PRIMARY KEY,
-    project_name VARCHAR(100) UNIQUE
+    project_name VARCHAR(100) UNIQUE,
+    is_active BOOLEAN,
 );
 
 CREATE TABLE project_user (
@@ -118,8 +119,8 @@ CREATE TABLE monsoon_measurements (
 SELECT create_hypertable('monsoon_measurements', 'time', if_not_exists => TRUE, create_default_indexes => TRUE);
 
 -- Add security
-
 CREATE ROLE colext_user;
+ALTER ROLE colext_user SET search_path TO fl_testbed_logging;
 GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA fl_testbed_logging TO colext_user;
 
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
@@ -131,8 +132,10 @@ ALTER TABLE batches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE device_measurements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monsoon_measurements ENABLE ROW LEVEL SECURITY;
 
+-- CREATE POLICY pc_jobs ON jobs
 CREATE POLICY p_jobs ON jobs
-    USING (project_id IN (SELECT DISTINCT project_id FROM project_users JOIN users USING(user_id) WHERE user_name = current_user));
+    USING (project_id IN (SELECT DISTINCT project_id FROM projects WHERE is_active = TRUE));
+    -- USING (project_id IN (SELECT DISTINCT project_id FROM project_users JOIN users USING(user_id) WHERE user_name = current_user));
 CREATE POLICY p_rounds ON rounds USING (job_id IN (SELECT DISTINCT job_id FROM jobs));
 CREATE POLICY p_clients ON clients USING (job_id IN (SELECT DISTINCT job_id FROM jobs));
 CREATE POLICY p_clients_in_round ON clients_in_round USING (client_id IN (SELECT DISTINCT client_id FROM clients));
@@ -140,3 +143,7 @@ CREATE POLICY p_epochs ON epochs USING (cir_id IN (SELECT DISTINCT cir_id FROM c
 CREATE POLICY p_batches ON batches USING (cir_id IN (SELECT DISTINCT cir_id FROM clients_in_round));
 CREATE POLICY p_device_measurements ON device_measurements USING (client_id IN (SELECT DISTINCT client_id FROM clients));
 CREATE POLICY p_monsoon_measurements ON monsoon_measurements USING (client_id IN (SELECT DISTINCT client_id FROM clients));
+
+GRANT USAGE ON SEQUENCE
+    jobs_job_id_seq, rounds_round_id_seq, clients_client_id_seq, clients_in_round_cir_id_seq
+    TO colext_user;

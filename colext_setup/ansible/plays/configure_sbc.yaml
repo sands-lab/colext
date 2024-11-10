@@ -26,6 +26,6 @@
           # microk8s add-node --token a1ef095d59c2fef65d5263090e678cc0 -l 31536000
           # /var/snap/microk8s/current/credentials/cluster-tokens.txt
         priv_registry:
-          hostname: flserver
+          hostname: colext
           internal_ip: 10.0.0.100
           port: 5000

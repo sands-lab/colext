@@ -2,3 +2,4 @@
 Create local user account
 Create user in harbor
 docker login flserver:5000
+add user to docker and microk8s groups

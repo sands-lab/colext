@@ -1,7 +1,5 @@
 .vscode
 src/*.egg-info/
-user_code_example/logs
-user_code_example/data
 __pycache__
 dist
 *.csv
