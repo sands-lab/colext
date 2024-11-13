@@ -1,10 +1,7 @@
 import os
 import atexit
 import multiprocessing
-from typing import Dict
 from datetime import datetime, timezone
-
-from flwr.common import (Config, Scalar)
 
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
@@ -49,30 +46,11 @@ def MonitorFlwrClient(FlwrClientClass):
             log.debug("Metric manager stopped")
 
         # ====== Flower functions ======
-        def get_properties(self, config: Config) -> Dict[str, Scalar]:
-            log.debug("get_properties function")
-            colext_properties_dict = {}
-            if "COLEXT_CLIENT_DB_ID" in config:
-                log.info(f"Announcing {self.client_db_id=} to server")
-                colext_properties_dict["COLEXT_CLIENT_DB_ID"] = self.client_db_id
-
-            og_properties = super().get_properties(config)
-            return {**colext_properties_dict, **og_properties}
-
-        def get_parameters(self, config):
-            log.debug("get_parameters function")
-            return super().get_parameters(config)
-
-        # set_parameters is not a function called by flower directly
-        # but it's still pretty standard and we could benefit from having it here
-        # def set_parameters(self, config):
-        def set_parameters(self, *args, **kwargs):
-            log.debug("set_parameters function")
-            super().set_parameters(*args, **kwargs)
-
         def fit(self, parameters, config):
+            """ Runs the fit or train function of the client """
+
             log.debug("fit function")
-            client_in_round_id = config[f"COLEXT_CIR_MAP_{self.client_db_id}"]
+            round_id = config["COLEXT_ROUND_ID"]
 
             start_fit_time = datetime.now(timezone.utc)
             fit_result = super().fit(parameters, config)
@@ -81,15 +59,17 @@ def MonitorFlwrClient(FlwrClientClass):
             num_examples = fit_result[1]
             loss = fit_result[2].get("loss")
             acc = fit_result[2].get("accuracy")
-            st = StageMetrics(client_in_round_id, "FIT",
+            st = StageMetrics(self.client_db_id, round_id,
                               start_fit_time, end_fit_time, loss, num_examples, acc)
             self.stage_timings_queue.put(st)
 
             return fit_result
 
         def evaluate(self, parameters, config):
+            """ Runs the evaluate function of the client """
+
             log.debug("evaluate function")
-            client_in_round_id = config[f"COLEXT_CIR_MAP_{self.client_db_id}"]
+            round_id = config["COLEXT_ROUND_ID"]
 
             start_eval_time = datetime.now(timezone.utc)
             eval_result = super().evaluate(parameters, config)
@@ -98,11 +78,24 @@ def MonitorFlwrClient(FlwrClientClass):
             loss = eval_result[0]
             num_examples = eval_result[1]
             acc = eval_result[2].get("accuracy")
-            st = StageMetrics(client_in_round_id, "EVAL",
+            st = StageMetrics(self.client_db_id, round_id,
                               start_eval_time, end_eval_time, loss, num_examples, acc)
             self.stage_timings_queue.put(st)
 
             return eval_result
+
+        # def get_properties(self, config: Config) -> Dict[str, Scalar]:
+        #     log.debug("get_properties function")
+        #     return super().get_properties(config)
+
+        # get/set_parameters are not functions called by flower directly
+        # but they're still pretty standard and we could benefit from having them here
+        # def get_parameters(self, *args, **kwargs):
+        #     log.debug("get_parameters function")
+        #     return super().get_parameters(config)
+        # def set_parameters(self, *args, **kwargs):
+        #     log.debug("set_parameters function")
+        #     super().set_parameters(*args, **kwargs)
 
     return _MonitorFlwrClient
 

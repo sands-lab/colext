@@ -6,9 +6,8 @@ from datetime import datetime
 @dataclass
 class StageMetrics:
     """ Class to keep track of stage(fit/eval) metrics."""
-
-    cir_id: int
-    stage: str
+    cdb_id: int
+    round_id: int
     start_time: datetime
     end_time: datetime
     loss: float

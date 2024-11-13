@@ -110,12 +110,11 @@ class MetricManager():
             return
 
         log.debug(f"Pushing {len(self.stage_metrics)} stage timings from client {self.client_db_id} to DB")
-
         sql = """
-                UPDATE clients_in_round
-                    SET start_time = %(start_time)s, end_time = %(end_time)s,
-                        loss = %(loss)s, num_examples = %(num_examples)s, accuracy = %(accuracy)s
-                WHERE cir_id = %(cir_id)s
+                INSERT INTO clients_in_round
+                        (client_id, round_id, start_time, end_time, loss, num_examples, accuracy)
+                VALUES  (%(cdb_id)s, %(round_id)s, %(start_time)s,
+                         %(end_time)s, %(loss)s, %(num_examples)s, %(accuracy)s)
               """
 
         formatted_metrics = [asdict(sm) for sm in self.stage_metrics]

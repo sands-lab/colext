@@ -1,4 +1,4 @@
-# Copied from https://github.com/adap/flower/blob/main/examples/quickstart-pytorch/server.py
+# Copied from https://github.com/adap/flower/blob/dcffb484fb7d1e712f65d414fb31aa021f0a760e/examples/quickstart-pytorch/server.py
 from typing import List, Tuple
 
 import os

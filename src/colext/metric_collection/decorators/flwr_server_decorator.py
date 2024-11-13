@@ -1,15 +1,12 @@
 import os
-import re
 import psycopg
-from colext.common.logger import log
-from colext.common.utils import get_colext_env_var_or_exit
-
 from typing import List, Tuple, Union, Optional, Dict
-from flwr.common import (
-    FitIns, Parameters, FitRes, Scalar, EvaluateIns, EvaluateRes, GetPropertiesIns, GetPropertiesRes, Code
-)
+from flwr.common import (FitIns, Parameters, FitRes, Scalar, EvaluateIns, EvaluateRes)
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
+
+from colext.common.logger import log
+from colext.common.utils import get_colext_env_var_or_exit
 
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
@@ -27,7 +24,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
 
             self.JOB_ID = get_colext_env_var_or_exit("COLEXT_JOB_ID")
             self.DB_CONNECTION = self.create_db_connection()
-            self.clients_ip_to_id = {}
+            self.clients_cid_to_db_id = {}
 
             # Temp variable to hold eval round id between evaluate and configure_evaluate
             self.eval_round_id = None
@@ -66,26 +63,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.DB_CONNECTION.commit()
             cursor.close()
 
-        def get_client_db_id(self, client_proxy: ClientProxy) -> int:
-            log.debug(f"Getting DB ID for client_proxy with cid = {client_proxy.cid}")
-
-            ip_address = re.search(r'ipv4:(\d+\.\d+\.\d+\.\d+:\d+)', client_proxy.cid).group(1)
-            if ip_address is None:
-                log.error("Could not parse IP for client. Client IP = {ip_address}")
-
-            if ip_address not in self.clients_ip_to_id:
-                # Client ip not mapped to client id. Ask client for id
-                # Not sure how the timeout works
-                properties_res: GetPropertiesRes = client_proxy.get_properties(GetPropertiesIns(config={"COLEXT_CLIENT_DB_ID": "?"}), timeout=3)
-                assert properties_res.status.code == Code.OK
-                client_id = properties_res.properties["COLEXT_CLIENT_DB_ID"]
-                self.clients_ip_to_id[ip_address] = client_id
-
-            return self.clients_ip_to_id[ip_address]
-
         def configure_clients_in_round(self, client_instructions: List[Tuple[ClientProxy, FitIns]], round_id: int) -> List[Tuple[ClientProxy, FitIns]]:
-            cursor = self.DB_CONNECTION.cursor()
-
             # For some reason flwr decided to have all FitIns point to a single dataclass
             # This prevents specifying a different config per client
             # Maybe it's related to the strategy?
@@ -93,23 +71,8 @@ def MonitorFlwrStrategy(FlwrStrategy):
             # client_instructions = [(c_proxy, copy.deepcopy(fit_ins)) for (c_proxy, fit_ins) in client_instructions]
             # TODO !!! The below solution is inneficient. The more clients we have the mode data we send !!!
 
-            # Register clients in round
-            sql = """
-                    INSERT INTO clients_in_round (client_id, round_id, client_state)
-                    VALUES (%s, %s, %s) RETURNING cir_id
-                """
-            for proxy, fit_ins in client_instructions:  # First (ClientProxy, FitIns) pair
-                client_db_id = self.get_client_db_id(proxy)
-
-                cur_client_state = "AVAILABLE"
-                data = (client_db_id, str(round_id), cur_client_state)
-                cursor.execute(sql, data)
-                cir_id = cursor.fetchone()[0]
-                # Flower does not support dict in the config ?
-                fit_ins.config[f"COLEXT_CIR_MAP_{client_db_id}"] = cir_id
-
-            self.DB_CONNECTION.commit()
-            cursor.close()
+            for _, fit_ins in client_instructions:  # First (ClientProxy, FitIns) pair
+                fit_ins.config["COLEXT_ROUND_ID"] = round_id
 
             return client_instructions
 
