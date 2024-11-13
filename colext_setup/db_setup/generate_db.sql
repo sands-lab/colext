@@ -145,5 +145,8 @@ CREATE POLICY p_device_measurements ON device_measurements USING (client_id IN (
 CREATE POLICY p_monsoon_measurements ON monsoon_measurements USING (client_id IN (SELECT DISTINCT client_id FROM clients));
 
 GRANT USAGE ON SEQUENCE
-    jobs_job_id_seq, rounds_round_id_seq, clients_client_id_seq, clients_in_round_cir_id_seq
+    jobs_job_id_seq,
+    rounds_round_id_seq,
+    clients_client_id_seq,
+    clients_in_round_cir_id_seq
     TO colext_user;

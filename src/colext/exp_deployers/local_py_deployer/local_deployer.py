@@ -62,11 +62,16 @@ class LocalDeployer(DeployerBase):
             "COLEXT_ENV": "1",
             "COLEXT_JOB_ID": str(job_id),
             "COLEXT_DEVICE_TYPE": "FLServer",
-            "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
             "COLEXT_LOG_LEVEL": "DEBUG",
+
+            "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
 
             "COLEXT_DATA_HOME_FOLDER": "/colext/datasets",
             "COLEXT_PYTORCH_DATASETS": "/colext/pytorch_datasets",
+
+            "PGHOSTADDR": "127.0.0.1",
+            "PGDATABASE": "colext_db",
+            "PGUSER": "colext_user",
         }
 
         server_code = self.config["code"]["server"]
@@ -80,12 +85,12 @@ class LocalDeployer(DeployerBase):
         current_env = os.environ.copy()
         base_env_vars = {
             "COLEXT_ENV": "1",
-            "COLEXT_SERVER_ADDRESS": "0.0.0.0:8080",
             "COLEXT_JOB_ID": str(job_id),
-            "COLEXT_LOG_LEVEL": "DEBUG",
-            "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
-
             "COLEXT_DEVICE_TYPE": "FLServer", # clients run on the server
+            "COLEXT_LOG_LEVEL": "DEBUG",
+
+            "COLEXT_SERVER_ADDRESS": "0.0.0.0:8080",
+            "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
 
             # "COLEXT_DATA_HOME_FOLDER": "/colext/datasets",
             # "COLEXT_PYTORCH_DATASETS": "/colext/pytorch_datasets",
@@ -94,6 +99,10 @@ class LocalDeployer(DeployerBase):
             "COLEXT_MONITORING_PUSH_INTERVAL": str(self.config["monitoring"]["push_interval"]),
             "COLEXT_MONITORING_SCRAPE_INTERVAL": str(self.config["monitoring"]["scraping_interval"]),
             "COLEXT_MONITORING_MEASURE_SELF": str(self.config["monitoring"]["measure_self"]),
+
+            "PGHOSTADDR": "127.0.0.1",
+            "PGDATABASE": "colext_db",
+            "PGUSER": "colext_user",
         }
 
         client_envs = []
@@ -110,7 +119,7 @@ class LocalDeployer(DeployerBase):
 
         return client_command, client_envs
 
-    def wait_for_devices(self, job_id: int):
+    def wait_for_devices(self, job_id: int) -> None:
         # Wait for bg processes
         log.info("Waiting for server proc to finish")
         exit_code = self.server_proc.wait()
