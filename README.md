@@ -1,9 +1,9 @@
 # CoLExT: Collaborative Learning Experimentation Testbed
-CoLExT is a testbed built for machine learning researchers to realistically execute and profile Federated Learning (FL) algorithms on real edge devices and smartphones. 
+CoLExT is a testbed built for machine learning researchers to realistically execute and profile Federated Learning (FL) algorithms on real edge devices and smartphones.
 This repo contains the software library developed to seamlessly deploy and monitor FL experiments compatible with the [Flower](https://github.com/adap/flower) Framework.
 Consider checking the [CoLExT website](https://sands.kaust.edu.sa/project/colext/) for an overview of the project.
 
-CoLExT contains 20 smartphones and 28 Single Board Computers (SBC) and is hosted at the King Abdullah University of Science and Technology (KAUST). 
+CoLExT contains 20 smartphones and 28 Single Board Computers (SBC) and is hosted at the King Abdullah University of Science and Technology (KAUST).
 If you’d like to experiment with CoLExT, please show your interest by filling out this [form](https://forms.gle/tpJJ1ehV3Zs1oCUv9).
 
 > [!WARNING]
@@ -16,12 +16,12 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
 # Using CoLExT
 **Note**: Requires prior approval. Please fill out the show of interest [form](https://forms.gle/tpJJ1ehV3Zs1oCUv9) if you're interested.
 1. Access the CoLExT server. How to [access CoLExT](#accessing-the-colext-server).
-1. Install the CoLExT package in a local Python environment, e.g. with venv.
-    ```Python
-    $ python3 -m venv .colext_env && source .colext_env/bin/activate
+1. Install the CoLExT package in a local Python environment, e.g. with conda.
+    ```bash
+    conda create -n colext_env python=3.10 && conda actiate colext_env
 
     # The plotting extras automatically generatess metric plots
-    (.colext_env)$ python3 -m pip install colext[plotting] git+ssh://git@github.com/sands-lab/colext.git
+    (colext_env)$ pip install colext[plotting] git+https://git@github.com/sands-lab/colext.git
     ```
 1. In the FL code, import the `colext` decorators and wrap Flower's client and strategy classes.
    Note: If used outside of the testbed, these decorators do not modify the program behavior and thus can safely be included in the code in general.
@@ -50,9 +50,9 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
         entrypoint: "./src/server.py"
         args: "--n_clients=${COLEXT_N_CLIENTS} --n_rounds=3"
     devices:
-      - { dev_type: LattePandaDelta3, count: 4 }
-      - { dev_type: OrangePi5B,  count: 2 }
-      - { dev_type: JetsonOrinNano, count: 4 }
+      - { device_type: LattePandaDelta3, count: 4 }
+      - { device_type: OrangePi5B,  count: 2 }
+      - { device_type: JetsonOrinNano, count: 4 }
     monitoring:
       scraping_interval: 0.3  # in seconds
       push_to_db_interval: 10 # in seconds
@@ -222,8 +222,8 @@ poetry export --without-hashes -f requirements.txt --output requirements.txt
 Coming soon...
 
 # Accessing the CoLExT server
-Currently, the CoLExT server is not reachable through a public IP. 
-To enable access to the server, we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network. 
+Currently, the CoLExT server is not reachable through a public IP.
+To enable access to the server, we're using [ZeroTier](https://www.zerotier.com/) to create a virtual private network.
 This allows external users to interact with the server as if they were directly on the same private network.
 
 ### Connect to CoLExT server:
@@ -237,7 +237,7 @@ This allows external users to interact with the server as if they were directly 
     ```
     # Add to ~/.ssh/config
     Host colext
-        Username <your_username>
+        User <your_username>
         Hostname 10.244.96.246
         ForwardAgent yes # Required to use local SSH keys in CoLExT
     ```
