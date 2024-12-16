@@ -26,10 +26,10 @@ config = ServerConfig(num_rounds=3)
 
 
 # Flower ServerApp
-app = ServerApp(
-    config=config,
-    strategy=strategy,
-)
+# app = ServerApp(
+#     config=config,
+#     strategy=strategy,
+# )
 
 def get_args():
     parser = argparse.ArgumentParser(

@@ -36,7 +36,6 @@ group "default" {
 }
 
 target "prod-base" {
-  ssh = ["default"]
   context = "${CONTEXT}"
   dockerfile = "${BAKE_FILE_DIR}/colext_general.Dockerfile"
   args = {
