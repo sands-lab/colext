@@ -149,12 +149,12 @@ def clean_up_cr(jd):
 
                 start_i = hw_group.index.get_indexer(cr_group["start_time"], method="nearest")
                 end_i = hw_group.index.get_indexer(cr_group["end_time"], method="nearest")
-                cr_group["Energy training (J)"] = (hw_group.iloc[end_i]["Energy (KJ)"][0] - hw_group.iloc[start_i]["Energy (KJ)"][0]) * 1000 # (KJ -> J)
+                cr_group["Energy training (J)"] = (hw_group.iloc[end_i]["Energy (KJ)"].iloc[0] - hw_group.iloc[start_i]["Energy (KJ)"].iloc[0]) * 1000 # (KJ -> J)
 
                 round_metric_f = round_metrics.query(f"round_number == {r_num} and stage == '{stage}'")
                 start_i = hw_group.index.get_indexer(round_metric_f["start_time"], method="nearest")
                 end_i = hw_group.index.get_indexer(round_metric_f["end_time"], method="nearest")
-                cr_group["Energy in round (J)"] = (hw_group.iloc[end_i]["Energy (KJ)"][0] - hw_group.iloc[start_i]["Energy (KJ)"][0]) * 1000 # (KJ -> J)
+                cr_group["Energy in round (J)"] = (hw_group.iloc[end_i]["Energy (KJ)"].iloc[0] - hw_group.iloc[start_i]["Energy (KJ)"].iloc[0]) * 1000 # (KJ -> J)
 
             return cr_group
         group_cols = ["client_id", "round_number", "stage"]

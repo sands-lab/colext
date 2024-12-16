@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import re
 import subprocess
 from subprocess import CompletedProcess
 import seaborn as sns
@@ -7,6 +8,8 @@ import pandas as pd
 from pandas import DataFrame
 import numpy as np
 import matplotlib.pyplot as plt
+
+FIG_SIZE = (4.5, 2.5)
 
 def collect_job_metrics(job_details):
     job_id = job_details["id"]
@@ -192,12 +195,13 @@ def plot_hw_metrics(df, id_vars="device_type", save_name=None):
 
     order=["JetsonAGXOrin", "JetsonOrinNano", "JetsonXavierNX", "JetsonNano", "LattePandaDelta3", "OrangePi5B"]
     g = sns.catplot(x="value", y="device_type", col="metric", hue="device_type", data=df_long,
-                kind="bar", order=order, sharex=False, height=3)
+                kind="bar", order=order, sharex=False)
     g.set_axis_labels("", "")
     g.set_titles("{col_name}")
-    plt.tight_layout()
+    g.figure.set_size_inches((4.1, 2))
+    # plt.tight_layout()
     if save_name:
-        g.figure.savefig(f"plots/{save_name}")
+        g.figure.savefig(f"plots/{save_name}", bbox_inches='tight', dpi=300)
     g.figure.show()
 
 def plot_cir_metrics(df, job_details, row="device_type", order=None, save_file=None, cols_per_batch=False, show=True):
@@ -223,6 +227,7 @@ def plot_cir_metrics(df, job_details, row="device_type", order=None, save_file=N
     # g.set_titles(col_template="{col_name}", row_template="{row_name}")
     g.set_titles(col_template="{col_name}")
     plt.tight_layout()
+    g.figure.set_size_inches(FIG_WIDTH)
     if save_file:
         g.figure.savefig(save_file)
     if show:
@@ -299,10 +304,14 @@ def cmp_algorithms_by_cir(cir_list, row, perb=False, N=True, save_file=None):
     # sns.move_legend(g, loc="center left", handlelength=0.7, bbox_to_anchor=(1.0, 0.5), frameon=True)
     # sns.move_legend(g, loc="lower left", handlelength=0.7, frameon=True, mode = "expand", ncol=len(df.device_type))
     # sns.move_legend(g, loc="upper center", title=title, handlelength=0.7, frameon=True, ncol=len(df.device_type), bbox_to_anchor=(0.5,0.05))
-    sns.move_legend(g, loc="lower right", title=title, frameon=True, bbox_to_anchor=(0.95,0.09))
-    plt.tight_layout()
+    sns.move_legend(g, loc="lower right", title=title, frameon=True, bbox_to_anchor=(0.73,0.125))
+    # plt.tight_layout()
+    for ax in g.axes.flat:
+        ax.set_xticks([0,1,2])
+        ax.set_xlim(right=3)
+    g.figure.set_size_inches((7, 3.5))
     if save_file:
-        g.figure.savefig(save_file, bbox_inches='tight')
+        g.figure.savefig(save_file, bbox_inches='tight', dpi=300)
     plt.show()
 
 def comp_algorithms_by_round_metrics(df_list, save_file=None):
@@ -330,8 +339,9 @@ def comp_algorithms_by_round_metrics(df_list, save_file=None):
     g.set_axis_labels("", "")
     g.set_titles(col_template="{col_name}")
 
+    g.figure.set_size_inches((4.1, 1.5))
     if save_file:
-        g.figure.savefig(save_file, bbox_inches='tight')
+        g.figure.savefig(save_file, bbox_inches='tight', dpi=300)
     plt.show()
 
 
