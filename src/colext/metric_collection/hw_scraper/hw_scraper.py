@@ -4,7 +4,7 @@ import threading
 
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
-from .scrapers.psutil_scraper import PSUtilScrapper
+from .scrapers.general_scraper import GeneralScrapper
 from .scrapers.scraper_base import ProcessMetrics, ScraperBase
 
 class HWScraper():
@@ -52,7 +52,7 @@ class HWScraper():
     def get_scrapper_agent_for_device() -> ScraperBase:
         dev_type = get_colext_env_var_or_exit("COLEXT_DEVICE_TYPE")
 
-        scrapper_agent = PSUtilScrapper
+        scrapper_agent = GeneralScrapper
         if "Jetson" in dev_type:
             from .scrapers.jetson_scraper import JetsonScraper
             scrapper_agent = JetsonScraper

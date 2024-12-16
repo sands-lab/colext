@@ -1,11 +1,18 @@
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor
+import time
 import psutil
+
+from colext.common.logger import log
+from .smart_plug import SmartPlug
 from .scraper_base import ScraperBase, ProcessMetrics
 
-class PSUtilScrapper(ScraperBase):
+
+class GeneralScrapper(ScraperBase):
     """
         Base scraper using psutil.
-        This scraper does not collect power consumption or GPU utilization.
+        This scraper tries to collect power consumption using the smart plug plugin.
+        It does not capture GPU utilization
     """
     def __init__(self, pid:int , collection_interval_s: float):
         super().__init__(pid, collection_interval_s)
@@ -16,7 +23,32 @@ class PSUtilScrapper(ScraperBase):
         self.total_bytes_recv = 0
         self.last_scrape_time = datetime.now(timezone.utc)
 
+        try:
+            self.smart_plug = SmartPlug()
+        except ValueError as e:
+            log.error(f"Failed to initialize smart plug plugin. Will not use it. {e}")
+            self.smart_plug = None
+
     def scrape_process_metrics(self) -> ProcessMetrics:
+        start_scrape_time = time.time()
+        if self.smart_plug:
+             # Use a ThreadPoolExecutor to run _scrape_psutils and get power concurrently
+            with ThreadPoolExecutor() as executor:
+                psutils_future = executor.submit(self._scrape_psutils)
+                get_power_future = executor.submit(self.smart_plug.get_power_consumption)
+
+                # Wait for both tasks to complete
+                p_metrics = psutils_future.result()
+                p_metrics.power_consumption = get_power_future.result()
+        else:
+            p_metrics = self._scrape_psutils()
+
+        end_scrape_time = time.time()
+        log.debug(f"scrape_process_metrics time = {end_scrape_time - start_scrape_time}")
+
+        return p_metrics
+
+    def _scrape_psutils(self) -> ProcessMetrics:
         with self.proc.oneshot():
             cpu_util = self.proc.cpu_percent()
             mem_util = self.proc.memory_full_info().rss

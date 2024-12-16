@@ -1,13 +1,11 @@
-# import jtop
 from .scraper_base import ProcessMetrics
-from .psutil_scraper import PSUtilScrapper
+from .general_scraper import GeneralScrapper
 from datetime import datetime, timezone
-import psutil
 from jtop import jtop
 from colext.common.logger import log
 import time
 
-class JetsonScraper(PSUtilScrapper):
+class JetsonScraper(GeneralScrapper):
     def __init__(self, pid: int, collection_interval_s: float):
         super().__init__(pid, collection_interval_s)
 
@@ -42,7 +40,7 @@ class JetsonScraper(PSUtilScrapper):
         if not self.jetson.ok():
             log.error("jetson.ok returned false!")
 
-        # Override psutils metrics
+        # Override general metrics
         p_metrics.power_consumption = self.jetson.power["tot"]["power"]
         p_metrics.gpu_util = self.jetson.gpu[self.gpu_key]["status"]["load"]
 

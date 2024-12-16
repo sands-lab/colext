@@ -8,13 +8,12 @@ from psycopg_pool import ConnectionPool
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
 from colext.metric_collection.typing import StageMetrics
-from .hw_scraper.hw_scraper_base import HWScraper
+from .hw_scraper.hw_scraper import HWScraper
 from .hw_scraper.scrapers.scraper_base import ProcessMetrics
 class MetricManager():
-    def __init__(self, finish_event: multiprocessing.Event, st_metric_queue: multiprocessing.Queue) -> None:
+    def __init__(self, finish_event: multiprocessing.Event, ready_event : multiprocessing.Event, st_metric_queue: multiprocessing.Queue) -> None:
         self.live_metrics = get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS") == "True"
         self.push_metrics_interval = float(get_colext_env_var_or_exit("COLEXT_MONITORING_PUSH_INTERVAL"))
-        measure_self = get_colext_env_var_or_exit("COLEXT_MONITORING_MEASURE_SELF") == "True"
         log.info(f"Live metrics: {self.live_metrics}")
         log.info(f"Push metrics interval: {self.push_metrics_interval}")
 
@@ -26,6 +25,7 @@ class MetricManager():
 
         self.finish_event = finish_event
         pid = os.getppid()
+        measure_self = get_colext_env_var_or_exit("COLEXT_MONITORING_MEASURE_SELF") == "True"
         if measure_self:
             pid = os.getpid()
         self.hw_scraper = HWScraper(pid, self.hw_metric_queue)
@@ -34,6 +34,9 @@ class MetricManager():
         self.client_db_id = get_colext_env_var_or_exit("COLEXT_CLIENT_DB_ID")
         # Pool required because we might be trying to push hw metrics + round metrics at the same time
         self.db_pool = self.create_db_pool()
+
+        # Inform parent we're ready
+        ready_event.set()
 
     def create_db_pool(self):
         # DB parameters are read from env variables

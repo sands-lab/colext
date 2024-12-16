@@ -9,7 +9,7 @@ from python_on_whales import docker
 from jinja2 import Environment, FileSystemLoader
 
 from colext.common.logger import log
-from colext.common.vars import REGISTY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH
+from colext.common.vars import REGISTY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH, SMART_PLUGS_HOST_SP_IP_MAP
 from colext.exp_deployers.deployer_base import DeployerBase
 from .kubernetes_utils import KubernetesUtils
 
@@ -127,6 +127,9 @@ class SBCDeployer(DeployerBase):
             pod_config["monitoring_push_interval"] = config["monitoring"]["push_interval"]
             pod_config["monitoring_scrape_interval"] = config["monitoring"]["scraping_interval"]
             pod_config["monitoring_measure_self"] = config["monitoring"]["measure_self"]
+
+            # Add IP of smartplug in case it exists
+            pod_config["SP_IP_ADDRESS"] = SMART_PLUGS_HOST_SP_IP_MAP.get(dev_hostname, None)
 
             pod_configs.append(pod_config)
 

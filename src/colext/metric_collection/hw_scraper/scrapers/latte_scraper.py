@@ -1,12 +1,11 @@
-# import jtop
 from datetime import datetime, timezone
-import pyRAPL
 import time
+import pyRAPL
 from colext.common.logger import log
 from .scraper_base import ProcessMetrics
-from .psutil_scraper import PSUtilScrapper
+from .general_scraper import GeneralScrapper
 
-class LatteScraper(PSUtilScrapper):
+class LatteScraper(GeneralScrapper):
     def __init__(self, pid: int, collection_interval_s: float):
         super().__init__(pid, collection_interval_s)
         pyRAPL.setup()
@@ -18,11 +17,11 @@ class LatteScraper(PSUtilScrapper):
         p_metrics: ProcessMetrics = super().scrape_process_metrics()
         end_ps_m_time = time.time()
         log.debug(f"psutil time = {end_ps_m_time - start_ps_m_time}")
-
         self.p_meter.end()
+
         energy_mj = self.p_meter.result.pkg[0] / 1.0e3
         interval_sec = self.p_meter.result.duration / 1.0e6
-        # Override psutils metrics
+        # Override general metrics
         p_metrics.power_consumption = energy_mj / interval_sec
 
         timestamp = datetime.now(timezone.utc)

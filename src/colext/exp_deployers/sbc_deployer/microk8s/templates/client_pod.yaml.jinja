@@ -57,7 +57,14 @@ spec:
         value: colext_user
       - name: PGPASSFILE
         value: /pgcreds/.pgpass
-
+      {# Set smartplug ip if set #}
+      {% if SP_IP_ADDRESS is not none %}
+      - name: SP_IP_ADDRESS
+        value: "{{ SP_IP_ADDRESS }}"
+      {% endif %}
+    envFrom:
+    - secretRef:
+        name: sp-creds
     volumeMounts:
       - name: pgcreds
         mountPath: /pgcreds

@@ -22,19 +22,24 @@ def MonitorFlwrClient(FlwrClientClass):
     class _MonitorFlwrClient(FlwrClientClass):
         def __init__(self, *args, **kwargs):
             log.debug("init function")
-            super().__init__(*args, **kwargs)
 
             self.client_db_id = get_colext_env_var_or_exit("COLEXT_CLIENT_DB_ID")
             self.client_id = int(get_colext_env_var_or_exit("COLEXT_CLIENT_ID"))
 
             self.mm_proc_stop_event = multiprocessing.Event()
+            mm_proc_ready_event = multiprocessing.Event()
             self.stage_timings_queue = multiprocessing.Queue()
             self.mm_proc = multiprocessing.Process(
-                target=MetricManager_as_bg_process, args=(self.mm_proc_stop_event, self.stage_timings_queue), daemon=True)
+                target=MetricManager_as_bg_process, args=(self.mm_proc_stop_event, mm_proc_ready_event, self.stage_timings_queue), daemon=True)
             self.mm_proc.start()
+            # Wait for metric manager to finish startup
+            mm_proc_ready_event.wait()
 
-            # Replace this, we might be able to cleanup better if the server tells us this is the last round
+            # We might be able to cleanup better if the server tells us this is the last round
             atexit.register(self.clean_up)
+
+            # Finish setup before invoking the original constructor
+            super().__init__(*args, **kwargs)
 
         def clean_up(self):
             log.debug("Stopping metric manager")
@@ -102,6 +107,7 @@ def MonitorFlwrClient(FlwrClientClass):
 
 def MetricManager_as_bg_process(*args, **kwargs):
     mm = MetricManager(*args, **kwargs)
+
     # runs until finish_event is set
     mm.start_metric_gathering()
     mm.stop_metric_gathering()
