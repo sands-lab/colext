@@ -288,9 +288,9 @@ Useful:
 ```
 
 # Limitations:
-- Currently, CoLExT only directly supports FL code using the Flower framework 1.5 + 1.6.
+- Currently, CoLExT only supports FL code using the Flower framework 1.5-1.9.
 - `tensorflow` package does not work with LattePandas.
-  Tensorflow builds from PiPy for x86 arch expect them to have support for AVX instructions, but the LattePandas do not have them.
+  Tensorflow builds from PiPy for x86 arch expect the CPUs to have support for AVX instructions, but the LattePanda's CPUs do not have them.
 - Currently, Nvidia Jetsons defaults to supporting Pytorch 2.2.0. Except for Jetson Nanos, which only support up to Pytorch 1.13.
   Additional Pytorch versions can be supported upon request.
 - Currently, only Python version 3.8 and 3.10 are supported.
