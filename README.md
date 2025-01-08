@@ -16,11 +16,11 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
 # Using CoLExT
 **Note**: Requires prior approval. Please fill out the show of interest [form](https://forms.gle/tpJJ1ehV3Zs1oCUv9) if you're interested.
 1. Access the CoLExT server. How to [access CoLExT](#accessing-the-colext-server).
-1. Install the CoLExT package in a local Python environment, e.g. with conda.
+1. Install the CoLExT package in a local Python environment, e.g., with conda.
     ```bash
-    conda create -n colext_env python=3.10 && conda actiate colext_env
+    conda create -n colext_env python=3.10 && conda activate colext_env
 
-    # The plotting extras automatically generatess metric plots
+    # The plotting extras automatically generate metric plots
     (colext_env)$ pip install colext[plotting] git+https://git@github.com/sands-lab/colext.git
     ```
 1. In the FL code, import the `colext` decorators and wrap Flower's client and strategy classes.
@@ -58,8 +58,8 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
       push_to_db_interval: 10 # in seconds
     ```
 
-1. Specify your Python dependencies using a `requirements.txt` file on the same directory as the CoLExT configuration file.
-1. Deploy, monitor the experiment in real time, and download the collected performance metrics as CSV files.
+1. Specify your Python dependencies using a `requirements.txt` file in the same directory as the CoLExT configuration file.
+1. Deploy, monitor the experiment in real-time, and download the collected performance metrics as CSV files.
 
     ```bash
     # Execute in the directory with the colext_config.yaml
@@ -189,8 +189,8 @@ The SBC deployment containerizes user code and deploys it using Kubernetes.
 Before starting the deployment process, it's recommended to make sure that a local deployment is working as expected.
 Local deployment can be used by changing the deployer to `local_py`. More information on setting the deployer [here](#python-version-and-deployers).
 
-Once this is verified, check the containarization is working as expected by running the `colext_launch_job` command in the "prepare" mode.
-This mode will perform checks and containerize the application making sure all the dependencies can be installed in the container.
+Once this is verified, check the containerization is working as expected by running the `colext_launch_job` command in the "prepare" mode.
+This mode will perform checks and containerize the application, ensuring all the dependencies can be installed in the container.
 ```Bash
 # Prepares app for deployment
 $ colext_launch_job -p
