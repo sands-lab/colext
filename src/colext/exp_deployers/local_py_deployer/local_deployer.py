@@ -15,6 +15,7 @@ class LocalDeployer(DeployerBase):
 
         # Will be assigned to inside deploy_setup
         self.server_proc = None
+        self.log_file_handles = []
         self.client_procs = []
 
     def prepare_deployment(self):
@@ -76,7 +77,7 @@ class LocalDeployer(DeployerBase):
 
         server_code = self.config["code"]["server"]
         # server_command = [sys.executable, server_code["entrypoint"], server_code["args"]]
-        server_command = [f"python3 {server_code['entrypoint']} {server_code['args']}"]
+        server_command = [server_code['command']]
 
         return server_command, {**current_env, **env_vars}
 
@@ -115,7 +116,8 @@ class LocalDeployer(DeployerBase):
             client_envs.append({**current_env, **base_env_vars, **per_client})
 
         client_code = self.config["code"]["client"]
-        client_command = [f"python3 {client_code['entrypoint']} {client_code['args']}"]
+        # client_command = [f"python3 {client_code['entrypoint']} {client_code['args']}"]
+        client_command = [client_code['command']]
 
         return client_command, client_envs
 

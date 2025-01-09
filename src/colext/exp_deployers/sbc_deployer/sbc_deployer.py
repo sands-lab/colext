@@ -96,8 +96,7 @@ class SBCDeployer(DeployerBase):
 
         server_pod_config["job_id"] = job_id
         server_pod_config["n_clients"] = config["n_clients"]
-        server_pod_config["entrypoint"] = config["code"]["server"]["entrypoint"]
-        server_pod_config["entrypoint_args"] = config["code"]["server"]["args"]
+        server_pod_config["command"] = config["code"]["server"]["command"]
 
         return server_pod_config
 
@@ -117,8 +116,7 @@ class SBCDeployer(DeployerBase):
             pod_config["n_clients"] = config["n_clients"]
             pod_config["client_id"] = client_i
             pod_config["pod_name"] = f"client-{client_i}"
-            pod_config["entrypoint"] = config["code"]["client"]["entrypoint"]
-            pod_config["entrypoint_args"] = config["code"]["client"]["args"]
+            pod_config["command"] = config["code"]["client"]["command"]
             pod_config["client_db_id"] = self.register_client_in_db(client_i, dev_id, job_id)
             pod_config["dev_type"] = client_type
             pod_config["device_hostname"] = dev_hostname

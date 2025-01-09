@@ -44,11 +44,15 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
     code:
       client:
         # Assumes relative paths from the config file
-        entrypoint: "./src/client.py"
-        args: "--client_id=${COLEXT_CLIENT_ID} --server_addr=${COLEXT_SERVER_ADDRESS}"
+        command: >-
+          python3 ./src/client.py
+          --client_id=${COLEXT_CLIENT_ID}
+          --server_addr=${COLEXT_SERVER_ADDRESS}
       server:
-        entrypoint: "./src/server.py"
-        args: "--n_clients=${COLEXT_N_CLIENTS} --n_rounds=3"
+        command: >-
+          python3 ./src/server.py
+          --n_clients=${COLEXT_N_CLIENTS}
+          --n_rounds=3
     devices:
       - { device_type: LattePandaDelta3, count: 4 }
       - { device_type: OrangePi5B,  count: 2 }

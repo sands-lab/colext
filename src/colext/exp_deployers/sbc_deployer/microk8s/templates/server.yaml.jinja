@@ -10,7 +10,7 @@ spec:
   - name: fl-server
     image: {{ image }}
     command: ["bash", "-c"]
-    args: ["python3 {{ entrypoint }} {{ entrypoint_args }}"]
+    args: ["{{ command }}"]
     env:
       - name: COLEXT_ENV
         value: "1"
