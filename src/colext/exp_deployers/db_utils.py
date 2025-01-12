@@ -7,7 +7,7 @@ class DBUtils:
 
     def create_db_connection(self):
         # Connection string is read from env variable pointing to pgpassfile
-        return psycopg.connect(dbname="colext_db", autocommit=True)
+        return psycopg.connect(dbname="colext_db", user="colext_user", autocommit=True)
 
     def project_exists(self, project_name) -> bool:
         try:
