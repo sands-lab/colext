@@ -20,7 +20,7 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
     ```bash
     conda create -n colext_env python=3.10 && conda activate colext_env
 
-    # The plotting extras automatically generate metric plots
+    # The plotting extras automatically generates metric plots
     (colext_env)$ pip install colext[plotting] git+https://git@github.com/sands-lab/colext.git
     ```
 1. In the FL code, import the `colext` decorators and wrap Flower's client and strategy classes.
@@ -45,7 +45,7 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
       # path: <code-root-dir>
       # if `path` is ommited it defaults to config file dir
       client:
-        # Assumes relative paths from path
+        # Assumes relative paths from `path`
         command: >-
           python3 ./src/client.py
           --client_id=${COLEXT_CLIENT_ID}
