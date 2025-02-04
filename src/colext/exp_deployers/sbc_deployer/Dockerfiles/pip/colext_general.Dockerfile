@@ -1,5 +1,5 @@
 # syntax=docker.io/docker/dockerfile:1.7-labs
-# Required for COPY --exclude
+# Above is required for COPY --exclude
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 

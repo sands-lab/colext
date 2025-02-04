@@ -8,7 +8,7 @@ from colext.common.logger import log
 from colext.exp_deployers.deployer_base import DeployerBase
 
 class LocalDeployer(DeployerBase):
-    """Deployer for SBC devices"""
+    """Local deployer for experimentation"""
     def __init__(self, config, test_env=False) -> None:
         # Creates db_utils and saves init parameters in self
         super().__init__(config, test_env)
@@ -22,8 +22,8 @@ class LocalDeployer(DeployerBase):
         log.debug("Nothing to do for prepare_deployment")
 
     def deploy_setup(self, job_id: int):
-        server_launch_cmd, server_env = self.prepare_server(job_id)
-        client_launch_cmd, cli_env = self.prepare_clients(job_id)
+        server_launch_cmd, server_env   = self.prepare_server(job_id)
+        client_launch_cmds, client_envs = self.prepare_clients(job_id)
 
         # Prepare logs
         logs_dir = Path("logs")
@@ -44,7 +44,7 @@ class LocalDeployer(DeployerBase):
         log.info("Waiting 3 sec for server startup")
         time.sleep(3)
         log.info("Deploying clients")
-        log.info(f"{client_launch_cmd=}")
+        log.info(f"{client_launch_cmds=}")
         for c_id in range(self.config["n_clients"]):
             if c_id == 0:
                 time.sleep(3) # weird flower bug
@@ -53,7 +53,7 @@ class LocalDeployer(DeployerBase):
             client_log_handle = open(client_log_path, 'w', encoding='UTF-8')
             self.log_file_handles.append(client_log_handle)
 
-            c_proc = subprocess.Popen(client_launch_cmd, shell=True, env=cli_env[c_id],
+            c_proc = subprocess.Popen(client_launch_cmds[c_id], shell=True, env=client_envs[c_id],
                                         stdout=client_log_handle, stderr=client_log_handle)
             self.client_procs.append(c_proc)
 
@@ -107,21 +107,30 @@ class LocalDeployer(DeployerBase):
         }
 
         client_envs = []
-        for client_id in range(self.config["n_clients"]):
+        client_commands = []
+        client_base_cmd = self.config["code"]["client"]['command']
+
+        def prepare_client(client_id):
             local_dev_id = 40 # Corresponds to the local device
-            per_client = {
+            client_env = {
                 "COLEXT_CLIENT_ID": str(client_id),
                 "COLEXT_CLIENT_DB_ID": self.register_client_in_db(client_id, local_dev_id, job_id),
             }
-            client_envs.append({**current_env, **base_env_vars, **per_client})
+            client_additional_args = client.get("add_args", "")
+            client_cmd = [f'{client_base_cmd} {client_additional_args}']
+            return client_cmd, client_env
 
-        client_code = self.config["code"]["client"]
-        # client_command = [f"python3 {client_code['entrypoint']} {client_code['args']}"]
-        client_command = [client_code['command']]
+        client_id = 0
+        for client in self.config["clients"]:
+            for _ in range(client["count"]):
+                client_cmd, client_env = prepare_client(client_id)
+                client_commands.append(client_cmd)
+                client_envs.append({**current_env, **base_env_vars, **client_env})
+                client_id += 1
 
-        return client_command, client_envs
+        return client_commands, client_envs
 
-    def wait_for_devices(self, job_id: int) -> None:
+    def wait_for_clients(self, job_id: int) -> None:
         # Wait for bg processes
         log.info("Waiting for server proc to finish")
         exit_code = self.server_proc.wait()

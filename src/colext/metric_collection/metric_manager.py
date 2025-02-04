@@ -1,7 +1,8 @@
 import os
 import time
 import queue
-import multiprocessing
+import multiprocessing as mp
+from multiprocessing.synchronize import Event as SyncEvent
 from dataclasses import asdict
 from psycopg_pool import ConnectionPool
 
@@ -10,12 +11,13 @@ from colext.common.utils import get_colext_env_var_or_exit
 from colext.metric_collection.typing import StageMetrics
 from .hw_scraper.hw_scraper import HWScraper
 from .hw_scraper.scrapers.scraper_base import ProcessMetrics
+
 class MetricManager():
-    def __init__(self, finish_event: multiprocessing.Event, ready_event : multiprocessing.Event, st_metric_queue: multiprocessing.Queue) -> None:
+    def __init__(self, finish_event: SyncEvent, ready_event : SyncEvent, st_metric_queue: mp) -> None:
         self.live_metrics = get_colext_env_var_or_exit("COLEXT_MONITORING_LIVE_METRICS") == "True"
         self.push_metrics_interval = float(get_colext_env_var_or_exit("COLEXT_MONITORING_PUSH_INTERVAL"))
-        log.info(f"Live metrics: {self.live_metrics}")
-        log.info(f"Push metrics interval: {self.push_metrics_interval}")
+        log.info("Live metrics: %s", self.live_metrics)
+        log.info("Push metrics interval: %s", self.push_metrics_interval)
 
         self.stage_metrics = []
         self.st_metric_queue = st_metric_queue
@@ -75,7 +77,7 @@ class MetricManager():
         self.push_current_metrics()
 
         log.info("Metric manager stopped.")
-        log.info(f"Nr of HW metrics pushed = {self.total_hw_metric_count}.")
+        log.info("Nr of HW metrics pushed = %s.", self.total_hw_metric_count)
 
     def push_current_metrics(self):
         self.push_current_hw_metrics()
@@ -88,7 +90,7 @@ class MetricManager():
             log.debug("No HW metrics to push.")
             return
 
-        log.debug(f"Pushing {len(self.hw_metrics)} HW metrics from client {self.client_db_id} to DB")
+        log.debug("Pushing %s HW metrics from client %s to DB", len(self.hw_metrics), self.client_db_id)
 
         sql = """
                 INSERT INTO fl_testbed_logging.device_measurements
@@ -112,7 +114,7 @@ class MetricManager():
             log.debug("No Stage timings metrics to push.")
             return
 
-        log.debug(f"Pushing {len(self.stage_metrics)} stage timings from client {self.client_db_id} to DB")
+        log.debug("Pushing %s stage timings from client %s to DB", len(self.stage_metrics), self.client_db_id)
         sql = """
                 INSERT INTO clients_in_round
                         (client_id, round_id, start_time, end_time, loss, num_examples, accuracy)
@@ -126,3 +128,4 @@ class MetricManager():
             with conn.cursor() as cur:
                 cur.executemany(sql, formatted_metrics)
         self.stage_metrics.clear()
+

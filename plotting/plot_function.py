@@ -172,14 +172,14 @@ def read_job_metrics(job_details, job_metric_dir):
     hw_metrics = hw_metrics.join(client_info, on="client_id")
 
     # Simplify names if we're only using Jetsons
-    if client_info["device_type"].str.startswith("Jetson").all():
+    if client_info["dev_type"].str.startswith("Jetson").all():
         mapping = {
         "JetsonAGXOrin": "AGXOrin",
         "JetsonOrinNano": "OrinNano",
         "JetsonXavierNX": "XavierNX",
         "JetsonNano": "Nano",
         }
-        cr_timings['device_type'] = cr_timings['device_type'].replace(mapping)
+        cr_timings['dev_type'] = cr_timings['dev_type'].replace(mapping)
 
     job_data = {
         "client_info": client_info,
@@ -189,12 +189,12 @@ def read_job_metrics(job_details, job_metric_dir):
     }
     return job_data
 
-def plot_hw_metrics(df, id_vars="device_type", save_name=None):
+def plot_hw_metrics(df, id_vars="dev_type", save_name=None):
     """Convert to long format and print facetgrid with metrics"""
     df_long = pd.melt(df, id_vars=id_vars, var_name='metric')
 
     order=["JetsonAGXOrin", "JetsonOrinNano", "JetsonXavierNX", "JetsonNano", "LattePandaDelta3", "OrangePi5B"]
-    g = sns.catplot(x="value", y="device_type", col="metric", hue="device_type", data=df_long,
+    g = sns.catplot(x="value", y="dev_type", col="metric", hue="dev_type", data=df_long,
                 kind="bar", order=order, sharex=False)
     g.set_axis_labels("", "")
     g.set_titles("{col_name}")
@@ -204,7 +204,7 @@ def plot_hw_metrics(df, id_vars="device_type", save_name=None):
         g.figure.savefig(f"plots/{save_name}", bbox_inches='tight', dpi=300)
     g.figure.show()
 
-def plot_cir_metrics(df, job_details, row="device_type", order=None, save_file=None, cols_per_batch=False, show=True):
+def plot_cir_metrics(df, job_details, row="dev_type", order=None, save_file=None, cols_per_batch=False, show=True):
     """Convert to long format and print facetgrid with metrics"""
     id_vars=[row, "stage"]
     cols = [row, "stage"]
@@ -240,7 +240,7 @@ def full_algo_plot(cr_timings, job_details, show=True):
     os.makedirs(plots_dir, exist_ok=True)
 
     # 1 Plot
-    # row = "device_type"
+    # row = "dev_type"
     # mean_edp_by_dev_type = cr_timings.groupby(row)['EDP (J*s)'].mean()
     # min_mean_edp = mean_edp_by_dev_type.min()
     # cr_timings['EDP (N)'] = cr_timings.groupby('stage')['EDP (J*s)'].transform(lambda x: x / min_mean_edp)
@@ -254,7 +254,7 @@ def full_algo_plot(cr_timings, job_details, show=True):
     plot_cir_metrics(cr_timings, job_details, row=row, save_file=f"{plots_dir}/per_dev.pdf", show=show)
 
     # 3 Plot
-    row = "device_type"
+    row = "dev_type"
     mean_edp = cr_timings.groupby(row)['EDP pb (J*s)'].mean()
     min_mean_edp = mean_edp.min()
     cr_timings['EDP pb (N)'] = cr_timings.groupby('client_id')['EDP pb (J*s)'].transform(lambda x: x / min_mean_edp)
@@ -299,11 +299,11 @@ def cmp_algorithms_by_cir(cir_list, row, perb=False, N=True, save_file=None):
     #         continue
     #     ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
 
-    if row == "device_type":
+    if row == "dev_type":
         title = "Device Type"
     # sns.move_legend(g, loc="center left", handlelength=0.7, bbox_to_anchor=(1.0, 0.5), frameon=True)
-    # sns.move_legend(g, loc="lower left", handlelength=0.7, frameon=True, mode = "expand", ncol=len(df.device_type))
-    # sns.move_legend(g, loc="upper center", title=title, handlelength=0.7, frameon=True, ncol=len(df.device_type), bbox_to_anchor=(0.5,0.05))
+    # sns.move_legend(g, loc="lower left", handlelength=0.7, frameon=True, mode = "expand", ncol=len(df.dev_type))
+    # sns.move_legend(g, loc="upper center", title=title, handlelength=0.7, frameon=True, ncol=len(df.dev_type), bbox_to_anchor=(0.5,0.05))
     sns.move_legend(g, loc="lower right", title=title, frameon=True, bbox_to_anchor=(0.73,0.125))
     # plt.tight_layout()
     for ax in g.axes.flat:

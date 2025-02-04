@@ -16,6 +16,16 @@ class KubernetesUtils:
         kubernetes.config.load_kube_config(config_file = MICROK8S_CONFIG_FILE)
         return kubernetes.client.ApiClient(), kubernetes.client.CoreV1Api()
 
+    def get_nodes_info_by_type(self, dev_type: str) -> list:
+        nodes = self.k8s_core_v1.list_node(label_selector=f"device-type={dev_type}").items
+        return [
+            (node.metadata.labels["device-id"], node.metadata.labels["kubernetes.io/hostname"])
+            for node in nodes
+            if not node.spec.unschedulable
+            and node.status.conditions is not None
+            and any(cond.type == "Ready" and cond.status == "True" for cond in node.status.conditions)
+        ]
+
     def create_from_yaml(self, yaml_file):
         kubernetes.utils.create_from_yaml(self.k8s_api, yaml_file)
 

@@ -4,6 +4,7 @@ from importlib.metadata import distribution
 import sys
 from pathlib import Path
 from typing import Dict
+from collections import defaultdict
 import yaml
 from python_on_whales import docker
 from jinja2 import Environment, FileSystemLoader
@@ -63,10 +64,10 @@ class SBCDeployer(DeployerBase):
                 f"Testing package. Expected to find src/colext dir in '{context}'"
 
         # Construct targets based on requested device types + Server, which is always there
-        server_image = self.get_image_for_device_type("Server")
+        server_image = self.get_image_for_dev_type("Server")
         targets = [server_image]
-        for dev in config_dict["devices"]:
-            dev_image = self.get_image_for_device_type(dev["device_type"])
+        for dev_type in config_dict["req_dev_types"]:
+            dev_image = self.get_image_for_dev_type(dev_type)
             if dev_image not in targets:
                 targets.append(dev_image)
 
@@ -102,34 +103,40 @@ class SBCDeployer(DeployerBase):
 
     FL_SERVER_ADDRESS = "fl-server-svc:80"
     def prepare_clients_for_launch(self, job_id: int) -> list:
-        config = self.config
-
-        client_types_to_generate = config["client_types_to_generate"]
+        client_types_to_generate = self.config["req_dev_types"]
         available_devices_by_type = self.get_available_devices_by_type(client_types_to_generate)
 
-        pod_configs = []
-        for client_i, client_type in enumerate(client_types_to_generate):
-            pod_config = self.get_base_pod_config(client_type, config)
-            (dev_id, dev_hostname) = self.get_device_hostname_by_type(available_devices_by_type, client_type)
+        def prepare_client(client_prototype, client_id):
+            dev_type = client_prototype["dev_type"]
+            pod_config = self.get_base_pod_config(dev_type, self.config)
+            dev_id, dev_hostname = self.get_device_hostname_by_type(available_devices_by_type, dev_type)
+            client_additional_args = client_prototype.get("add_args", "")
 
             pod_config["job_id"] = job_id
-            pod_config["n_clients"] = config["n_clients"]
-            pod_config["client_id"] = client_i
-            pod_config["pod_name"] = f"client-{client_i}"
-            pod_config["command"] = config["code"]["client"]["command"]
-            pod_config["client_db_id"] = self.register_client_in_db(client_i, dev_id, job_id)
-            pod_config["dev_type"] = client_type
+            pod_config["n_clients"] = self.config["n_clients"]
+            pod_config["client_id"] = client_id
+            pod_config["pod_name"] = f"client-{client_id}"
+            pod_config["command"] = f'{self.config["code"]["client"]["command"]} {client_additional_args}'
+            pod_config["client_db_id"] = self.register_client_in_db(client_id, dev_id, job_id)
+            pod_config["dev_type"] = dev_type
             pod_config["device_hostname"] = dev_hostname
             pod_config["server_address"] = self.FL_SERVER_ADDRESS
-            pod_config["monitoring_live_metrics"] = config["monitoring"]["live_metrics"]
-            pod_config["monitoring_push_interval"] = config["monitoring"]["push_interval"]
-            pod_config["monitoring_scrape_interval"] = config["monitoring"]["scraping_interval"]
-            pod_config["monitoring_measure_self"] = config["monitoring"]["measure_self"]
+            pod_config["monitoring_live_metrics"] = self.config["monitoring"]["live_metrics"]
+            pod_config["monitoring_push_interval"] = self.config["monitoring"]["push_interval"]
+            pod_config["monitoring_scrape_interval"] = self.config["monitoring"]["scraping_interval"]
+            pod_config["monitoring_measure_self"] = self.config["monitoring"]["measure_self"]
 
             # Add IP of smartplug in case it exists
             pod_config["SP_IP_ADDRESS"] = SMART_PLUGS_HOST_SP_IP_MAP.get(dev_hostname, None)
 
-            pod_configs.append(pod_config)
+            return pod_config
+
+        pod_configs = []
+        client_id = 0
+        for client_prototype in self.config["clients"]:
+            for _ in range(client_prototype["count"]):
+                pod_configs.append(prepare_client(client_prototype, client_id))
+                client_id += 1
 
         log.debug(f"Generated {len(pod_configs)} pod configs")
         return pod_configs
@@ -144,14 +151,14 @@ class SBCDeployer(DeployerBase):
         "OrangePi5B":       "generic-cpu-arm",
     }
 
-    def get_image_for_device_type(self, dev_type: str):
+    def get_image_for_dev_type(self, dev_type: str):
         return self.IMAGE_BY_DEV_TYPE[dev_type]
 
     def get_base_pod_config(self, dev_type, config: Dict[str, str]):
         pod_config = {}
         project_name = config["project"]
 
-        pod_image_name = self.get_image_for_device_type(dev_type)
+        pod_image_name = self.get_image_for_dev_type(dev_type)
         pod_config["image"] =  f"{REGISTY}/{project_name}/{pod_image_name}:latest"
         pod_config["std_datasets_path"] = STD_DATASETS_PATH
         pod_config["pytorch_datasets_path"] = PYTORCH_DATASETS_PATH
@@ -181,15 +188,23 @@ class SBCDeployer(DeployerBase):
 
         log.info(f"Experiment deployed. It can be canceled with 'mk delete pods --all'")
 
-    def get_device_hostname_by_type(self, available_devices_by_type, device_type):
+    def get_available_devices_by_type(self, dev_types):
+        available_devices_by_type = defaultdict(list)
+        for dev_type in dev_types:
+            for (dev_id, dev_hostname) in self.k_utils.get_nodes_info_by_type(dev_type):
+                available_devices_by_type[dev_type].append((dev_id, dev_hostname))
+
+        return available_devices_by_type
+
+    def get_device_hostname_by_type(self, available_devices_by_type, dev_type):
         try:
-            (dev_id, dev_hostname) = available_devices_by_type[device_type].pop()
+            dev_id, dev_hostname = available_devices_by_type[dev_type].pop()
         except IndexError:
-            log.error(f"Not enough {device_type}s available for the request.")
+            log.error(f"Not enough {dev_type}s available for the request.")
             sys.exit(1)
 
-        return (dev_id, dev_hostname)
+        return dev_id, dev_hostname
 
-    def wait_for_devices(self, job_id):
+    def wait_for_clients(self, job_id):
         """ Wait for all pods with label colext-job-id """
         self.k_utils.wait_for_pods(f"colext-job-id={job_id}")

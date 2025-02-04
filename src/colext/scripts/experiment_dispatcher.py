@@ -5,15 +5,19 @@ import sys
 import yaml
 from colext.common.logger import log
 from colext.exp_deployers import get_deployer
-from colext.exp_deployers.db_utils import DBUtils, ProjectNotFoundException
+from colext.exp_deployers.db_utils import DBUtils
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
 
-    parser.add_argument('-c', '--config_file', type=str, default="./colext_config.yaml", help="Path to CoLExT config file.")
-    parser.add_argument('-t', '--test_env', default=False, action='store_true', help="Test deployment in test environment.")
-    parser.add_argument('-p', '--prepare_only', default=False, action='store_true', help="Only prepare experiment for launch.")
-    parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true', help="Wait for experiment to finish.")
+    parser.add_argument('-c', '--config_file', type=str, default="./colext_config.yaml",
+                        help="Path to CoLExT config file.")
+    parser.add_argument('-t', '--test_env', default=False, action='store_true',
+                        help="Test deployment in test environment.")
+    parser.add_argument('-p', '--prepare_only', default=False, action='store_true',
+                        help="Only prepare experiment for launch.")
+    parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
+                        help="Wait for experiment to finish.")
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
     args = parser.parse_args()
@@ -25,7 +29,7 @@ def read_config(config_file):
 
     try:
         print(f"Trying to read CoLExT configuration file from '{config_file}'")
-        with open(config_file, "r") as stream:
+        with open(config_file, "r", encoding="utf-8") as stream:
             config_dict = yaml.safe_load(stream)
     except OSError as os_err:
         print(f"Could not read config file: {os_err}")
@@ -55,6 +59,7 @@ def read_config(config_file):
         "scraping_interval": 0.3,
         "measure_self": False,
     } # intervals are in seconds
+    # Override defaults by whatever is in the config
     config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
 
     # Validate
@@ -67,8 +72,8 @@ def read_config(config_file):
             print_err(f"Could not find project named {project_name}. Please use a valid project name.")
             sys.exit(1)
 
-    if "devices" not in config_dict:
-        print_err("Please specify at least one device to act as a client")
+    if "clients" not in config_dict:
+        print_err("Please specify at least one client in the config file.")
         sys.exit(1)
 
     valid_python_versions = ["3.8", "3.10"]
@@ -81,14 +86,13 @@ def read_config(config_file):
         print_err(f"deployer can  only be set to {valid_deployers}")
         sys.exit(1)
 
-    # TODO Support specifying device type + count
-    config_dict["client_types_to_generate"] = []
-    n_clients = 0
-    # count n_clients
-    for dev in config_dict["devices"]:
-        config_dict["client_types_to_generate"].extend([dev["device_type"]]*dev["count"])
-        n_clients += dev["count"]
-    config_dict["n_clients"] = n_clients
+    # Add fields
+    client_defaults = {
+        "count": 1
+    }
+    config_dict["clients"] = [{**client_defaults, **c} for c in config_dict["clients"]]
+    config_dict["req_dev_types"] = list(set([client["dev_type"] for client in config_dict["clients"]]))
+    config_dict["n_clients"] = sum(client["count"] for client in config_dict["clients"])
 
     print("CoLExT configuration read successfully")
     return config_dict

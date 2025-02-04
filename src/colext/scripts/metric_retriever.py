@@ -172,7 +172,7 @@ def clean_up_cr(jd):
 
     return cr_timings
 
-def plot_cir_metrics(df, interest_cols, save_file, row="device_type"):
+def plot_cir_metrics(df, interest_cols, save_file, row="dev_type"):
     """Convert to long format and print facetgrid with metrics"""
     id_vars=[row, "stage"]
     cols = [row, "stage"] + interest_cols
@@ -191,7 +191,7 @@ def plot_cir_metrics(df, interest_cols, save_file, row="device_type"):
 def plot_summary_data(summary_data):
     interest_cols = ["Training time (s)", "Energy training (J)", "Energy in round (J)", 'EDP (N)']
     # 1 Plot
-    row = "device_type"
+    row = "dev_type"
     mean_edp_by_dev_type = summary_data.groupby(row)['EDP (J*s)'].mean()
     min_mean_edp = mean_edp_by_dev_type.min()
     summary_data['EDP (N)'] = summary_data.groupby('stage')['EDP (J*s)'].transform(lambda x: x / min_mean_edp)
@@ -206,7 +206,7 @@ def plot_summary_data(summary_data):
 
     interest_cols = ["Training time ps (ms)", "Energy ps (mJ)", "EDP ps (N)"]
     # 3 Plot
-    row = "device_type"
+    row = "dev_type"
     mean_edp = summary_data.groupby(row)['EDP ps (mJ*ms)'].mean()
     min_mean_edp = mean_edp.min()
     summary_data['EDP ps (N)'] = summary_data.groupby('client_id')['EDP ps (mJ*ms)'].transform(lambda x: x / min_mean_edp)

@@ -4,12 +4,6 @@ from collections import defaultdict
 from abc import ABC, abstractmethod
 from .db_utils import DBUtils
 
-# ClientConfig: TypeAlias = Dict[str, str]
-@dataclass
-class DeviceTypeRequest:
-    """Class to represent a device type request"""
-    device_type: str
-    count: int
 
 class DeployerBase(ABC):
     """
@@ -47,9 +41,9 @@ class DeployerBase(ABC):
         """
 
     @abstractmethod
-    def wait_for_devices(self, job_id: int):
+    def wait_for_clients(self, job_id: int):
         """
-            Wait for devices to finish
+            Wait for clients to finish
         """
 
     def register_client_in_db(self, client_id: int, dev_id: int, job_id: int) -> str:
@@ -69,5 +63,5 @@ class DeployerBase(ABC):
         """ Hand until job is finished and mark job as finished """
         # Give some buffer for experiment launch
         time.sleep(1)
-        self.wait_for_devices(job_id)
+        self.wait_for_clients(job_id)
         self.db_utils.finish_job(job_id)

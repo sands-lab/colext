@@ -63,13 +63,13 @@ class DBUtils:
 
         return job_record is not None
 
-    def get_current_available_clients(self, device_types: Tuple[int, str, str]) -> str:
+    def get_current_available_clients(self, dev_types: Tuple[int, str, str]) -> str:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 SELECT device_id, device_code AS hostname, device_name
                 FROM devices WHERE device_name = ANY(%s) AND status = %s
             """
-        data = (device_types, 'ACTIVE')
+        data = (dev_types, 'ACTIVE')
         cursor.execute(sql, data)
         db_devices = cursor.fetchall()
         cursor.close()
@@ -130,7 +130,7 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT client_number AS client_id, device_code AS device_name, device_name AS device_type
+                (SELECT client_number AS client_id, device_code AS device_name, device_name AS dev_type
                     FROM clients
                         JOIN devices USING(device_id)
                     WHERE job_id = %s

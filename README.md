@@ -42,8 +42,10 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
     project: colext_example
 
     code:
+      # path: <code-root-dir>
+      # if `path` is ommited it defaults to config file dir
       client:
-        # Assumes relative paths from the config file
+        # Assumes relative paths from path
         command: >-
           python3 ./src/client.py
           --client_id=${COLEXT_CLIENT_ID}
@@ -53,13 +55,26 @@ If you’d like to experiment with CoLExT, please show your interest by filling 
           python3 ./src/server.py
           --n_clients=${COLEXT_N_CLIENTS}
           --n_rounds=3
-    devices:
-      - { device_type: LattePandaDelta3, count: 4 }
-      - { device_type: OrangePi5B,  count: 2 }
-      - { device_type: JetsonOrinNano, count: 4 }
+
+    clients:
+      - dev_type: LattePandaDelta3
+        count: 6
+
+      - dev_type: JetsonOrinNano
+        count: 4
+
+      - dev_type: OrangePi5B
+        # If `count` is not specified, it's assumed to be 1
+
+      - dev_type: OrangePi5B
+        count: 2
+        # Add additional arguments only to this client group
+        add_args: "--steps=200"
+
+
     monitoring:
-      scraping_interval: 0.3  # in seconds
-      push_to_db_interval: 10 # in seconds
+      scraping_interval: 0.3  # Freq. of data collection (seconds)
+      push_to_db_interval: 10 # Freq. for database updates (seconds)
     ```
 
 1. Specify your Python dependencies using a `requirements.txt` file in the same directory as the CoLExT configuration file.
@@ -95,21 +110,34 @@ This section describes the possible configuration options for the CoLExT configu
 ### Currently available devices
 ```YAML
 # SBCs
-  - { device_type: JetsonAGXOrin,  count: 2 }
-  - { device_type: JetsonOrinNano, count: 4 }
-  - { device_type: JetsonXavierNX, count: 2 }
-  - { device_type: JetsonNano, count: 6 }
-  - { device_type: LattePandaDelta3, count: 6 }
-  - { device_type: OrangePi5B, count: 8 }
+  - { dev_type: JetsonAGXOrin,  count: 2 }
+  - { dev_type: JetsonOrinNano, count: 4 }
+  - { dev_type: JetsonXavierNX, count: 2 }
+  - { dev_type: JetsonNano, count: 6 }
+  - { dev_type: LattePandaDelta3, count: 6 }
+  - { dev_type: OrangePi5B, count: 8 }
 # !!! Currently, this config file will not work with smartphones !!!
 # Smartphones
-  - { device_type: SamsungXCover6Pro, count: 3 }
-  - { device_type: SamsungGalaxyM54, count: 2 }
-  - { device_type: Xiaomi12, count: 2 }
-  - { device_type: XiaomiPocoX5Pro, count: 2 }
-  - { device_type: GooglePixel7, count: 5 }
-  - { device_type: AsusRogPhone6, count: 2 }
-  - { device_type: OnePlusNord2T5G, count: 2 }
+  - { dev_type: SamsungXCover6Pro, count: 3 }
+  - { dev_type: SamsungGalaxyM54, count: 2 }
+  - { dev_type: Xiaomi12, count: 2 }
+  - { dev_type: XiaomiPocoX5Pro, count: 2 }
+  - { dev_type: GooglePixel7, count: 5 }
+  - { dev_type: AsusRogPhone6, count: 2 }
+  - { dev_type: OnePlusNord2T5G, count: 2 }
+```
+
+Occasionally, device maintenance is required, rendering them unavailable for experiments. To check the current availability of each device type, use the command below:
+
+```bash
+$ colext_get_dev_count
+      1 colext (FL Server)
+      2 jao    (Jetson AGX Orin)
+      6 jn     (Jetson Nano)
+      4 jon    (Jetson Orin Nano)
+      2 jxn    (Jetson Xavier NX)
+      4 lp     (LattePanda Delta 3)
+      8 op     (OrangePi 5B)
 ```
 
 ### Exposed environment variables
@@ -161,7 +189,7 @@ Here are the contents for each CSV:
 
 ### client_info.csv
 - client_id: ID of the client
-- device_type: Device type as requested in the config file
+- dev_type: Device type as requested in the config file
 - device_name: Name of the device with the associated device type
 
 ### client_round_timings.csv
