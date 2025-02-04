@@ -40,9 +40,8 @@ def read_config(config_file):
 
     # Apply defaults
     if "path" not in config_dict["code"]:
-        default_path = os.path.dirname(os.path.realpath(config_file))
-        config_dict["code"]["path"] = default_path
-        print(f"Could not find 'code.path' in config file. Assuming {default_path}")
+        config_dict["code"]["path"] = "."
+        print("Could not find 'code.path' in config file. Assuming code is in same dir as config file.")
 
     if "python_version" not in config_dict["code"]:
         default_py_version = "3.10"
@@ -87,10 +86,16 @@ def read_config(config_file):
         sys.exit(1)
 
     # Add fields
+    config_dir_path = os.path.dirname(os.path.realpath(config_file))
+    config_dict["code"]["path"] = os.path.join(config_dir_path, config_dict["code"]["path"])
+    print(f'Code path = {config_dict["code"]["path"]}')
+
+
     client_defaults = {
         "count": 1
     }
     config_dict["clients"] = [{**client_defaults, **c} for c in config_dict["clients"]]
+
     config_dict["req_dev_types"] = list(set([client["dev_type"] for client in config_dict["clients"]]))
     config_dict["n_clients"] = sum(client["count"] for client in config_dict["clients"])
 
