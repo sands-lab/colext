@@ -93,8 +93,8 @@ class LocalDeployer(DeployerBase):
             "COLEXT_SERVER_ADDRESS": "0.0.0.0:8080",
             "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
 
-            # "COLEXT_DATASETS": "/colext/datasets",
-            # "COLEXT_PYTORCH_DATASETS": "/colext/pytorch_datasets",
+            "COLEXT_DATASETS": "/colext/datasets",
+            "COLEXT_PYTORCH_DATASETS": "/colext/pytorch_datasets",
 
             "COLEXT_MONITORING_LIVE_METRICS": str(self.config["monitoring"]["live_metrics"]),
             "COLEXT_MONITORING_PUSH_INTERVAL": str(self.config["monitoring"]["push_interval"]),
