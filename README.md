@@ -279,7 +279,10 @@ This allows external users to interact with the server as if they were directly 
     # Add to /etc/hosts
     10.244.96.246 colext
     ```
-1. Wait for your device to be added to the ZeroTier network
+1. Join CoLExT's ZeroTier network - ask your contact point for the network ID
+   ```bash
+   zerotier-cli join <colext_network_id>
+   ```
 1. Test connection to CoLExT server:
     ```bash
     # Confirm connectivity
