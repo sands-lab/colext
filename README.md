@@ -330,3 +330,18 @@ Useful:
 - Currently, Nvidia Jetsons defaults to supporting Pytorch 2.2.0. Except for Jetson Nanos, which only support up to Pytorch 1.13.
   Additional Pytorch versions can be supported upon request.
 - Currently, only Python version 3.8 and 3.10 are supported.
+
+
+# Citation
+
+If you'd like to reference CoLExT in your work, please cite our paper:
+```
+@inproceedings{bovzivc2024testbed,
+  title={Where is the Testbed for my Federated Learning Research?},
+  author={Bo{\v{z}}i{\v{c}}, Janez and Faustino, Am{\^a}ndio R and Radovi{\v{c}}, Boris and Canini, Marco and Pejovi{\'c}, Veljko},
+  booktitle={2024 IEEE/ACM Symposium on Edge Computing (SEC)},
+  pages={249--264},
+  year={2024},
+  organization={IEEE}
+}
+```
