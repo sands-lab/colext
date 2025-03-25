@@ -7,6 +7,8 @@ from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
 from colext.metric_collection.metric_manager import MetricManager
 from colext.metric_collection.typing import StageMetrics
+import subprocess
+
 
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
@@ -34,6 +36,27 @@ def MonitorFlwrClient(FlwrClientClass):
             self.mm_proc.start()
             # Wait for metric manager to finish startup
             mm_proc_ready_event.wait()
+            
+            # Network setup
+            NET_CONF_PATH = "network/tcconfig_rules.txt"
+            if os.path.exists(NET_CONF_PATH):
+                log.info(f"Applying network configuration from {NET_CONF_PATH}")
+                try:
+                    with open(NET_CONF_PATH, "r") as f:
+                        tc_commands = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+
+                    for cmd in tc_commands:
+                        log.debug(f"Running network command: {cmd}")
+                        result = subprocess.run(cmd.split(), capture_output=True, text=True)
+                        if result.returncode != 0:
+                            log.error(f"Network command failed: {result.stderr}")
+                        else:
+                            log.debug(f"Network command output: {result.stdout}")
+                except Exception as e:
+                    log.error(f"Failed to apply network configuration: {e}")
+            else:
+                log.info(f"No network configuration found at {NET_CONF_PATH}")
+
 
             # We might be able to cleanup better if the server tells us this is the last round
             atexit.register(self.clean_up)

@@ -6,6 +6,8 @@ import yaml
 from colext.common.logger import log
 from colext.exp_deployers import get_deployer
 from colext.exp_deployers.db_utils import DBUtils
+import re
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
@@ -98,9 +100,123 @@ def read_config(config_file):
 
     config_dict["req_dev_types"] = list(set([client["dev_type"] for client in config_dict["clients"]]))
     config_dict["n_clients"] = sum(client["count"] for client in config_dict["clients"])
+    
+    config_dict["networks"] = read_network(config_dict)
 
     print("CoLExT configuration read successfully")
     return config_dict
+
+# given in input dictonary config it will output a new dict with all the networks
+def read_network(config):
+    networks = config['network']
+
+    network_tags = {}
+
+    #create a tcconfig commands list for each network
+    for network in networks:
+        network_tags[network['tag']] = {}
+        network_commands = network_tags[network['tag']]["commands"] = { "upstream": [] , "downstream": [] }
+        for direction in ["upstream", "downstream"]:
+            if isinstance(network[direction], str):
+                commands = str(network[direction]).split()
+                if len(commands) > 0:
+                    network_commands[direction].append(f"--rate {commands[0]} ")
+                if len(commands) > 1:
+                    network_commands[direction].append(f"--delay {commands[1]} ")
+                if len(commands) > 2:
+                    network_commands[direction].append(f"--loss {commands[2]} ")
+                if len(commands) > 3:
+                    network_commands[direction].append(f"--delay-distribution {commands[3]} ")
+            elif isinstance(network[direction], dict):
+                for rule, value in network[direction].items():
+                    network_commands[direction].append(f"--{rule} {value} ")
+    print(network_tags)
+
+    #clean commands and validate all rules and finalize commands
+    for network_name, network in network_tags.items():
+        for direction in ["upstream", "downstream"]:
+            network["commands"][direction] = " ".join(validate_network_commands(network["commands"][direction], network_name))
+
+    print(f"Network tags: {network_tags}")
+    return network_tags
+
+
+def validate_network_commands(commands, network_name):
+    #input command mapping
+    command_mapping = {
+        "--bandwidth": "--rate",
+        "--speed": "--rate",
+        "--rate": "--rate",
+        "--delay": "--delay",
+        "--delay-time": "--delay",
+        "--latency": "--delay",
+        "--latency-time": "--delay",
+        "--delay-distribution": "--delay-distribution",
+        "--delay-distro": "--delay-distro",
+        "--loss": "--loss",
+        "--duplicate": "--duplicate",
+        "--corrupt": "--corrupt",
+        "--reordering": "--reordering",
+        "--reorder": "--reordering",
+        "--limit": "--limit",
+    }
+
+    # input value validation mapping
+    TIME_UNITS = r"(h|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds|ms|msec|msecs|millisecond|milliseconds|us|usec|usecs|microsecond|microseconds)"
+
+    validation_mapping = {
+        "--rate": r"^\d{1,4}(\.\d+)?(Kbps|Mbps|Gbps)$",
+        "--delay": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
+        "--delay-distro": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
+        "--delay-distribution": r"^(normal|pareto|paretonormal|Normal|Pareto|ParetoNormal)$",
+        "--loss": r"^\d+(\.\d+)?%$",
+        "--duplicate": r"^\d+(\.\d+)?%$",
+        "--corrupt": r"^\d+(\.\d+)?%$",
+        "--reordering": r"^\d+(\.\d+)?%$",
+        "--limit": r"^\d+$",
+    }
+
+    new_commands = []
+    for rule in commands:
+            rule_split = rule.split()
+
+            #check if the rule and value exist
+
+            if len(rule_split) < 1:
+                # should not be possible but added for testing
+                log.error(f"empty value in network:{network_name} ")
+                sys.exit(1)
+            elif len(rule_split) < 2:
+                # value is not there
+                log.error(f"invlid {rule_split[0].lstrip('-')} value: None in network:{network_name} ")
+                sys.exit(1)
+            elif len(rule_split) > 2:
+                # should not be possible but added for testing
+                log.error(f"invalid size (< 2) for value in network :{network_name} ")
+                sys.exit(1)
+
+            # check the validity of the rule
+
+            if rule_split[0] not in command_mapping.keys():
+                # invlid command rule
+                log.error(f"invlid {rule_split[0]} Command in network:{network_name} ")
+                sys.exit(1)
+            else:
+                rule_split[0] = command_mapping[rule_split[0]]
+
+            # check the validity of the value
+
+            if not bool(re.match(validation_mapping[rule_split[0]], rule_split[1])):
+                    #invalid input
+                log.error(f"invlid {rule_split[0].lstrip('-')} format:{rule_split[1]} in network:{network_name}.")
+                sys.exit(1)
+            
+            rule = " ".join(rule_split)
+            new_commands.append(rule)
+
+    return new_commands
+
+
 
 def print_err(msg):
     print(f"ERR: {msg}")

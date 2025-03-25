@@ -1,7 +1,7 @@
-project: colext_example # project name should not have spaces
+project: network_exp # project name should not have spaces
 job_name: "SOTA FL experiment"
 
-# deployer: local_py
+deployer: sbc
 # python_version: "3.10"
 
 code:
@@ -16,31 +16,56 @@ code:
     command: >-
       python3 ./server.py
       --num_clients=${COLEXT_N_CLIENTS}
-      --num_rounds=3
+      --num_rounds=30
+
+network:
+  - tag: default
+    upstream:
+      bandwidth: 100Mbps
+      latency: 1ms
+    downstream:
+      bandwidth: 100Mbps
+      latency: 1ms
+  - tag: slow
+    upstream:
+      bandwidth: 1Mbps
+      latency: 1ms
+    downstream:
+      bandwidth: 1Mbps
+      latency: 1ms
+  - tag: veryslow
+    upstream:
+      bandwidth: 100Kbps
+      latency: 1ms
+    downstream:
+      bandwidth: 100Kbps
+      latency: 1ms
 
 clients:
-  # - dev_type: LattePandaDelta3
-  #   count: 4
-  #   add_args: "--max_step_count=50"
+        #  - dev_type: LattePandaDelta3
+        #count: 4
+        #add_args: "--max_step_count=50"
+        #network: veryslow
 
-  - dev_type: JetsonOrinNano
-    count: 4
-    add_args: "--max_step_count=200"
+        #  - dev_type: JetsonOrinNano
+        # add_args: "--max_step_count=200"
+        # network: slow
 
-  - dev_type: OrangePi5B
-    add_args: "--max_step_count=100"
+    #  - dev_type: OrangePi5B
+    #add_args: "--max_step_count=100"
+    #network: default
 
-  - dev_type: OrangePi5B
-    count: 2
-    add_args: "--max_step_count=50"
+    #  - dev_type: OrangePi5B
+    #count: 2
+    #add_args: "--max_step_count=50"
+    #network: default
+  - { dev_type: JetsonAGXOrin,  count: 1 }
+  - { dev_type: JetsonOrinNano, count: 2 }
+  - { dev_type: JetsonXavierNX, count: 2 }
+  - { dev_type: JetsonNano, count: 6 }
 
-  # - { dev_type: JetsonAGXOrin,  count: 1 }
-  # - { dev_type: JetsonOrinNano, count: 2 }
-  # - { dev_type: JetsonXavierNX, count: 2 }
-  # - { dev_type: JetsonNano, count: 6 }
-
-# Monitoring defaults
-# monitoring:
-#   live_metrics: True # True/False
-#   push_interval: 10 # in seconds
-#   scraping_interval: 0.3 # in seconds
+    # Monitoring defaults
+monitoring:
+  live_metrics: True # True/False
+  push_interval: 10 # in seconds
+  scraping_interval: 0.3 # in seconds

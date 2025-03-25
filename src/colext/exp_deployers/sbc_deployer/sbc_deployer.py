@@ -87,7 +87,9 @@ class SBCDeployer(DeployerBase):
                             push=True)
 
     def clear_prev_experiment(self) -> None:
+        
         log.info("Clearing previous experiment")
+        self.k_utils.delete_all_config_maps()
         self.k_utils.delete_fl_service()
         self.k_utils.delete_experiment_pods()
 
@@ -125,20 +127,63 @@ class SBCDeployer(DeployerBase):
             pod_config["monitoring_push_interval"] = self.config["monitoring"]["push_interval"]
             pod_config["monitoring_scrape_interval"] = self.config["monitoring"]["scraping_interval"]
             pod_config["monitoring_measure_self"] = self.config["monitoring"]["measure_self"]
+            
+            # add volume for the configmap
+            pod_config["network_volumeMount"] = {"name": f"group-{client_prototype['group_id']}-network-config", "mountPath": "/fl_testbed/test_code/network"}
+            pod_config["network_volume"] = {"name": f"group-{client_prototype['group_id']}-network-config","configMap": {"name": f"group-{client_prototype['group_id']}-networkrules"}}
 
             # Add IP of smartplug in case it exists
             pod_config["SP_IP_ADDRESS"] = SMART_PLUGS_HOST_SP_IP_MAP.get(dev_hostname, None)
 
             return pod_config
 
+
+        # TODO union all network result rules for each client resultant configmap
+        # this function is called for every client group to generate the network configmap for it
+        # clientgroup is the name of the client group aka client_prototype
+        def generate_network_configmap(clientgroup,group_id):
+                # check if networktemp file exists
+                if not os.path.exists("networktemp"):
+                    os.makedirs("networktemp")
+                
+                log.info(f"Generating network configmap for {group_id}")
+                log.debug(f"group dict: {clientgroup}")
+
+                network_tags = {}
+                if 'network' in clientgroup.keys():
+                    network_tags = clientgroup['network']
+
+
+                with open(f"networktemp/group-{group_id}-networkrules.txt", 'w') as f:
+                    f.write("")
+                if isinstance(network_tags,str): # if there is only one network make it a list
+                    network_tags = [network_tags]
+                for network in network_tags:
+                        log.debug(f"network tag: {network_tags}")
+                        log.info(f"group {group_id} is in {network}")
+                        with open(f"networktemp/group-{group_id}-networkrules.txt", 'a') as f:
+                            f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
+                            f.write(f"tcset eth0 --direction incoming {self.config["networks"][network]["commands"]["downstream"]} --change \n")
+
+
         pod_configs = []
+        pod_configs_volumes = []
         client_id = 0
+        group_id = 0 # needed to map the netowkr configmap to the client groups
         for client_prototype in self.config["clients"]:
+            
+            client_prototype["group_id"] = group_id
+            generate_network_configmap(client_prototype,group_id)
+            
+            group_id += 1
             for _ in range(client_prototype["count"]):
                 pod_configs.append(prepare_client(client_prototype, client_id))
                 client_id += 1
+        
+        
 
         log.debug(f"Generated {len(pod_configs)} pod configs")
+        log.debug(f"config: {pod_configs}")
         return pod_configs
 
     IMAGE_BY_DEV_TYPE = {
@@ -170,7 +215,7 @@ class SBCDeployer(DeployerBase):
             Launch experiment in kubernetes cluster
             Prepares and deployes client pods and fl service
         """
-
+        
         self.clear_prev_experiment()
 
         log.info(f"Deploying FL server and service")
@@ -180,12 +225,19 @@ class SBCDeployer(DeployerBase):
         self.k_utils.create_from_yaml(self.server_service_path)
 
         log.debug(f"Deploying Client pods")
+
         client_pod_configs = self.prepare_clients_for_launch(job_id)
+
+        # create config map for each client group
+        for client_prototype in self.config["clients"]:
+            self.k_utils.create_config_map(f"group-{client_prototype['group_id']}-networkrules", f"networktemp/group-{client_prototype['group_id']}-networkrules.txt")
+
+        
         for pod_config in client_pod_configs:
             # log.debug(f"Deploying Client pod = {pod_config}")
             client_pod_dict = yaml.safe_load(self.client_template.render(pod_config))
             self.k_utils.create_from_dict(client_pod_dict)
-
+        
         log.info(f"Experiment deployed. It can be canceled with 'mk delete pods --all'")
 
     def get_available_devices_by_type(self, dev_types):

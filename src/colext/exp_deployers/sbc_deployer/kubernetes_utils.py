@@ -5,6 +5,7 @@ from colext.common.logger import log
 from enum import Enum
 
 FL_NAMESPACE = "default"
+FL_NETWORK_NAMESPACE = "default"
 FL_SERVICE_PREFIX = "fl-server-svc"
 
 class KubernetesUtils:
@@ -31,6 +32,28 @@ class KubernetesUtils:
 
     def create_from_dict(self, dict_obj):
         kubernetes.utils.create_from_dict(self.k8s_api, dict_obj)
+    
+    def create_config_map(self, name, data_file):
+        with open(data_file, 'r') as f:
+            data = f.read()
+
+        config_map = kubernetes.client.V1ConfigMap(
+            api_version="v1",
+            kind="ConfigMap",
+            metadata=kubernetes.client.V1ObjectMeta(name=name),
+            data={f"tcconfig_rules.txt": data}
+        )
+        self.k8s_core_v1.create_namespaced_config_map(FL_NETWORK_NAMESPACE, config_map)
+
+    def delete_config_map(self,name):
+        self.k8s_core_v1.delete_namespaced_config_map(name, FL_NETWORK_NAMESPACE)
+
+    def delete_all_config_maps(self):
+        configmaps = self.k8s_core_v1.list_namespaced_config_map(FL_NETWORK_NAMESPACE).items
+
+        for configmap in configmaps:
+            log.info(f"Deleteing configmap {configmap.metadata.name}")
+            self.k8s_core_v1.delete_namespaced_config_map(configmap.metadata.name, FL_NETWORK_NAMESPACE)
 
     def delete_experiment_pods(self):
             pods = self.k8s_core_v1.list_namespaced_pod(FL_NAMESPACE).items
