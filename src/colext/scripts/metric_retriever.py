@@ -16,6 +16,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='Retrieve metrics from CoLExt')
     parser.add_argument('-j', '--job_id', required=True, type=int, help="Job id to retrieve metrics")
     parser.add_argument('-o', '--output_p_dir', type=Path, default=Path("./"), help="Output parent dir for job metrics")
+    parser.add_argument('-f', '--force_collect', action='store_true', help="Force collect metrics when output dir for job exists")
     # parser.add_argument('-s', '--gen_summary', help="Generate summary data")
 
     args = parser.parse_args()
@@ -38,6 +39,11 @@ def retrieve_metrics():
     args = get_args()
     job_id = args.job_id
     output_dir = f"{args.output_p_dir}/colext_metrics/{job_id}"
+
+    if os.path.isdir(output_dir) and not args.force_collect:
+        print(f"Skippiging metric retrieval for job {job_id} because the output dir '{output_dir}' already exists.")
+        print("Use the -f flag to force retrieval of metrics.")
+        return
 
     with change_cwd(f"{output_dir}/raw", mkdir=True):
         print("Retrieving metrics")
