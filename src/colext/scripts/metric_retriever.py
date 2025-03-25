@@ -137,7 +137,7 @@ def clean_up_cr(jd):
 
     # Add round time to cr_timings
     round_metrics['Round time (s)'] = (round_metrics['end_time'] - round_metrics['start_time']).dt.total_seconds()
-    cr_timings = cr_timings.merge(round_metrics[['round_number', 'Round time (s)']], on='round_number')
+    cr_timings = cr_timings.merge(round_metrics[['round_number', 'stage', 'Round time (s)']], on=['round_number', 'stage'])
     cr_timings['Training time (s)'] = (cr_timings['end_time'] - cr_timings['start_time']).dt.total_seconds()
 
     def collect_energy_metrics_client_rounds(cr_metrics, hw_metrics, round_metrics):
