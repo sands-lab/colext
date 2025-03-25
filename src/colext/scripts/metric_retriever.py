@@ -46,7 +46,7 @@ def retrieve_metrics():
         return
 
     with change_cwd(f"{output_dir}/raw", mkdir=True):
-        print("Retrieving metrics")
+        print(f"Retrieving metrics for job {job_id}")
         download_metric_files(job_id)
 
         print("Generating client summary timings")
