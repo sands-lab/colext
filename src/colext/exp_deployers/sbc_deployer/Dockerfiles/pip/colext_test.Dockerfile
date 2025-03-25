@@ -11,7 +11,11 @@ WORKDIR /fl_testbed
 RUN apt update && apt install -y git gcc
 RUN python3 -m pip install --no-cache-dir --upgrade pip==24.0 setuptools==69.5.1
 
-# DOCKER file assumes the context is set to root of the colext project
+#Network Setup
+RUN apt install -y iproute2
+RUN python3 -m pip install --no-cache-dir tcconfig
+
+# DOCKER file assumes the context is set to root of the fltb project
 COPY $TEST_REL_DIR/requirements.txt test_code/requirements.txt
 COPY ./requirements.txt .
 
@@ -39,5 +43,6 @@ COPY --exclude=requirements.txt $TEST_REL_DIR/ test_code/
 COPY --exclude=colext_config.yaml,requirements.txt  . .
 # Install current state of CoLExT package
 RUN python3 -m pip install .${INSTALL_OPTIONS}
+
 
 WORKDIR /fl_testbed/test_code

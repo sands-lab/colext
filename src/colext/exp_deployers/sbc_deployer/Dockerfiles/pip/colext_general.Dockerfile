@@ -12,6 +12,10 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip==24.0 setuptools==69.5.1
 RUN apt update && apt install -y git
 
 
+#Network Setup
+RUN apt install -y iproute2 && mkdir -p /network
+RUN python3 -m pip install --no-cache-dir tcconfig
+
 ARG COLEXT_COMMIT_HASH
 # Install the colext package
 RUN python3 -m pip install \

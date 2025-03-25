@@ -10,7 +10,30 @@ code:
     command: >-
       python3 ./server.py
       --num_clients=${COLEXT_N_CLIENTS}
-      --num_rounds=3
+      --num_rounds=30
+
+network:
+  - tag: default
+    upstream:
+      bandwidth: 100Mbps
+      latency: 1ms
+    downstream:
+      bandwidth: 100Mbps
+      latency: 1ms
+  - tag: slow
+    upstream:
+      bandwidth: 1Mbps
+      latency: 1ms
+    downstream:
+      bandwidth: 1Mbps
+      latency: 1ms
+  - tag: veryslow
+    upstream:
+      bandwidth: 100Kbps
+      latency: 1ms
+    downstream:
+      bandwidth: 100Kbps
+      latency: 1ms
 
 clients:
   - dev_type: LattePandaDelta3

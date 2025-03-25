@@ -1,4 +1,4 @@
-project: colext_example # project name should not have spaces
+project: network_exp # project name should not have spaces
 job_name: "SOTA FL experiment"
 
 code:
@@ -13,9 +13,9 @@ code:
       --num_rounds=3
 
 clients:
-   - dev_type: LattePandaDelta3
-     count: 2
-     add_args: "--max_step_count=50"
+  - dev_type: LattePandaDelta3
+    count: 2
+    add_args: "--max_step_count=50"
 
   - dev_type: JetsonOrinNano
     count: 2
@@ -34,7 +34,7 @@ clients:
   # - { dev_type: JetsonNano, count: 6 }
 
 # Monitoring defaults
-# monitoring:
-#   live_metrics: True # True/False
-#   push_interval: 10 # in seconds
-#   scraping_interval: 0.3 # in seconds
+monitoring:
+  live_metrics: True # True/False
+  push_interval: 10 # in seconds
+  scraping_interval: 0.3 # in seconds
