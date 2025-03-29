@@ -92,7 +92,10 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT client_number AS client_id, time, cpu_util, mem_util, gpu_util, power_consumption,
+                (SELECT client_number AS client_id,
+                        time,
+                        cpu_util, mem_util, gpu_util,
+                        power_consumption,
                         n_bytes_sent, n_bytes_rcvd, net_usage_out, net_usage_in
                     FROM clients
                     JOIN device_measurements USING (client_id)
@@ -113,7 +116,11 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT round_number, start_time, end_time, dist_accuracy, srv_accuracy, stage
+                (SELECT round_number,
+                        start_time, end_time,
+                        EXTRACT(EPOCH FROM end_time - start_time) AS "Round time (s)",
+                        dist_accuracy, srv_accuracy,
+                        stage
                     FROM rounds
                     WHERE job_id = %s
                     ORDER BY round_number, start_time)
@@ -130,7 +137,9 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT client_number AS client_id, device_code AS device_name, device_name AS dev_type
+                (SELECT client_number AS client_id,
+                        device_code AS device_name,
+                        device_name AS dev_type
                     FROM clients
                         JOIN devices USING(device_id)
                     WHERE job_id = %s
@@ -148,14 +157,16 @@ class DBUtils:
         cursor = self.DB_CONNECTION.cursor()
         sql = """
                 COPY
-                (SELECT client_number AS client_id, round_number, stage,
+                (SELECT client_number AS client_id,
+                        round_number,
+                        stage,
                         cir.start_time, cir.end_time,
-                        loss, num_examples, accuracy
+                        num_examples, loss, accuracy
                     FROM clients_in_round as cir
                         JOIN rounds USING(round_id)
                         JOIN clients USING(client_id)
                     WHERE rounds.job_id = %s
-                    ORDER BY client_number, round_id)
+                    ORDER BY client_number, round_id, start_time)
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)

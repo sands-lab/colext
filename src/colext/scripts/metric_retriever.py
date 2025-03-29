@@ -71,6 +71,8 @@ def gen_cr_metric_summary():
     jd["hw_metrics"] = clean_up_hw(jd)
     client_rounds_summary = clean_up_cr(jd)
 
+    client_rounds_summary = client_rounds_summary.sort_values(by=["client_id", "round_number", "start_time"])
+
     client_rounds_summary.to_csv('client_rounds_summary.csv', index=False)
     return client_rounds_summary
 
@@ -136,7 +138,6 @@ def clean_up_cr(jd):
     round_metrics, hw_metrics, cr_timings, client_info = jd["round_metrics"], jd["hw_metrics"], jd["cr_timings"], jd["client_info"]
 
     # Add round time to cr_timings
-    round_metrics['Round time (s)'] = (round_metrics['end_time'] - round_metrics['start_time']).dt.total_seconds()
     cr_timings = cr_timings.merge(round_metrics[['round_number', 'stage', 'Round time (s)']], on=['round_number', 'stage'])
     cr_timings['Training time (s)'] = (cr_timings['end_time'] - cr_timings['start_time']).dt.total_seconds()
 
