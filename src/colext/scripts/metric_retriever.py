@@ -48,9 +48,13 @@ def retrieve_metrics():
     with change_cwd(f"{output_dir}/raw", mkdir=True):
         print(f"Retrieving metrics for job {job_id}")
         download_metric_files(job_id)
+        jd = read_metric_files()
+
+        print("Generating cleaned HW metrics")
+        jd["hw_metrics_cleaned"] = gen_clean_hw_metrics(jd)
 
         print("Generating client summary timings")
-        client_rounds_summary = gen_cr_metric_summary()
+        client_rounds_summary = gen_cr_metric_summary(jd)
 
     with change_cwd(f"{output_dir}/plots", mkdir=True):
         print("Creating plots")
@@ -63,18 +67,6 @@ def download_metric_files(job_id):
     except JobNotFoundException:
         print(f"Could not find job with id {job_id}")
         sys.exit(1)
-
-def gen_cr_metric_summary():
-    # Assumes local dir has data
-    jd = read_metric_files()
-
-    jd["hw_metrics"] = clean_up_hw(jd)
-    client_rounds_summary = clean_up_cr(jd)
-
-    client_rounds_summary = client_rounds_summary.sort_values(by=["client_id", "round_number", "start_time"])
-
-    client_rounds_summary.to_csv('client_rounds_summary.csv', index=False)
-    return client_rounds_summary
 
 def read_metric_files():
     # FIX: Why set_index?
@@ -95,12 +87,12 @@ def read_metric_files():
 
     return job_data
 
-def clean_up_hw(jd):
-    round_metrics, hw_metrics = jd["round_metrics"], jd["hw_metrics"]
+def gen_clean_hw_metrics(jd):
+    round_metrics, hw_metrics, cr_timings = jd["round_metrics"], jd["hw_metrics"], jd["cr_timings"]
     # Clip HW measurements to start at first round and finish at last round
-    start_time = round_metrics["start_time"].min()
+    start_time = round_metrics.query("round_number == 1 and stage == 'FIT'")["start_time"].min()
     end_time = round_metrics["end_time"].max()
-    # FIX: Why copy?
+    # Copy to create a new df - otherwise it would be a view
     hw_metrics = hw_metrics[(hw_metrics["time"] > start_time) & (hw_metrics["time"] < end_time)].copy()
 
     # Compute energy from power
@@ -110,6 +102,29 @@ def clean_up_hw(jd):
         return group
     hw_metrics = hw_metrics.groupby('client_id').apply(comp_comulative_energy).reset_index(drop=True)
 
+    def attach_round_stage_state(client_i_hw):
+        client_id = client_i_hw.name
+        time_values = client_i_hw["time"].to_numpy()
+        for _, row in round_metrics.iterrows():
+            start_i = time_values.searchsorted(row["start_time"], side="left")
+            end_i = time_values.searchsorted(row["end_time"], side="right") - 1
+
+            client_i_hw.loc[client_i_hw.index[start_i:end_i + 1], "round_number"] = row["round_number"]
+            client_i_hw.loc[client_i_hw.index[start_i:end_i + 1], "stage"] = row["stage"]
+
+        client_i_cr = cr_timings[cr_timings["client_id"] == client_id]
+        for _, row in client_i_cr.iterrows():
+            start_i = time_values.searchsorted(row["start_time"], side="left")
+            end_i = time_values.searchsorted(row["end_time"], side="right") - 1
+
+            client_i_hw.loc[client_i_hw.index[start_i:end_i + 1], "state"] = "run"
+
+        return client_i_hw
+
+    # prime state to idle - set running state during training portion
+    hw_metrics["state"] = "idle"
+    hw_metrics = hw_metrics.groupby("client_id").apply(attach_round_stage_state)
+
     # Adjust HW Units:
     hw_metrics["mem_util"] = hw_metrics["mem_util"] / 1024 / 1024 # MiB
     hw_metrics["power_consumption"] = hw_metrics["power_consumption"] / 1000 # W
@@ -118,6 +133,8 @@ def clean_up_hw(jd):
     hw_metrics["n_bytes_rcvd"] = hw_metrics["n_bytes_rcvd"] / 1024 / 1024 # MiB
     hw_metrics["net_usage_out"] = hw_metrics["net_usage_out"] / 1024 / 1024  # MiB/s
     hw_metrics["net_usage_in"] =  hw_metrics["net_usage_in"]  / 1024 / 1024 # MiB/s
+
+    hw_metrics["round_number"] = hw_metrics["round_number"].astype("Int64")
 
     # Rename columns
     hw_metrics.rename(columns={
@@ -132,51 +149,63 @@ def clean_up_hw(jd):
         "net_usage_in":  "Download (MiB/s)",
         }, inplace=True)
 
+    hw_metrics.to_csv('hw_metrics_cleaned.csv', index=False)
     return hw_metrics
 
-def clean_up_cr(jd):
-    round_metrics, hw_metrics, cr_timings, client_info = jd["round_metrics"], jd["hw_metrics"], jd["cr_timings"], jd["client_info"]
+def gen_cr_metric_summary(jd):
+    round_metrics, hw_metrics, cr_timings, client_info = jd["round_metrics"], jd["hw_metrics_cleaned"], jd["cr_timings"], jd["client_info"]
 
-    # Add round time to cr_timings
-    cr_timings = cr_timings.merge(round_metrics[['round_number', 'stage', 'Round time (s)']], on=['round_number', 'stage'])
-    cr_timings['Training time (s)'] = (cr_timings['end_time'] - cr_timings['start_time']).dt.total_seconds()
+    # crs = client round summary
+    crs = cr_timings
+    crs = crs.merge(round_metrics[['round_number', 'stage', 'Round time (s)']], on=['round_number', 'stage'])
+    crs['Training time (s)'] = (crs['end_time'] - crs['start_time']).dt.total_seconds()
 
-    def collect_energy_metrics_client_rounds(cr_metrics, hw_metrics, round_metrics):
-        def get_energy(cr_group):
-            cid, r_num, stage = cr_group.name
+    def get_scoped_metrics(cr_group):
+        cid, r_num, stage = cr_group.name
 
-            hw_group = hw_metrics[hw_metrics["client_id"] == cid]
-            # happens when evaluate is too fast
-            if hw_group.empty:
-                cr_group["Energy training (J)"] = np.nan
-                cr_group["Energy in round (J)"] = np.nan
-            else:
-                hw_group.set_index("time", inplace=True)
+        hw_group = hw_metrics[hw_metrics["client_id"] == cid]
+        # happens when evaluate is too fast
+        if hw_group.empty:
+            cr_group.loc[:,
+                            ["Energy training (J)",
+                            "Energy in round (J)",
+                            "Data rcvd in round (MiB)",
+                            "Data sent in round (MiB)"]] = np.nan
+        else:
+            hw_group.set_index("time", inplace=True)
 
-                start_i = hw_group.index.get_indexer(cr_group["start_time"], method="nearest")
-                end_i = hw_group.index.get_indexer(cr_group["end_time"], method="nearest")
-                cr_group["Energy training (J)"] = (hw_group.iloc[end_i]["Energy (KJ)"].iloc[0] - hw_group.iloc[start_i]["Energy (KJ)"].iloc[0]) * 1000 # (KJ -> J)
+            def calc_diff(start_i, end_i, col):
+                return hw_group.iloc[end_i][col].iloc[0] - hw_group.iloc[start_i][col].iloc[0]
 
-                round_metric_f = round_metrics.query(f"round_number == {r_num} and stage == '{stage}'")
-                start_i = hw_group.index.get_indexer(round_metric_f["start_time"], method="nearest")
-                end_i = hw_group.index.get_indexer(round_metric_f["end_time"], method="nearest")
-                cr_group["Energy in round (J)"] = (hw_group.iloc[end_i]["Energy (KJ)"].iloc[0] - hw_group.iloc[start_i]["Energy (KJ)"].iloc[0]) * 1000 # (KJ -> J)
+            # Scoped to training
+            start_i = hw_group.index.get_indexer(cr_group["start_time"], method="nearest")
+            end_i = hw_group.index.get_indexer(cr_group["end_time"], method="nearest")
+            cr_group["Energy training (J)"] = calc_diff(start_i, end_i, "Energy (KJ)") * 1000 # (KJ -> J)
 
-            return cr_group
-        group_cols = ["client_id", "round_number", "stage"]
-        return cr_metrics.groupby(group_cols).apply(get_energy).reset_index(drop=True)
+            # Scoped to round
+            round_metric_f = round_metrics.query(f"round_number == {r_num} and stage == '{stage}'")
+            start_i = hw_group.index.get_indexer(round_metric_f["start_time"], method="nearest")
+            end_i = hw_group.index.get_indexer(round_metric_f["end_time"], method="nearest")
+            cr_group["Energy in round (J)"] = calc_diff(start_i, end_i, "Energy (KJ)") * 1000 # (KJ -> J)
+            cr_group["Data sent in round (MiB)"] = calc_diff(start_i, end_i, "Sent (MiB)")
+            cr_group["Data rcvd in round (MiB)"] = calc_diff(start_i, end_i, "Rcvd (MiB)")
 
-    cr_timings = collect_energy_metrics_client_rounds(cr_timings, hw_metrics, round_metrics)
-    cr_timings['EDP (J*s)'] = cr_timings['Energy training (J)'] * cr_timings['Training time (s)']
+        return cr_group
+    crs = crs.groupby(["client_id", "round_number", "stage"]).apply(get_scoped_metrics).reset_index(drop=True)
 
-    cr_timings['Training time ps (ms)'] = cr_timings.apply(lambda row: row["Training time (s)"] / row["num_examples"] * 1000, axis=1)
-    cr_timings['Energy ps (mJ)'] = cr_timings.apply(lambda row: row["Energy training (J)"] / row["num_examples"] * 1000 , axis=1)
-    cr_timings['EDP ps (mJ*ms)'] = cr_timings['Training time ps (ms)'] * cr_timings['Energy ps (mJ)']
+    crs['EDP (J*s)'] = crs['Energy training (J)'] * crs['Training time (s)']
+
+    crs['Training time ps (ms)'] = crs.apply(lambda row: row["Training time (s)"] / row["num_examples"] * 1000, axis=1)
+    crs['Energy ps (mJ)'] = crs.apply(lambda row: row["Energy training (J)"] / row["num_examples"] * 1000 , axis=1)
+    crs['EDP ps (mJ*ms)'] = crs['Training time ps (ms)'] * crs['Energy ps (mJ)']
 
     # Add client device name and type
-    cr_timings = cr_timings.join(client_info, on="client_id")
+    crs = crs.join(client_info, on="client_id")
 
-    return cr_timings
+    crs.sort_values(by=["client_id", "round_number", "start_time"], inplace=True)
+    crs.to_csv('client_rounds_summary.csv', index=False)
+
+    return crs
 
 def plot_cir_metrics(df, interest_cols, save_file, row="dev_type"):
     """Convert to long format and print facetgrid with metrics"""
@@ -224,3 +253,7 @@ def plot_summary_data(summary_data):
     min_mean_edp = mean_edp.min()
     summary_data['EDP ps (N)'] = summary_data.groupby('client_id')['EDP ps (mJ*ms)'].transform(lambda x: x / min_mean_edp)
     plot_cir_metrics(summary_data, interest_cols, row=row, save_file="ps_per_dev.pdf")
+
+if __name__ == "__main__":
+    retrieve_metrics()
+
