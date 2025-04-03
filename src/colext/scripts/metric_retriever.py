@@ -175,17 +175,22 @@ def gen_cr_metric_summary(jd):
             hw_group.set_index("time", inplace=True)
 
             def calc_diff(start_i, end_i, col):
-                return hw_group.iloc[end_i][col].iloc[0] - hw_group.iloc[start_i][col].iloc[0]
+                return hw_group.iloc[end_i][col] - hw_group.iloc[start_i][col]
 
             # Scoped to training
-            start_i = hw_group.index.get_indexer(cr_group["start_time"], method="nearest")
-            end_i = hw_group.index.get_indexer(cr_group["end_time"], method="nearest")
+            start_i = hw_group.index.get_indexer(cr_group["start_time"], method="nearest")[0]
+            end_i = hw_group.index.get_indexer(cr_group["end_time"], method="nearest")[0]
             cr_group["Energy training (J)"] = calc_diff(start_i, end_i, "Energy (KJ)") * 1000 # (KJ -> J)
+
+            df = hw_group.iloc[start_i:end_i].groupby(["round_number", "stage"])[["CPU Util (%)", "GPU Util (%)", "Mem Util (MiB)"]].agg(["mean", "max"])
+            # Flatten MultiIndex columns
+            df.columns = [f"Avg {col[0]}" if col[1] == "mean" else f"Max {col[0]}" for col in df.columns]
+            cr_group = cr_group.merge(df, on=["round_number", "stage"])
 
             # Scoped to round
             round_metric_f = round_metrics.query(f"round_number == {r_num} and stage == '{stage}'")
-            start_i = hw_group.index.get_indexer(round_metric_f["start_time"], method="nearest")
-            end_i = hw_group.index.get_indexer(round_metric_f["end_time"], method="nearest")
+            start_i = hw_group.index.get_indexer(round_metric_f["start_time"], method="nearest")[0]
+            end_i = hw_group.index.get_indexer(round_metric_f["end_time"], method="nearest")[0]
             cr_group["Energy in round (J)"] = calc_diff(start_i, end_i, "Energy (KJ)") * 1000 # (KJ -> J)
             cr_group["Data sent in round (MiB)"] = calc_diff(start_i, end_i, "Sent (MiB)")
             cr_group["Data rcvd in round (MiB)"] = calc_diff(start_i, end_i, "Rcvd (MiB)")
