@@ -228,6 +228,14 @@ class SBCDeployer(DeployerBase):
 
         client_pod_configs = self.prepare_clients_for_launch(job_id)
 
+        #delete previous networktemp files
+        if os.path.exists("networktemp"):
+            for file in os.listdir("networktemp"):
+                os.remove(os.path.join("networktemp", file))
+        else:
+            os.makedirs("networktemp")
+
+
         # create config map for each client group
         for client_prototype in self.config["clients"]:
             self.k_utils.create_config_map(f"group-{client_prototype['group_id']}-networkrules", f"networktemp/group-{client_prototype['group_id']}-networkrules.txt")
