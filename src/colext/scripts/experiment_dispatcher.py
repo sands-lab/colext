@@ -11,7 +11,7 @@ import re
 
 #Network variables
 
-NETWORK_DIR = "network_temp"
+network_dir = "./network_scripts"
 
 # Global mappings for commands and validation regexes
 COMMAND_MAPPING = {
@@ -55,6 +55,7 @@ def get_args():
                         help="Run a local deployer using CoLExT just as the launcher for debugging outside of the colext environment. Equivalent to `--local_deployer --just_launcher`")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
                         help="Wait for experiment to finish.")
+    parser.add_argument('-n', '--network_dir', type=str, default=NETWORK_DIR,)
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
     args = parser.parse_args()
@@ -173,7 +174,7 @@ def add_config_fields(config_dict, config_file):
 
     config_dict["req_dev_types"] = list(set([client["dev_type"] for client in config_dict["clients"]]))
     config_dict["n_clients"] = sum(client["count"] for client in config_dict["clients"])
-    
+
     config_dict["networks"] = read_network(config_dict)
 
     return config_dict
@@ -182,15 +183,15 @@ def add_config_fields(config_dict, config_file):
 def read_network(config):
     networks = config['network']
     clients = config['clients']
-    
+
     # Create a mapping from network tag to clients using that tag.
     network_tags = {
-        net['tag']: {"clients": [client['id'] for client in clients 
+        net['tag']: {"clients": [client['id'] for client in clients
                                    if 'network' in client and net['tag'] in client['network']]
                      }
         for net in networks
     }
-    
+
     # Process static network commands
     for net in networks:
         tag = net['tag']
@@ -198,14 +199,14 @@ def read_network(config):
             network_tags[tag]["dynamic"] = {}  # prepare dict for dynamic config
             continue
         network_tags[tag]["commands"] = read_static(net)
-        
-    
+
+
     # Validate commands for non-dynamic networks
     for tag, net in network_tags.items():
         if "dynamic" not in net:
             for direction in ["upstream", "downstream"]:
                 net["commands"][direction] = validate_static_commands(net["commands"][direction], tag)
-    
+
 
 
     # Process dynamic network configuration and validate
@@ -221,12 +222,12 @@ def read_network(config):
 def read_static(net):
     # Build commands for upstream and downstream directions
     network_commands = {"upstream": [], "downstream": []}
-    
-    
+
+
     for direction in ["upstream", "downstream"]:
         cmd_value = net.get(direction)
         if isinstance(cmd_value, str):
-            # example: (upstream/downstream): 2000Mbps 3ms 50% normal 
+            # example: (upstream/downstream): 2000Mbps 3ms 50% normal
             # each string is a token
             tokens = cmd_value.split()
             if tokens:
@@ -250,7 +251,7 @@ def validate_static_commands(commands, network_name):
     Returns a list of validated and formatted command strings.
     """
     # commands is the attributes defined for each network
-    # example 
+    # example
     validated = []
     for command in commands:
         command_split = command.split()
@@ -260,23 +261,23 @@ def validate_static_commands(commands, network_name):
         if len(command_split) > 2:
             print(f"Too many tokens in command in network:{network_name}")
             sys.exit(1)
-        
+
         rule_name = command_split[0]
         if rule_name not in COMMAND_MAPPING:
             print(f"Invalid command {rule_name} in network:{network_name}")
             sys.exit(1)
-        
+
         rule_name = COMMAND_MAPPING[rule_name]
         if not re.match(VALIDATION_MAPPING[rule_name], command_split[1]):
             print(f"Invalid {rule_name} format: {command_split[1]} in network:{network_name}")
             sys.exit(1)
-        
+
         validated.append(f"{rule_name} {command_split[1]}")
     return validated
 
 def read_validate_dynamic(net, dynamic_config):
     '''
-    Read and validate dynamic network configuration from the given dict. 
+    Read and validate dynamic network configuration from the given dict.
     input dynamic_config should be a dict that contains a single network config with dynamic configs
     input net should be a dict that contains the original network config
     Returns a dict with validated and formatted dynamic network config.
@@ -285,7 +286,7 @@ def read_validate_dynamic(net, dynamic_config):
     tag = net['tag']
     #looping through the dynamic config and validating each entry aka each iterator defined with its list of commands
     for entry in net['dynamic']:
-        
+
         #validate the iterator
         iterator = entry.get('iterator')
         if not iterator or iterator not in ['time', 'epochs']:
@@ -294,19 +295,22 @@ def read_validate_dynamic(net, dynamic_config):
         if iterator in dynamic_config:
             print(f"Iterator {iterator} already exists in {tag} ignoring this entry")
             continue
-        
 
-        
+
+
         entry_temp = {}
         #validate structure
         structure = entry.get("structure", ['rate', 'delay']) # default to [rate,delay] if structure is not defined
         corrected = check_rules(structure)
-        
+
         entry_temp["structure"] = corrected
-        
+
 
         #check for script else take commands
         if 'script' in entry:
+            if not os.path.exists(network_dir + entry["script"]):
+                print(f"Script file {entry['script']} does not exist.")
+                sys.exit(1)
             entry_temp["script"] = entry['script']
         else:
             entry_temp["script"] = False
@@ -319,7 +323,7 @@ def read_validate_dynamic(net, dynamic_config):
                     print(f"Invalid command: {command} in {tag}")
                     sys.exit(1)
                 entry_temp["commands_dict"][key] = command
-        
+
         dynamic_config[iterator] = entry_temp
     return dynamic_config
 
@@ -328,12 +332,12 @@ def check_command(command, structure):
     checks if the list of commands follow the given structure
     Returns True if the command is valid else False
     '''
-    
+
     command_split = command.split() if isinstance(command, str) else command
     if len(command_split) - 2 != len(structure):
         print("Invalid command length")
         return False
-    
+
     if command_split[0] not in ['set', 'del']:
         print(f"Invalid command name: {command_split[0]} in {command} only 'set' and 'del' are allowed")
         return False
@@ -383,8 +387,9 @@ def launch_experiment():
     print("Preparing to launch CoLExT")
 
     args = get_args()
-    config_dict = read_config(args.config_file, args)
 
+    config_dict = read_config(args.config_file, args)
+    network_dir = args.network_dir
     Deployer = get_deployer(config_dict["colext"]["deployer"])
     deployer = Deployer(config_dict, args.test_env)
 
