@@ -55,7 +55,7 @@ def get_args():
                         help="Run a local deployer using CoLExT just as the launcher for debugging outside of the colext environment. Equivalent to `--local_deployer --just_launcher`")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
                         help="Wait for experiment to finish.")
-    parser.add_argument('-n', '--network_dir', type=str, default=NETWORK_DIR,)
+    parser.add_argument('-n', '--network_dir', type=str, default=network_dir,)
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
     args = parser.parse_args()
