@@ -9,6 +9,35 @@ from colext.exp_deployers.db_utils import DBUtils
 import re
 
 
+#Network variables
+
+NETWORK_DIR = "network_temp"
+
+# Global mappings for commands and validation regexes
+COMMAND_MAPPING = {
+    "bandwidth": "rate", "speed": "rate", "rate": "rate",
+    "delay": "delay", "delay-time": "delay", "latency": "delay", "latency-time": "delay",
+    "delay-distribution": "delay-distribution", "delay-distro": "delay-distro",
+    "loss": "loss", "duplicate": "duplicate", "corrupt": "corrupt",
+    "reordering": "reordering", "reorder": "reordering", "limit": "limit"
+}
+
+TIME_UNITS = r"(h|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds|ms|msec|msecs|millisecond|milliseconds|us|usec|usecs|microsecond|microseconds)"
+VALIDATION_MAPPING = {
+    "rate": r"^\d{1,4}(\.\d+)?(Kbps|Mbps|Gbps)$",
+    "delay": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
+    "delay-distro": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
+    "delay-distribution": r"^(normal|pareto|paretonormal|Normal|Pareto|ParetoNormal)$",
+    "loss": r"^\d+(\.\d+)?%$",
+    "duplicate": r"^\d+(\.\d+)?%$",
+    "corrupt": r"^\d+(\.\d+)?%$",
+    "reordering": r"^\d+(\.\d+)?%$",
+    "limit": r"^\d+$"
+}
+
+
+
+
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
 
@@ -109,112 +138,185 @@ def read_config(config_file):
 # given in input dictonary config it will output a new dict with all the networks
 def read_network(config):
     networks = config['network']
+    clients = config['clients']
+    
+    # Create a mapping from network tag to clients using that tag.
+    network_tags = {
+        net['tag']: {"clients": [client['id'] for client in clients 
+                                   if 'network' in client and net['tag'] in client['network']]
+                     }
+        for net in networks
+    }
+    
+    # Process static network commands
+    for net in networks:
+        tag = net['tag']
+        if "dynamic" in net:
+            network_tags[tag]["dynamic"] = {}  # prepare dict for dynamic config
+            continue
+        network_tags[tag]["commands"] = read_static(net)
+        
+    
+    # Validate commands for non-dynamic networks
+    for tag, net in network_tags.items():
+        if "dynamic" not in net:
+            for direction in ["upstream", "downstream"]:
+                net["commands"][direction] = validate_static_commands(net["commands"][direction], tag)
+    
 
-    network_tags = {}
 
-    #create a tcconfig commands list for each network
-    for network in networks:
-        network_tags[network['tag']] = {}
-        network_commands = network_tags[network['tag']]["commands"] = { "upstream": [] , "downstream": [] }
-        for direction in ["upstream", "downstream"]:
-            if isinstance(network[direction], str):
-                commands = str(network[direction]).split()
-                if len(commands) > 0:
-                    network_commands[direction].append(f"--rate {commands[0]} ")
-                if len(commands) > 1:
-                    network_commands[direction].append(f"--delay {commands[1]} ")
-                if len(commands) > 2:
-                    network_commands[direction].append(f"--loss {commands[2]} ")
-                if len(commands) > 3:
-                    network_commands[direction].append(f"--delay-distribution {commands[3]} ")
-            elif isinstance(network[direction], dict):
-                for rule, value in network[direction].items():
-                    network_commands[direction].append(f"--{rule} {value} ")
-    print(network_tags)
+    # Process dynamic network configuration and validate
+    for net in [n for n in networks if "dynamic" in n]:
+        tag = net['tag']
+        network_tags[tag]["dynamic"] = {}
+        network_tags[tag]["dynamic"] = read_validate_dynamic(net, network_tags[tag]["dynamic"])
 
-    #clean commands and validate all rules and finalize commands
-    for network_name, network in network_tags.items():
-        for direction in ["upstream", "downstream"]:
-            network["commands"][direction] = " ".join(validate_network_commands(network["commands"][direction], network_name))
 
-    print(f"Network tags: {network_tags}")
+    print("Network tags:", network_tags)
     return network_tags
 
+def read_static(net):
+    # Build commands for upstream and downstream directions
+    network_commands = {"upstream": [], "downstream": []}
+    
+    
+    for direction in ["upstream", "downstream"]:
+        cmd_value = net.get(direction)
+        if isinstance(cmd_value, str):
+            # example: (upstream/downstream): 2000Mbps 3ms 50% normal 
+            # each string is a token
+            tokens = cmd_value.split()
+            if tokens:
+                if len(tokens) > 0:
+                    network_commands[direction].append(f"rate {tokens[0]}")
+                if len(tokens) > 1:
+                    network_commands[direction].append(f"delay {tokens[1]}")
+                if len(tokens) > 2:
+                    network_commands[direction].append(f"loss {tokens[2]}")
+                if len(tokens) > 3:
+                    network_commands[direction].append(f"delay-distribution {tokens[3]}")
+        elif isinstance(cmd_value, dict):
+            for rule, value in cmd_value.items():
+                network_commands[direction].append(f"{rule} {value}")
+    return network_commands
 
-def validate_network_commands(commands, network_name):
-    #input command mapping
-    command_mapping = {
-        "--bandwidth": "--rate",
-        "--speed": "--rate",
-        "--rate": "--rate",
-        "--delay": "--delay",
-        "--delay-time": "--delay",
-        "--latency": "--delay",
-        "--latency-time": "--delay",
-        "--delay-distribution": "--delay-distribution",
-        "--delay-distro": "--delay-distro",
-        "--loss": "--loss",
-        "--duplicate": "--duplicate",
-        "--corrupt": "--corrupt",
-        "--reordering": "--reordering",
-        "--reorder": "--reordering",
-        "--limit": "--limit",
-    }
+def validate_static_commands(commands, network_name):
+    """
+    Validate a list of command strings for a given network.
+    input commands should be a list of command strings
+    Returns a list of validated and formatted command strings.
+    """
+    # commands is the attributes defined for each network
+    # example 
+    validated = []
+    for command in commands:
+        command_split = command.split()
+        if len(command_split) < 2:
+            print(f"Missing value for command in network:{network_name}")
+            sys.exit(1)
+        if len(command_split) > 2:
+            print(f"Too many tokens in command in network:{network_name}")
+            sys.exit(1)
+        
+        rule_name = command_split[0]
+        if rule_name not in COMMAND_MAPPING:
+            print(f"Invalid command {rule_name} in network:{network_name}")
+            sys.exit(1)
+        
+        rule_name = COMMAND_MAPPING[rule_name]
+        if not re.match(VALIDATION_MAPPING[rule_name], command_split[1]):
+            print(f"Invalid {rule_name} format: {command_split[1]} in network:{network_name}")
+            sys.exit(1)
+        
+        validated.append(f"{rule_name} {command_split[1]}")
+    return validated
 
-    # input value validation mapping
-    TIME_UNITS = r"(h|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds|ms|msec|msecs|millisecond|milliseconds|us|usec|usecs|microsecond|microseconds)"
+def read_validate_dynamic(net, dynamic_config):
+    '''
+    Read and validate dynamic network configuration from the given dict. 
+    input dynamic_config should be a dict that contains a single network config with dynamic configs
+    input net should be a dict that contains the original network config
+    Returns a dict with validated and formatted dynamic network config.
+    '''
 
-    validation_mapping = {
-        "--rate": r"^\d{1,4}(\.\d+)?(Kbps|Mbps|Gbps)$",
-        "--delay": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
-        "--delay-distro": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
-        "--delay-distribution": r"^(normal|pareto|paretonormal|Normal|Pareto|ParetoNormal)$",
-        "--loss": r"^\d+(\.\d+)?%$",
-        "--duplicate": r"^\d+(\.\d+)?%$",
-        "--corrupt": r"^\d+(\.\d+)?%$",
-        "--reordering": r"^\d+(\.\d+)?%$",
-        "--limit": r"^\d+$",
-    }
+    tag = net['tag']
+    #looping through the dynamic config and validating each entry aka each iterator defined with its list of commands
+    for entry in net['dynamic']:
+        
+        #validate the iterator
+        iterator = entry.get('iterator')
+        if not iterator or iterator not in ['time', 'epochs']:
+            print(f"Invalid or missing iterator in {tag}")
+            sys.exit(1)
+        if iterator in dynamic_config:
+            print(f"Iterator {iterator} already exists in {tag} ignoring this entry")
+            continue
+        
 
-    new_commands = []
-    for rule in commands:
-            rule_split = rule.split()
+        
+        entry_temp = {}
+        #validate structure
+        structure = entry.get("structure", ['rate', 'delay']) # default to [rate,delay] if structure is not defined
+        corrected = check_rules(structure)
+        
+        entry_temp["structure"] = corrected
+        
 
-            #check if the rule and value exist
+        #check for script else take commands
+        if 'script' in entry:
+            entry_temp["script"] = entry['script']
+        else:
+            entry_temp["script"] = False
+            entry_temp["commands_dict"] = {}
+            # Process each command entry excluding 'structure' and 'iterator'
+            for key, command in entry.items():
+                if key in ['structure', 'iterator']:
+                    continue
+                if not check_command(command, entry_temp["structure"]):
+                    print(f"Invalid command: {command} in {tag}")
+                    sys.exit(1)
+                entry_temp["commands_dict"][key] = command
+        
+        dynamic_config[iterator] = entry_temp
+    return dynamic_config
 
-            if len(rule_split) < 1:
-                # should not be possible but added for testing
-                log.error(f"empty value in network:{network_name} ")
-                sys.exit(1)
-            elif len(rule_split) < 2:
-                # value is not there
-                log.error(f"invlid {rule_split[0].lstrip('-')} value: None in network:{network_name} ")
-                sys.exit(1)
-            elif len(rule_split) > 2:
-                # should not be possible but added for testing
-                log.error(f"invalid size (< 2) for value in network :{network_name} ")
-                sys.exit(1)
+def check_command(command, structure):
+    '''
+    checks if the list of commands follow the given structure
+    Returns True if the command is valid else False
+    '''
+    
+    command_split = command.split() if isinstance(command, str) else command
+    if len(command_split) - 2 != len(structure):
+        print("Invalid command length")
+        return False
+    
+    if command_split[0] not in ['set', 'del']:
+        print(f"Invalid command name: {command_split[0]} in {command} only 'set' and 'del' are allowed")
+        return False
 
-            # check the validity of the rule
+    if command_split[1] not in ["incoming", "outgoing"]:
+        print(f"Invalid direction: {command_split[1]} in {command} only 'incoming' and 'outgoing' are allowed")
+        return False
+    for i, rule in enumerate(structure):
+        if not re.match(VALIDATION_MAPPING[rule], command_split[i + 2]):
+            print(f"Invalid {rule} format: {command_split[i + 2]}")
+            return False
+    return True
 
-            if rule_split[0] not in command_mapping.keys():
-                # invlid command rule
-                log.error(f"invlid {rule_split[0]} Command in network:{network_name} ")
-                sys.exit(1)
-            else:
-                rule_split[0] = command_mapping[rule_split[0]]
+def check_rules(structure):
+    """
+    Validate and correct a list of rule names using COMMAND_MAPPING.
+    Returns a tuple (is_valid, corrected_structure).
+    """
+    corrected = []
+    for rule in structure:
+        if rule not in COMMAND_MAPPING:
+            print(f"Invalid rule: {rule}. Valid rules are: {', '.join(COMMAND_MAPPING.keys())}")
+            sys.exit(1)
+        corrected.append(COMMAND_MAPPING[rule])
+    return corrected
 
-            # check the validity of the value
-
-            if not bool(re.match(validation_mapping[rule_split[0]], rule_split[1])):
-                    #invalid input
-                log.error(f"invlid {rule_split[0].lstrip('-')} format:{rule_split[1]} in network:{network_name}.")
-                sys.exit(1)
-            
-            rule = " ".join(rule_split)
-            new_commands.append(rule)
-
-    return new_commands
 
 
 
