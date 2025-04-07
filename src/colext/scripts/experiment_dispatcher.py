@@ -11,7 +11,7 @@ import re
 
 #Network variables
 
-NETWORK_DIR = "network_temp"
+network_dir = "./network_scripts"
 
 # Global mappings for commands and validation regexes
 COMMAND_MAPPING = {
@@ -49,6 +49,7 @@ def get_args():
                         help="Only prepare experiment for launch.")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
                         help="Wait for experiment to finish.")
+    parser.add_argument('-n', '--network_dir', type=str, default=NETWORK_DIR,)
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
     args = parser.parse_args()
@@ -264,6 +265,9 @@ def read_validate_dynamic(net, dynamic_config):
 
         #check for script else take commands
         if 'script' in entry:
+            if not os.path.exists(network_dir + entry["script"]):
+                print(f"Script file {entry['script']} does not exist.")
+                sys.exit(1)
             entry_temp["script"] = entry['script']
         else:
             entry_temp["script"] = False
@@ -339,7 +343,7 @@ def launch_experiment():
 
     args = get_args()
     config_dict = read_config(args.config_file)
-
+    network_dir = args.network_dir
     Deployer = get_deployer(config_dict["deployer"])
     deployer = Deployer(config_dict, args.test_env)
 
