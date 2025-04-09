@@ -18,9 +18,9 @@ class DBUtils:
 
     def get_project_id(self, project_name) -> int:
         cursor = self.DB_CONNECTION.cursor()
-        sql = "SELECT project_id FROM projects WHERE project_name = %s"
+        query = "SELECT project_id FROM projects WHERE project_name = %s"
         data = (project_name,)
-        cursor.execute(sql, data)
+        cursor.execute(query, data)
         record = cursor.fetchone()
         cursor.close()
 
@@ -34,13 +34,13 @@ class DBUtils:
         project_id = self.get_project_id(config['project'])
 
         cursor = self.DB_CONNECTION.cursor()
-        sql = """
+        query = """
                 INSERT INTO jobs(start_time, user_id, project_id)
                 VALUES (CURRENT_TIMESTAMP, 1, %s)
                 returning job_id
             """
         data = (project_id,)
-        cursor.execute(sql, data)
+        cursor.execute(query, data)
         job_id = cursor.fetchone()[0]
         cursor.close()
 
@@ -48,16 +48,16 @@ class DBUtils:
 
     def finish_job(self, job_id: int):
         cursor = self.DB_CONNECTION.cursor()
-        sql = "UPDATE jobs SET end_time = CURRENT_TIMESTAMP WHERE job_id = %s"
+        query = "UPDATE jobs SET end_time = CURRENT_TIMESTAMP WHERE job_id = %s"
         data = (job_id,)
-        cursor.execute(sql, data)
+        cursor.execute(query, data)
         cursor.close()
 
     def job_exists(self, job_id: int) -> bool:
         cursor = self.DB_CONNECTION.cursor()
-        sql = "SELECT 1 FROM jobs WHERE job_id = %s"
+        query = "SELECT 1 FROM jobs WHERE job_id = %s"
         data = (job_id,)
-        cursor.execute(sql, data)
+        cursor.execute(query, data)
         job_record = cursor.fetchone()
         cursor.close()
 
@@ -65,12 +65,12 @@ class DBUtils:
 
     def get_current_available_clients(self, dev_types: Tuple[int, str, str]) -> str:
         cursor = self.DB_CONNECTION.cursor()
-        sql = """
+        query = """
                 SELECT device_id, device_code AS hostname, device_name
                 FROM devices WHERE device_name = ANY(%s) AND status = %s
             """
         data = (dev_types, 'ACTIVE')
-        cursor.execute(sql, data)
+        cursor.execute(query, data)
         db_devices = cursor.fetchall()
         cursor.close()
 
@@ -78,11 +78,11 @@ class DBUtils:
 
     def register_client(self, client_id: int, dev_id: int, job_id: int) -> str:
         cursor = self.DB_CONNECTION.cursor()
-        sql = """
+        query = """
                 INSERT INTO clients (client_number, device_id, job_id)
                 VALUES (%s, %s, %s) RETURNING client_id
             """
-        cursor.execute(sql, (client_id, dev_id, job_id))
+        cursor.execute(query, (client_id, dev_id, job_id))
         client_id = cursor.fetchone()[0]
         cursor.close()
 
@@ -90,7 +90,7 @@ class DBUtils:
 
     def get_hw_metrics(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
-        sql = """
+        query = """
                 COPY
                 (SELECT client_number AS client_id,
                         time,
@@ -106,7 +106,7 @@ class DBUtils:
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)
-        with cursor.copy(sql, data) as copy:
+        with cursor.copy(query, data) as copy:
             for data in copy:
                 metric_writer.write(data)
 
@@ -114,7 +114,7 @@ class DBUtils:
 
     def get_round_metrics(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
-        sql = """
+        query = """
                 COPY
                 (SELECT round_number,
                         start_time, end_time,
@@ -127,7 +127,7 @@ class DBUtils:
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)
-        with cursor.copy(sql, data) as copy:
+        with cursor.copy(query, data) as copy:
             for data in copy:
                 metric_writer.write(data)
 
@@ -135,7 +135,7 @@ class DBUtils:
 
     def get_client_info(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
-        sql = """
+        query = """
                 COPY
                 (SELECT client_number AS client_id,
                         device_code AS device_name,
@@ -147,7 +147,7 @@ class DBUtils:
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)
-        with cursor.copy(sql, data) as copy:
+        with cursor.copy(query, data) as copy:
             for data in copy:
                 metric_writer.write(data)
 
@@ -155,7 +155,7 @@ class DBUtils:
 
     def get_client_round_metrics(self, job_id: int, metric_writer: BinaryIO):
         cursor = self.DB_CONNECTION.cursor()
-        sql = """
+        query = """
                 COPY
                 (SELECT client_number AS client_id,
                         round_number,
@@ -170,7 +170,31 @@ class DBUtils:
                 TO STDOUT WITH (FORMAT CSV, HEADER)
                """
         data = (job_id,)
-        with cursor.copy(sql, data) as copy:
+        with cursor.copy(query, data) as copy:
+            for data in copy:
+                metric_writer.write(data)
+
+        cursor.close()
+
+    def get_server_round_metrics(self, job_id: int, metric_writer: BinaryIO):
+        cursor = self.DB_CONNECTION.cursor()
+        query = """
+                COPY
+                (SELECT round_number, stage,
+                        EXTRACT(EPOCH FROM eval_time_end - eval_time_start) AS "Eval time (s)",
+                        EXTRACT(EPOCH FROM configure_time_end - configure_time_start) AS "Configure time (s)",
+                        EXTRACT(EPOCH FROM aggregate_time_end - aggregate_time_start) AS "Aggregate time (s)",
+                        eval_time_start, eval_time_end,
+                        configure_time_start, configure_time_end,
+                        aggregate_time_start, aggregate_time_end
+                    FROM server_round_metrics
+                    JOIN rounds USING (round_id)
+                    WHERE rounds.job_id = %s
+                    ORDER BY round_number, stage IN ('FIT', 'EVAL'))
+                TO STDOUT WITH (FORMAT CSV, HEADER)
+               """
+        data = (job_id,)
+        with cursor.copy(query, data) as copy:
             for data in copy:
                 metric_writer.write(data)
 
@@ -190,6 +214,9 @@ class DBUtils:
 
         with open("client_round_metrics.csv", "wb") as metric_writer:
             self.get_client_round_metrics(job_id, metric_writer)
+
+        with open("server_round_metrics.csv", "wb") as metric_writer:
+            self.get_server_round_metrics(job_id, metric_writer)
 
         with open("client_info.csv", "wb") as metric_writer:
             self.get_client_info(job_id, metric_writer)

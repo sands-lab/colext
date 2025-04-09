@@ -68,6 +68,17 @@ CREATE TABLE clients_in_round (
     client_state VARCHAR(50)
 );
 
+-- Associated with a round stage
+CREATE TABLE server_round_metrics (
+    round_id INT PRIMARY KEY REFERENCES rounds(round_id),
+    configure_time_start TIMESTAMP WITH TIME ZONE,
+    configure_time_end TIMESTAMP WITH TIME ZONE,
+    aggregate_time_start TIMESTAMP WITH TIME ZONE,
+    aggregate_time_end TIMESTAMP WITH TIME ZONE,
+    eval_time_start TIMESTAMP WITH TIME ZONE,
+    eval_time_end TIMESTAMP WITH TIME ZONE
+);
+
 CREATE TABLE epochs (
     epoch_id SERIAL PRIMARY KEY,
     epoch_number INTEGER,
@@ -131,6 +142,7 @@ ALTER TABLE epochs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE batches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE device_measurements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE monsoon_measurements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE server_round_metrics ENABLE ROW LEVEL SECURITY;
 
 -- CREATE POLICY pc_jobs ON jobs
 CREATE POLICY p_jobs ON jobs
@@ -143,6 +155,7 @@ CREATE POLICY p_epochs ON epochs USING (cir_id IN (SELECT DISTINCT cir_id FROM c
 CREATE POLICY p_batches ON batches USING (cir_id IN (SELECT DISTINCT cir_id FROM clients_in_round));
 CREATE POLICY p_device_measurements ON device_measurements USING (client_id IN (SELECT DISTINCT client_id FROM clients));
 CREATE POLICY p_monsoon_measurements ON monsoon_measurements USING (client_id IN (SELECT DISTINCT client_id FROM clients));
+CREATE POLICY p_server_round_metrics ON server_round_metrics USING (round_id IN (SELECT DISTINCT round_id FROM rounds));
 
 GRANT USAGE ON SEQUENCE
     jobs_job_id_seq,
