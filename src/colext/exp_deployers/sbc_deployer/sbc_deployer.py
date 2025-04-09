@@ -268,8 +268,7 @@ class SBCDeployer(DeployerBase):
         
         # create config map for each client group
         for client_prototype in self.config["clients"]:
-            self.k_utils.create_config_map(f"group-{client_prototype['group_id']}-networkrules", f"networktemp/group-{client_prototype['group_id']}-networkrules.txt")
-
+            self.k_utils.create_config_map_from_dict(f"group-{client_prototype['group_id']}-network-config", f"networktemp/group-{client_prototype['group_id']}")
         
         for pod_config in client_pod_configs:
             # log.debug(f"Deploying Client pod = {pod_config}")
