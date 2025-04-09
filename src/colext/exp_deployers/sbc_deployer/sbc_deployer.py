@@ -143,7 +143,11 @@ class SBCDeployer(DeployerBase):
         # clientgroup is the name of the client group aka client_prototype
         def generate_network_configmap(clientgroup,group_id):
                 # check if networktemp file exists
-                if not os.path.exists("networktemp"):
+                #delete previous networktemp files if it does exist
+                if os.path.exists("networktemp"):
+                    for file in os.listdir("networktemp"):
+                        os.remove(os.path.join("networktemp", file))
+                else:
                     os.makedirs("networktemp")
                 
                 log.info(f"Generating network configmap for {group_id}")
@@ -228,12 +232,7 @@ class SBCDeployer(DeployerBase):
 
         client_pod_configs = self.prepare_clients_for_launch(job_id)
 
-        #delete previous networktemp files
-        if os.path.exists("networktemp"):
-            for file in os.listdir("networktemp"):
-                os.remove(os.path.join("networktemp", file))
-        else:
-            os.makedirs("networktemp")
+        
 
         #TODO: change it so its folder for each client group and then include all the files to be converted to a configmap in the specified folder
         #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
