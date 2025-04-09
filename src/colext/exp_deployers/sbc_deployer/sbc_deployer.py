@@ -141,7 +141,7 @@ class SBCDeployer(DeployerBase):
         # TODO union all network result rules for each client resultant configmap
         # this function is called for every client group to generate the network configmap for it
         # clientgroup is the name of the client group aka client_prototype
-        def generate_network_configmap(clientgroup,group_id):
+        def generate_network_configmap_folder(clientgroup,group_id):
                 if os.path.exists(f"networktemp/group-{group_id}"):
                     for file in os.listdir(f"networktemp/group-{group_id}"):
                         os.remove(os.path.join(f"networktemp/group-{group_id}", file))
@@ -172,17 +172,21 @@ class SBCDeployer(DeployerBase):
 
 
                 #save dynamic network configs
-                #TODO: change it so its folder for each client group and then include all the files to be converted to a configmap in the specified folder
                 #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
                 if "dynamic" in clientgroup['network'].keys():
                     dynamic = clientgroup['network']['dynamic']
                     for iter in dynamic.keys():
+                        # check if script is provided then save script else save the dict as json to be used
                         if dynamic[iter]["script"] != False :
                             script = ""
                             with open(dynamic[iter]["script"], 'r') as s:
                                 script = s.read()
                             with open(f"{group_path}/{iter}_script.py", "w") as f:
                                 f.write(script)
+                        else:
+                            json_str = json.dumps(dynamic[iter], indent=4)
+                            with open(f"{group_path}/{iter}_json.py", "w") as f:
+                                f.write(json_str)
 
 
 
@@ -202,7 +206,7 @@ class SBCDeployer(DeployerBase):
         for client_prototype in self.config["clients"]:
             
             client_prototype["group_id"] = group_id
-            generate_network_configmap(client_prototype,group_id)
+            generate_network_configmap_folder(client_prototype,group_id)
             
             group_id += 1
             for _ in range(client_prototype["count"]):
