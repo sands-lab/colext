@@ -38,6 +38,7 @@ def MonitorFlwrClient(FlwrClientClass):
             mm_proc_ready_event.wait()
             
             # Network setup
+            #TODO: make a class for this and the dynamic part
             NET_CONF_PATH = "network/tcconfig_rules.txt"
             if os.path.exists(NET_CONF_PATH):
                 log.info(f"Applying network configuration from {NET_CONF_PATH}")
