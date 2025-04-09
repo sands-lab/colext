@@ -235,7 +235,8 @@ class SBCDeployer(DeployerBase):
         else:
             os.makedirs("networktemp")
 
-
+        #TODO: change it so its folder for each client group and then include all the files to be converted to a configmap in the specified folder
+        #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
         # create config map for each client group
         for client_prototype in self.config["clients"]:
             self.k_utils.create_config_map(f"group-{client_prototype['group_id']}-networkrules", f"networktemp/group-{client_prototype['group_id']}-networkrules.txt")

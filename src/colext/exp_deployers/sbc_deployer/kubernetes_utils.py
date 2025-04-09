@@ -45,6 +45,25 @@ class KubernetesUtils:
         )
         self.k8s_core_v1.create_namespaced_config_map(FL_NETWORK_NAMESPACE, config_map)
 
+    def create_config_map_from_dict(self, name, folder_path):
+        data = {}
+
+        for file_name in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, file_name)
+
+            if os.path.isfile(file_path):
+                with open(file_path, "r") as f:
+                    data[file_name] = f.read()
+        config_map = kubernetes.client.V1ConfigMap(
+            api_version="v1",
+            kind="ConfigMap",
+            metadata=kubernetes.client.V1ObjectMeta(name=name),
+            data={f"tcconfig_rules.txt": data}
+        )
+        self.k8s_core_v1.create_namespaced_config_map(FL_NETWORK_NAMESPACE, config_map)
+
+
+
     def delete_config_map(self,name):
         self.k8s_core_v1.delete_namespaced_config_map(name, FL_NETWORK_NAMESPACE)
 
