@@ -33,6 +33,7 @@ class KubernetesUtils:
     def create_from_dict(self, dict_obj):
         kubernetes.utils.create_from_dict(self.k8s_api, dict_obj)
     
+    #TODO:  NOT USED ATM delete or reuse. potentially used to simplify the next configmap creation function
     def create_config_map(self, name, data_file):
         with open(data_file, 'r') as f:
             data = f.read()
