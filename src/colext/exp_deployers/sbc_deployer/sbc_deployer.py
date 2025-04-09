@@ -142,14 +142,14 @@ class SBCDeployer(DeployerBase):
         # this function is called for every client group to generate the network configmap for it
         # clientgroup is the name of the client group aka client_prototype
         def generate_network_configmap(clientgroup,group_id):
-                # check if networktemp file exists
-                #delete previous networktemp files if it does exist
-                if os.path.exists("networktemp"):
-                    for file in os.listdir("networktemp"):
-                        os.remove(os.path.join("networktemp", file))
+                if os.path.exists(f"networktemp/group-{group_id}"):
+                    for file in os.listdir(f"networktemp/group-{group_id}"):
+                        os.remove(os.path.join(f"networktemp/group-{group_id}", file))
                 else:
-                    os.makedirs("networktemp")
-                
+                    os.makedirs(f"networktemp/group-{group_id}")
+
+                group_path = f"networktemp/group-{group_id}"
+
                 log.info(f"Generating network configmap for {group_id}")
                 log.debug(f"group dict: {clientgroup}")
 
@@ -157,23 +157,48 @@ class SBCDeployer(DeployerBase):
                 if 'network' in clientgroup.keys():
                     network_tags = clientgroup['network']
 
-
-                with open(f"networktemp/group-{group_id}-networkrules.txt", 'w') as f:
+                #save the static network rules
+                
+                with open(f"{group_path}/networkrules.txt", 'w') as f:
                     f.write("")
                 if isinstance(network_tags,str): # if there is only one network make it a list
                     network_tags = [network_tags]
                 for network in network_tags:
                         log.debug(f"network tag: {network_tags}")
                         log.info(f"group {group_id} is in {network}")
-                        with open(f"networktemp/group-{group_id}-networkrules.txt", 'a') as f:
+                        with open(f"{group_path}/networkrules.txt", 'a') as f:
                             f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
                             f.write(f"tcset eth0 --direction incoming {self.config["networks"][network]["commands"]["downstream"]} --change \n")
+
+
+                #save dynamic network configs
+                #TODO: change it so its folder for each client group and then include all the files to be converted to a configmap in the specified folder
+                #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
+                if "dynamic" in clientgroup['network'].keys():
+                    dynamic = clientgroup['network']['dynamic']
+                    for iter in dynamic.keys():
+                        if dynamic[iter]["script"] != False :
+                            script = ""
+                            with open(dynamic[iter]["script"], 'r') as s:
+                                script = s.read()
+                            with open(f"{group_path}/{iter}_script.py", "w") as f:
+                                f.write(script)
+
 
 
         pod_configs = []
         pod_configs_volumes = []
         client_id = 0
         group_id = 0 # needed to map the netowkr configmap to the client groups
+
+        # check if networktemp file exists
+        #delete previous networktemp files if it does exist
+        if os.path.exists("networktemp"):
+            for file in os.listdir("networktemp"):
+                os.remove(os.path.join("networktemp", file))
+        else:
+            os.makedirs("networktemp")
+
         for client_prototype in self.config["clients"]:
             
             client_prototype["group_id"] = group_id
@@ -230,12 +255,13 @@ class SBCDeployer(DeployerBase):
 
         log.debug(f"Deploying Client pods")
 
+
+
         client_pod_configs = self.prepare_clients_for_launch(job_id)
 
         
 
-        #TODO: change it so its folder for each client group and then include all the files to be converted to a configmap in the specified folder
-        #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
+        
         # create config map for each client group
         for client_prototype in self.config["clients"]:
             self.k_utils.create_config_map(f"group-{client_prototype['group_id']}-networkrules", f"networktemp/group-{client_prototype['group_id']}-networkrules.txt")
