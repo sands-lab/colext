@@ -3,6 +3,7 @@ import kubernetes
 from typing import Tuple
 from colext.common.logger import log
 from enum import Enum
+import os
 
 FL_NAMESPACE = "default"
 FL_NETWORK_NAMESPACE = "default"
