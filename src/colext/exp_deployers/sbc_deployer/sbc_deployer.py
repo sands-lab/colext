@@ -200,9 +200,8 @@ class SBCDeployer(DeployerBase):
         #delete previous networktemp files if it does exist
         if os.path.exists("networktemp"):
             for file in os.listdir("networktemp"):
-                #remove the files in the folder if tis file and recursive if folder
-                for file2 in os.listdir(os.path.join("networktemp", file)):
-                    os.remove(os.path.join("networktemp", file, file2))
+                for file2 in os.listdir(os.path.join("networktemp",file)):
+                    os.remove(os.path.join("networktemp", file,file2))
         else:
             os.makedirs("networktemp")
 
