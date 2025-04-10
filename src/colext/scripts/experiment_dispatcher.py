@@ -141,10 +141,13 @@ def read_network(config):
     networks = config['network']
     clients = config['clients']
     
+    # Create a mapping from network tag to clients using that tag.
+    network_tags = {}
     
     # Process static network commands
     for net in networks:
         tag = net['tag']
+        network_tags[tag] = {}
         if "dynamic" in net:
             network_tags[tag]["dynamic"] = {}  # prepare dict for dynamic config
             continue
