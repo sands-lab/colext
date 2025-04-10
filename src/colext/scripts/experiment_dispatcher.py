@@ -141,13 +141,6 @@ def read_network(config):
     networks = config['network']
     clients = config['clients']
     
-    # Create a mapping from network tag to clients using that tag.
-    network_tags = {
-        net['tag']: {"clients": [client['id'] for client in clients 
-                                   if 'network' in client and net['tag'] in client['network']]
-                     }
-        for net in networks
-    }
     
     # Process static network commands
     for net in networks:
