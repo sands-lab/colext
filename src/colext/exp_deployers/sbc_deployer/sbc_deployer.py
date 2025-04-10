@@ -173,7 +173,8 @@ class SBCDeployer(DeployerBase):
 
                 #save dynamic network configs
                 #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
-                if "dynamic" in clientgroup['network'].keys():
+                log.info("clientgroup network:" + clientgroup['network'])
+                if "dynamic" in self.config['networks'].keys():
                     dynamic = clientgroup['network']['dynamic']
                     for iter in dynamic.keys():
                         # check if script is provided then save script else save the dict as json to be used
@@ -199,7 +200,8 @@ class SBCDeployer(DeployerBase):
         #delete previous networktemp files if it does exist
         if os.path.exists("networktemp"):
             for file in os.listdir("networktemp"):
-                os.remove(os.path.join("networktemp", file))
+                for file2 in os.listdir(os.path.join("networktemp",file)):
+                    os.remove(os.path.join("networktemp", file,file2))
         else:
             os.makedirs("networktemp")
 
