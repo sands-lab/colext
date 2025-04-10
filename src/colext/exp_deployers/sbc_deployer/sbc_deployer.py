@@ -86,7 +86,7 @@ class SBCDeployer(DeployerBase):
                             push=True)
 
     def clear_prev_experiment(self) -> None:
-        
+
         log.info("Clearing previous experiment")
         self.k_utils.delete_all_config_maps()
         self.k_utils.delete_fl_service()
@@ -126,7 +126,7 @@ class SBCDeployer(DeployerBase):
             pod_config["monitoring_push_interval"] = self.config["monitoring"]["push_interval"]
             pod_config["monitoring_scrape_interval"] = self.config["monitoring"]["scraping_interval"]
             pod_config["monitoring_measure_self"] = self.config["monitoring"]["measure_self"]
-            
+
             # add volume for the configmap
             pod_config["network_volumeMount"] = {"name": f"group-{client_prototype['group_id']}-network-config", "mountPath": "/fl_testbed/test_code/network"}
             pod_config["network_volume"] = {"name": f"group-{client_prototype['group_id']}-network-config","configMap": {"name": f"group-{client_prototype['group_id']}-networkrules"}}
@@ -157,7 +157,7 @@ class SBCDeployer(DeployerBase):
                     network_tags = clientgroup['network']
 
                 #save the network rules for each client group in a folder
-                
+
                 with open(f"{group_path}/networkrules.txt", 'w') as f:
                     f.write("")
                 if isinstance(network_tags,str): # if there is only one network make it a list
@@ -165,23 +165,24 @@ class SBCDeployer(DeployerBase):
                 for network in network_tags:
                         log.debug(f"network tag: {network_tags}")
                         log.info(f"group {group_id} is in {network}")
-                        #save dynamic network configs first
-                        #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
-                        if "dynamic" in self.config["networks"][network].keys():
-                            dynamic = self.config["networks"][network]['dynamic']
-                            for iter in dynamic.keys():
-                                # check if script is provided then save script else save the dict as json to be used
-                                if dynamic[iter]["script"] != False :
-                                    script = ""
-                                    with open(dynamic[iter]["script"], 'r') as s:
-                                        script = s.read()
-                                    with open(f"{group_path}/{iter}_script.py", "w") as f:
-                                        f.write(script)
-                                else:
-                                    json_str = json.dumps(dynamic[iter], indent=4)
-                                    with open(f"{group_path}/{iter}_json.py", "w") as f:
-                                        f.write(json_str)
-                        # if dynamic doesnt exist then save static of that network
+                        with open(f"{group_path}/networkrules.txt", 'a') as f:
+                            f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
+                            f.write(f"tcset eth0 --direction incoming {self.config["networks"][network]["commands"]["downstream"]} --change \n")
+
+
+                #save dynamic network configs
+                #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
+                log.info("clientgroup network:" + clientgroup['network'])
+                if "dynamic" in self.config['networks'].keys():
+                    dynamic = clientgroup['network']['dynamic']
+                    for iter in dynamic.keys():
+                        # check if script is provided then save script else save the dict as json to be used
+                        if dynamic[iter]["script"] != False :
+                            script = ""
+                            with open(dynamic[iter]["script"], 'r') as s:
+                                script = s.read()
+                            with open(f"{group_path}/{iter}_script.py", "w") as f:
+                                f.write(script)
                         else:
                             with open(f"{group_path}/networkrules.txt", 'a') as f:
                                 f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
@@ -199,23 +200,22 @@ class SBCDeployer(DeployerBase):
         #delete previous networktemp files if it does exist
         if os.path.exists("networktemp"):
             for file in os.listdir("networktemp"):
-                #remove the files in the folder if tis file and recursive if folder
-                for file2 in os.listdir(os.path.join("networktemp", file)):
-                    os.remove(os.path.join("networktemp", file, file2))
+                for file2 in os.listdir(os.path.join("networktemp",file)):
+                    os.remove(os.path.join("networktemp", file,file2))
         else:
             os.makedirs("networktemp")
 
         for client_prototype in self.config["clients"]:
-            
+
             client_prototype["group_id"] = group_id
             generate_network_configmap_folder(client_prototype,group_id)
-            
+
             group_id += 1
             for _ in range(client_prototype["count"]):
                 pod_configs.append(prepare_client(client_prototype, client_id))
                 client_id += 1
-        
-        
+
+
 
         log.debug(f"Generated {len(pod_configs)} pod configs")
         log.debug(f"config: {pod_configs}")
@@ -253,7 +253,7 @@ class SBCDeployer(DeployerBase):
             Launch experiment in kubernetes cluster
             Prepares and deployes client pods and fl service
         """
-        
+
         self.clear_prev_experiment()
 
         log.info(f"Deploying FL server and service")
@@ -268,18 +268,18 @@ class SBCDeployer(DeployerBase):
 
         client_pod_configs = self.prepare_clients_for_launch(job_id)
 
-        
 
-        
+
+
         # create config map for each client group
         for client_prototype in self.config["clients"]:
             self.k_utils.create_config_map_from_dict(f"group-{client_prototype['group_id']}-network-config", f"networktemp/group-{client_prototype['group_id']}")
-        
+
         for pod_config in client_pod_configs:
             # log.debug(f"Deploying Client pod = {pod_config}")
             client_pod_dict = yaml.safe_load(self.client_template.render(pod_config))
             self.k_utils.create_from_dict(client_pod_dict)
-        
+
         log.info(f"Experiment deployed. It can be canceled with 'mk delete pods --all'")
 
     def get_available_devices_by_type(self, dev_types):
