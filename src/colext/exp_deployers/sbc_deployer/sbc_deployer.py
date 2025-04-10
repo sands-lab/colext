@@ -157,7 +157,7 @@ class SBCDeployer(DeployerBase):
                 if 'network' in clientgroup.keys():
                     network_tags = clientgroup['network']
 
-                #save the static network rules
+                #save the network rules for each client group in a folder
                 
                 with open(f"{group_path}/networkrules.txt", 'w') as f:
                     f.write("")
@@ -166,27 +166,28 @@ class SBCDeployer(DeployerBase):
                 for network in network_tags:
                         log.debug(f"network tag: {network_tags}")
                         log.info(f"group {group_id} is in {network}")
-                        with open(f"{group_path}/networkrules.txt", 'a') as f:
-                            f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
-                            f.write(f"tcset eth0 --direction incoming {self.config["networks"][network]["commands"]["downstream"]} --change \n")
-
-
-                #save dynamic network configs
-                #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
-                if "dynamic" in clientgroup['network'].keys():
-                    dynamic = clientgroup['network']['dynamic']
-                    for iter in dynamic.keys():
-                        # check if script is provided then save script else save the dict as json to be used
-                        if dynamic[iter]["script"] != False :
-                            script = ""
-                            with open(dynamic[iter]["script"], 'r') as s:
-                                script = s.read()
-                            with open(f"{group_path}/{iter}_script.py", "w") as f:
-                                f.write(script)
+                        #save dynamic network configs first
+                        #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
+                        if "dynamic" in self.config["networks"][network].keys():
+                            dynamic = self.config["networks"][network]['dynamic']
+                            for iter in dynamic.keys():
+                                # check if script is provided then save script else save the dict as json to be used
+                                if dynamic[iter]["script"] != False :
+                                    script = ""
+                                    with open(dynamic[iter]["script"], 'r') as s:
+                                        script = s.read()
+                                    with open(f"{group_path}/{iter}_script.py", "w") as f:
+                                        f.write(script)
+                                else:
+                                    json_str = json.dumps(dynamic[iter], indent=4)
+                                    with open(f"{group_path}/{iter}_json.py", "w") as f:
+                                        f.write(json_str)
+                        # if dynamic doesnt exist then save static of that network
                         else:
-                            json_str = json.dumps(dynamic[iter], indent=4)
-                            with open(f"{group_path}/{iter}_json.py", "w") as f:
-                                f.write(json_str)
+                            with open(f"{group_path}/networkrules.txt", 'a') as f:
+                                f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
+                                f.write(f"tcset eth0 --direction incoming {self.config["networks"][network]["commands"]["downstream"]} --change \n")
+
 
 
 
@@ -199,7 +200,9 @@ class SBCDeployer(DeployerBase):
         #delete previous networktemp files if it does exist
         if os.path.exists("networktemp"):
             for file in os.listdir("networktemp"):
-                os.remove(os.path.join("networktemp", file))
+                #remove the files in the folder if tis file and recursive if folder
+                for file2 in os.listdir(os.path.join("networktemp", file)):
+                    os.remove(os.path.join("networktemp", file, file2))
         else:
             os.makedirs("networktemp")
 
