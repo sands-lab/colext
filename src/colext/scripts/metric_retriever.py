@@ -182,7 +182,9 @@ def gen_cr_metric_summary(jd):
             end_i = hw_group.index.get_indexer(cr_group["end_time"], method="nearest")[0]
             cr_group["Energy training (J)"] = calc_diff(start_i, end_i, "Energy (KJ)") * 1000 # (KJ -> J)
 
-            df = hw_group.iloc[start_i:end_i].groupby(["round_number", "stage"])[["CPU Util (%)", "GPU Util (%)", "Mem Util (MiB)"]].agg(["mean", "max"])
+            df = hw_group.iloc[start_i:end_i].groupby(["round_number", "stage"])[
+                ["CPU Util (%)", "GPU Util (%)", "Mem Util (MiB)", "Upload (MiB/s)", "Download (MiB/s)"]
+            ].agg(["mean", "max"])
             # Flatten MultiIndex columns
             df.columns = [f"Avg {col[0]}" if col[1] == "mean" else f"Max {col[0]}" for col in df.columns]
             cr_group = cr_group.merge(df, on=["round_number", "stage"])
