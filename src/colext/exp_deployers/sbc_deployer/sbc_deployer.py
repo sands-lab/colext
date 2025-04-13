@@ -163,6 +163,9 @@ class SBCDeployer(DeployerBase):
                     f.write("")
                 if isinstance(network_tags,str): # if there is only one network make it a list
                     network_tags = [network_tags]
+                
+                #variable to store all the network static rules for each client group
+                static_network_rules = {"upstream": [], "downstream": []}
                 for network in network_tags:
                         log.debug(f"network tag: {network_tags}")
                         log.info(f"group {group_id} is in {network}")
@@ -184,10 +187,42 @@ class SBCDeployer(DeployerBase):
                                         f.write(json_str)
                         # if dynamic doesnt exist then save static of that network
                         else:
-                            with open(f"{group_path}/networkrules.txt", 'a') as f:
-                                f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
-                                f.write(f"tcset eth0 --direction incoming {self.config["networks"][network]["commands"]["downstream"]} --change \n")
+                            #save static rules
+                            static_network_rules["upstream"].append(self.config["networks"][network]["commands"]["upstream"])
+                            static_network_rules["downstream"].append(self.config["networks"][network]["commands"]["downstream"])
+                
+                # merge the static rules into one rule for each client group
+                upstream, downstream = merge_static_network_rules(static_network_rules)
+                # save the merged rules to the configmap
+                with open(f"{group_path}/networkrules.txt", 'a') as f:
+                    f.write(f"tcset eth0 --direction outgoing {upstream} \n")
+                    f.write(f"tcset eth0 --direction incoming {downstream} --change \n")
 
+        def merge_static_network_rules(network):
+            # given a network tag output 2 static rules for upstream and downstream
+            #TODO this is not comptible with input ips and ports yet
+            upstream = ""
+            downstream = ""
+            upstream_dict = network["upstream"]
+            downstream_dict = network["downstream"]
+
+            merged_upstream = {}
+            merged_downstream = {}
+
+            for rules in upstream_dict:
+                rule, value = rules.split()
+                merged_upstream[rule] = value
+            for rules in downstream_dict:
+                rule, value = rules.split()
+                merged_downstream[rule] = value
+
+            # merge the rules into one rule
+            upstream = " ".join([f"--{key} {value}" for key, value in merged_upstream.items()])
+            downstream = " ".join([f"--{key} {value}" for key, value in merged_downstream.items()])
+
+            return upstream, downstream
+
+            
 
 
 
