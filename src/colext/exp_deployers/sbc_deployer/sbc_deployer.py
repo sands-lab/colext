@@ -201,24 +201,23 @@ class SBCDeployer(DeployerBase):
         def merge_static_network_rules(network):
             # given a network tag output 2 static rules for upstream and downstream
             #TODO this is not comptible with input ips and ports yet
-            upstream = ""
-            downstream = ""
+            
             upstream_dict = network["upstream"]
             downstream_dict = network["downstream"]
 
-            merged_upstream = {}
-            merged_downstream = {}
+            merged_upstream_dict = {}
+            merged_downstream_dict = {}
 
             for rules in upstream_dict:
                 rule, value = rules.split()
-                merged_upstream[rule] = value
+                merged_upstream_dict[rule] = value
             for rules in downstream_dict:
                 rule, value = rules.split()
-                merged_downstream[rule] = value
+                merged_downstream_dict[rule] = value
 
             # merge the rules into one rule
-            upstream = " ".join([f"--{key} {value}" for key, value in merged_upstream.items()])
-            downstream = " ".join([f"--{key} {value}" for key, value in merged_downstream.items()])
+            upstream = " ".join([f"--{key} {value}" for key, value in merged_upstream_dict.items()])
+            downstream = " ".join([f"--{key} {value}" for key, value in merged_downstream_dict.items()])
 
             return upstream, downstream
 
