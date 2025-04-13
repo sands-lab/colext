@@ -42,10 +42,10 @@ network:
       latency: 1ms
 
 clients:
-    - dev_type: LattePandaDelta3
-      count: 4
-      add_args: "--max_step_count=50"
-      network: veryslow
+        #    - dev_type: LattePandaDelta3
+        # count: 4
+        #add_args: "--max_step_count=50"
+        #network: veryslow
 
     - dev_type: JetsonOrinNano
       add_args: "--max_step_count=200"
@@ -56,7 +56,7 @@ clients:
       network: default
 
     - dev_type: OrangePi5B
-      count: 2
+      count: 1
       add_args: "--max_step_count=50"
       network: default
     # - { dev_type: JetsonAGXOrin,  count: 1 }
