@@ -60,7 +60,7 @@ class KubernetesUtils:
             api_version="v1",
             kind="ConfigMap",
             metadata=kubernetes.client.V1ObjectMeta(name=name),
-            data={f"tcconfig_rules.txt": data}
+            data=data
         )
         self.k8s_core_v1.create_namespaced_config_map(FL_NETWORK_NAMESPACE, config_map)
 
