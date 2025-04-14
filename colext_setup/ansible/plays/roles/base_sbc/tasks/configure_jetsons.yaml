@@ -1,0 +1,12 @@
+- name: Upgrade minor version of Jetpack
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: Install Jtop
+  ansible.builtin.pip:
+    name: "jetson-stats==4.3.2"
+    executable: pip3
+
+# - name: Set jetson power mode to highest performance (NVP_model)
+#   ansible.builtin.shell:
+#     cmd: sudo nvpmodel -m 0

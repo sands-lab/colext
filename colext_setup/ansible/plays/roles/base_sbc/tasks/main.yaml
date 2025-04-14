@@ -23,8 +23,10 @@
 - name: Install services
   ansible.builtin.import_tasks: install_services.yaml
 
-- name: Configure HW for max performance
-  ansible.builtin.import_tasks: configure_hw.yaml
+- name: Configure Jetsons
+  ansible.builtin.import_tasks: configure_jetsons.yaml
+  when: "'jetsons' in group_names"
+  tags: jetson_specific
 
 - name: Configure datasets
   ansible.builtin.import_tasks: configure_datasets.yaml
