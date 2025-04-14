@@ -10,3 +10,40 @@
 # - name: Set jetson power mode to highest performance (NVP_model)
 #   ansible.builtin.shell:
 #     cmd: sudo nvpmodel -m 0
+
+- name: Configure tc modules
+  block:
+    - name: Ensure accidental destination directory does not exist
+      ansible.builtin.file:
+        path: "/lib/modules/{{ ansible_kernel }}/kernel/{{ item }}"
+        state: absent
+      loop:
+        - 4.9.337-tegra
+        - 5.10.120-tegra
+
+    - name: Copy kernel modules
+      ansible.builtin.copy:
+        src: jetson_tc_kernel_modules/{{ ansible_kernel }}/
+        dest: "/lib/modules/{{ ansible_kernel }}/kernel/"
+        mode: '0644'
+
+    - name: Reload kernel modules if changed
+      ansible.builtin.command: "depmod -a"
+
+    - name: Load kernel modules from list
+      community.general.modprobe:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - ifb
+        - sch_netem
+        - sch_tbf
+
+    - name: Ensure modules are loaded on boot
+      ansible.builtin.copy:
+        content: |
+          ifb
+          sch_netem
+          sch_tbf
+        dest: /etc/modules-load.d/tc_modules.conf
+        mode: '0644'

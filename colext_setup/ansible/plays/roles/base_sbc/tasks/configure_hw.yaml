@@ -1,4 +1,0 @@
-# - name: Set jetson power mode to highest performance (NVP_model)
-#   ansible.builtin.shell:
-#     cmd: sudo nvpmodel -m 0 
-#   when: jetson in group
