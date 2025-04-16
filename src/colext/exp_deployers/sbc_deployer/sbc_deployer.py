@@ -188,8 +188,8 @@ class SBCDeployer(DeployerBase):
                         # if dynamic doesnt exist then save static of that network
                         else:
                             #save static rules
-                            static_network_rules["upstream"].append(self.config["networks"][network]["commands"]["upstream"])
-                            static_network_rules["downstream"].append(self.config["networks"][network]["commands"]["downstream"])
+                            static_network_rules["upstream"] = self.config["networks"][network]["commands"]["upstream"]
+                            static_network_rules["downstream"] = self.config["networks"][network]["commands"]["downstream"]
                 
                 # merge the static rules into one rule for each client group
                 upstream, downstream = merge_static_network_rules(static_network_rules)
@@ -207,7 +207,7 @@ class SBCDeployer(DeployerBase):
             log.debug(upstream_list)
             log.debug(downstream_list)
 
-            
+
             merged_upstream_dict = {}
             merged_downstream_dict = {}
 
