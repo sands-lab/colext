@@ -173,7 +173,7 @@ class SBCDeployer(DeployerBase):
                         log.info(f"group {group_id} is in {network}")
                         #save dynamic network configs first
                         #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
-                        if "dynamic" in self.config["networks"][network].keys():
+                        if "dynamic" in self.config["networks"][network]:
                             dynamic = self.config["networks"][network]['dynamic']
                             for iter in dynamic.keys():
                                 # check if script is provided then save script else save the dict as json to be used
