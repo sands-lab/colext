@@ -129,8 +129,10 @@ class SBCDeployer(DeployerBase):
             pod_config["monitoring_measure_self"] = self.config["monitoring"]["measure_self"]
             
             # add volume for the configmap
-            pod_config["network_volumeMount"] = {"name": f"group-{client_prototype['group_id']}-network-config", "mountPath": "/fl_testbed/test_code/network"}
-            pod_config["network_volume"] = {"name": f"group-{client_prototype['group_id']}-network-config","configMap": {"name": f"group-{client_prototype['group_id']}-networkrules"}}
+            pod_config["network_volumeMount"] = {"name": f"group-{client_prototype['group_id']}-network-config",
+                                                  "mountPath": "/fl_testbed/test_code/network"}
+            pod_config["network_volume"] = {"name": f"group-{client_prototype['group_id']}-network-config",
+                                            "configMap": {"name": f"group-{client_prototype['group_id']}-network-config"}}
 
             # Add IP of smartplug in case it exists
             pod_config["SP_IP_ADDRESS"] = SMART_PLUGS_HOST_SP_IP_MAP.get(dev_hostname, None)
