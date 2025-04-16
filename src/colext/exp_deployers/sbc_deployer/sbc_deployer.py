@@ -202,16 +202,19 @@ class SBCDeployer(DeployerBase):
             # given a network tag output 2 static rules for upstream and downstream
             #TODO this is not comptible with input ips and ports yet
             
-            upstream_dict = network["upstream"]
-            downstream_dict = network["downstream"]
+            upstream_list = network["upstream"]
+            downstream_list = network["downstream"]
+            log.debug(upstream_list)
+            log.debug(downstream_list)
 
+            
             merged_upstream_dict = {}
             merged_downstream_dict = {}
 
-            for rules in upstream_dict:
+            for rules in upstream_list:
                 rule, value = rules.split()
                 merged_upstream_dict[rule] = value
-            for rules in downstream_dict:
+            for rules in downstream_list:
                 rule, value = rules.split()
                 merged_downstream_dict[rule] = value
 
