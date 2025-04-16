@@ -140,7 +140,7 @@ class SBCDeployer(DeployerBase):
             return pod_config
 
 
-        # TODO union all network result rules for each client resultant configmap
+        
         # this function is called for every client group to generate the network configmap for it
         # clientgroup is the name of the client group aka client_prototype
         def generate_network_configmap_folder(clientgroup,group_id):
@@ -177,17 +177,22 @@ class SBCDeployer(DeployerBase):
                         if "dynamic" in self.config["networks"][network].keys():
                             dynamic = self.config["networks"][network]['dynamic']
                             for iter in dynamic.keys():
+                                log.debug(f"saving scripts of : {network} {dynamic[iter]}")
                                 # check if script is provided then save script else save the dict as json to be used
                                 if dynamic[iter]["script"] != False :
+                                    log.debug(f"saving script: {dynamic[iter]['script']} into {group_path}/{iter}_script.py")
                                     script = ""
                                     with open(dynamic[iter]["script"], 'r') as s:
                                         script = s.read()
                                     with open(f"{group_path}/{iter}_script.py", "w") as f:
                                         f.write(script)
+                                        log.debug(f"script saved")
                                 else:
                                     json_str = json.dumps(dynamic[iter], indent=4)
+                                    log.debug(f"saving json: {json_str} into {group_path}/{iter}_json.py")
                                     with open(f"{group_path}/{iter}_json.py", "w") as f:
                                         f.write(json_str)
+                                        log.debug(f"json saved")
                         # if dynamic doesnt exist then save static of that network
                         else:
                             #save static rules
