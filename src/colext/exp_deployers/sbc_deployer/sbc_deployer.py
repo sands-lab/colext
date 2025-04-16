@@ -164,35 +164,34 @@ class SBCDeployer(DeployerBase):
                     f.write("")
                 if isinstance(network_tags,str): # if there is only one network make it a list
                     network_tags = [network_tags]
-                
+
                 #variable to store all the network static rules for each client group
                 static_network_rules = {"upstream": [], "downstream": []}
                 for network in network_tags:
                         log.debug(f"network tag: {network_tags}")
                         log.info(f"group {group_id} is in {network}")
-                        with open(f"{group_path}/networkrules.txt", 'a') as f:
-                            f.write(f"tcset eth0 --direction outgoing {self.config["networks"][network]["commands"]["upstream"]} --change \n")
-                            f.write(f"tcset eth0 --direction incoming {self.config["networks"][network]["commands"]["downstream"]} --change \n")
-
-
-                #save dynamic network configs
-                #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
-                log.info("clientgroup network:" + clientgroup['network'])
-                if "dynamic" in self.config['networks'].keys():
-                    dynamic = clientgroup['network']['dynamic']
-                    for iter in dynamic.keys():
-                        # check if script is provided then save script else save the dict as json to be used
-                        if dynamic[iter]["script"] != False :
-                            script = ""
-                            with open(dynamic[iter]["script"], 'r') as s:
-                                script = s.read()
-                            with open(f"{group_path}/{iter}_script.py", "w") as f:
-                                f.write(script)
+                        #save dynamic network configs first
+                        #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
+                        if "dynamic" in self.config["networks"][network]:
+                            dynamic = self.config["networks"][network]['dynamic']
+                            for iter in dynamic.keys():
+                                # check if script is provided then save script else save the dict as json to be used
+                                if dynamic[iter]["script"] != False :
+                                    script = ""
+                                    with open(dynamic[iter]["script"], 'r') as s:
+                                        script = s.read()
+                                    with open(f"{group_path}/{iter}_script.py", "w") as f:
+                                        f.write(script)
+                                else:
+                                    json_str = json.dumps(dynamic[iter], indent=4)
+                                    with open(f"{group_path}/{iter}_json.py", "w") as f:
+                                        f.write(json_str)
+                        # if dynamic doesnt exist then save static of that network
                         else:
                             #save static rules
                             static_network_rules["upstream"] = self.config["networks"][network]["commands"]["upstream"]
                             static_network_rules["downstream"] = self.config["networks"][network]["commands"]["downstream"]
-                
+
                 # merge the static rules into one rule for each client group
                 upstream, downstream = merge_static_network_rules(static_network_rules)
                 # save the merged rules to the configmap
@@ -203,7 +202,7 @@ class SBCDeployer(DeployerBase):
         def merge_static_network_rules(network):
             # given a network tag output 2 static rules for upstream and downstream
             #TODO this is not comptible with input ips and ports yet
-            
+
             upstream_list = network["upstream"]
             downstream_list = network["downstream"]
             log.debug(upstream_list)
@@ -226,7 +225,7 @@ class SBCDeployer(DeployerBase):
 
             return upstream, downstream
 
-            
+
 
 
 
