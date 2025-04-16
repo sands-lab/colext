@@ -165,6 +165,8 @@ class SBCDeployer(DeployerBase):
                     f.write("")
                 if isinstance(network_tags,str): # if there is only one network make it a list
                     network_tags = [network_tags]
+                if isinstance(network_tags, dict): # convert dict to list
+                    network_tags = [network for network in network_tags.keys()]
                 
                 #variable to store all the network static rules for each client group
                 static_network_rules = {"upstream": [], "downstream": []}
@@ -173,7 +175,7 @@ class SBCDeployer(DeployerBase):
                         log.info(f"group {group_id} is in {network}")
                         #save dynamic network configs first
                         #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
-                        if "dynamic" in self.config["networks"][network]:
+                        if "dynamic" in self.config["networks"][network].keys():
                             dynamic = self.config["networks"][network]['dynamic']
                             for iter in dynamic.keys():
                                 # check if script is provided then save script else save the dict as json to be used
