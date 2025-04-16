@@ -173,6 +173,10 @@ class SBCDeployer(DeployerBase):
                         log.debug(f"network tag: {network_tags}")
                         log.info(f"group {group_id} is in {network}")
                         #save dynamic network configs first
+                        
+                        log.debug(f"network config: {self.config['networks'][network]}")
+                        log.debug(f" network keys: {self.config['networks'][network].keys()}")
+
                         #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
                         if "dynamic" in self.config["networks"][network].keys():
                             dynamic = self.config["networks"][network]['dynamic']
