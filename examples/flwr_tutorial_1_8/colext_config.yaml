@@ -40,6 +40,7 @@ network:
     downstream:
       bandwidth: 100Kbps
       latency: 1ms
+  
 
 clients:
     - dev_type: LattePandaDelta3

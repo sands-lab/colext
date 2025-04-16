@@ -276,6 +276,8 @@ def read_validate_dynamic(net, dynamic_config):
                     print(f"Invalid command: {command} in {tag}")
                     sys.exit(1)
                 entry_temp["commands_dict"][key] = command
+                #TODO some values may have -1 and that should be checked and removed accordingly
+
         
         dynamic_config[iterator] = entry_temp
     return dynamic_config
@@ -299,6 +301,8 @@ def check_command(command, structure):
         print(f"Invalid direction: {command_split[1]} in {command} only 'incoming' and 'outgoing' are allowed")
         return False
     for i, rule in enumerate(structure):
+        if command_split[i + 2] == -1:
+            continue
         if not re.match(VALIDATION_MAPPING[rule], command_split[i + 2]):
             print(f"Invalid {rule} format: {command_split[i + 2]}")
             return False
