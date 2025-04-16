@@ -165,8 +165,7 @@ def read_network(config):
     # Process dynamic network configuration and validate
     for net in [n for n in networks if "dynamic" in n]:
         tag = net['tag']
-        network_tags[tag]["dynamic"] = {}
-        network_tags[tag]["dynamic"] = read_validate_dynamic(net, network_tags[tag]["dynamic"])
+        network_tags[tag]["dynamic"] = read_validate_dynamic(net)
 
 
     print("Network tags:", network_tags)
@@ -228,14 +227,13 @@ def validate_static_commands(commands, network_name):
         validated.append(f"{rule_name} {command_split[1]}")
     return validated
 
-def read_validate_dynamic(net, dynamic_config):
+def read_validate_dynamic(net):
     '''
     Read and validate dynamic network configuration from the given dict. 
-    input dynamic_config should be a dict that contains a single network config with dynamic configs
     input net should be a dict that contains the original network config
     Returns a dict with validated and formatted dynamic network config.
     '''
-
+    dynamic_config = {}
     tag = net['tag']
     #looping through the dynamic config and validating each entry aka each iterator defined with its list of commands
     for entry in net['dynamic']:

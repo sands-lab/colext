@@ -41,7 +41,7 @@ network:
       bandwidth: 100Kbps
       latency: 1ms
   - tag: DynFast
-    Dynamic:
+    dynamic:
     - iterator: time 
       structure: [bandwidth, latency, delay-distribution] 
       10: [set ,outgoing , -1, 1ms, normal]
