@@ -69,7 +69,9 @@ clients:
     - dev_type: OrangePi5B
       count: 2
       add_args: "--max_step_count=100"
-      network: default
+      network: 
+        - default:
+        - DynFast
 
     #  - dev_type: OrangePi5B
     #count: 2
