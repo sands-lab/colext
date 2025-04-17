@@ -298,6 +298,11 @@ def check_command(command, structure):
     if command_split[1] not in ["incoming", "outgoing"]:
         print(f"Invalid direction: {command_split[1]} in {command} only 'incoming' and 'outgoing' are allowed")
         return False
+    
+    #since del does not require any values we can skip the rest of the checks
+    if command_split[0] == "del":
+        return True
+
     for i, rule in enumerate(structure):
         if command_split[i + 2] == -1:
             continue
