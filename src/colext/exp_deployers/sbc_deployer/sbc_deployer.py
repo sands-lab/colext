@@ -165,7 +165,11 @@ class SBCDeployer(DeployerBase):
                     f.write("")
                 if isinstance(network_tags,str): # if there is only one network make it a list
                     network_tags = [network_tags]
-                
+                #check each network and make sure its a string to verify
+                for i in range(len(network_tags)):
+                    if not isinstance(network_tags[i],str):
+                        log.error(f"network tags should be a string or a list of strings")
+                        sys.exit(1)
                 
                 #variable to store all the network static rules for each client group
                 static_network_rules = {"upstream": [], "downstream": []}
