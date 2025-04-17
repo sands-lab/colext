@@ -10,3 +10,5 @@ build
 *.pdf
 torch_wheels
 Miniforge3-Linux-x86_64.sh
+/examples/**/*.txt
+/examples/**/*.json
