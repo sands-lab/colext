@@ -177,24 +177,23 @@ class SBCDeployer(DeployerBase):
                         log.debug(f"network config: {self.config['networks'][network]}")
                         log.debug(f" network keys: {self.config['networks'][network].keys()}")
 
-                        #TODO: change how the configmap maps are created to instead check for a folder and create a configmap with all the files in it
                         if "dynamic" in self.config["networks"][network].keys():
                             dynamic = self.config["networks"][network]['dynamic']
                             for iter in dynamic.keys():
                                 log.debug(f"saving scripts of : {network} {dynamic[iter]}")
                                 # check if script is provided then save script else save the dict as json to be used
                                 if dynamic[iter]["script"] != False :
-                                    log.debug(f"saving script: {dynamic[iter]['script']} into {group_path}/{iter}_script.py")
+                                    log.debug(f"saving script: {dynamic[iter]['script']} into {group_path}/{iter}_{network}_script.py")
                                     script = ""
                                     with open(dynamic[iter]["script"], 'r') as s:
                                         script = s.read()
-                                    with open(f"{group_path}/{iter}_script.py", "w") as f:
+                                    with open(f"{group_path}/{iter}_{network}_script.py", "w") as f:
                                         f.write(script)
                                         log.debug(f"script saved")
                                 else:
                                     json_str = json.dumps(dynamic[iter], indent=4)
-                                    log.debug(f"saving json: {json_str} into {group_path}/{iter}_json.py")
-                                    with open(f"{group_path}/{iter}_json.py", "w") as f:
+                                    log.debug(f"saving json: {json_str} into {group_path}/{iter}_{network}_json.py")
+                                    with open(f"{group_path}/{iter}_{network}_json.py", "w") as f:
                                         f.write(json_str)
                                         log.debug(f"json saved")
                         # if dynamic doesnt exist then save static of that network
