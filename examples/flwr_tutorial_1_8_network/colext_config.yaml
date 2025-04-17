@@ -44,15 +44,17 @@ network:
     dynamic:
     - iterator: time 
       structure: [bandwidth, latency, delay-distribution] 
-      10: [set ,outgoing , -1, 1ms, normal]
-      20: [set ,outgoing , 1000Mbps, 0.1ms, normal]
-      100: [del, outgoing , 1000Mbps, 0.1ms, normal]
-      100: [ set ,outgoing , 1000Mbps, 0.1ms, normal]
-      120: [set,outgoing , 10Mbps ,  0.1ms, normal]
+      commands:
+      - [10,set ,outgoing , -1, 1ms, normal]
+      - [20,set ,outgoing , 1000Mbps, 0.1ms, normal]
+      - [100,del, outgoing , 1000Mbps, 0.1ms, normal]
+      - [100, set ,outgoing , 1000Mbps, 0.1ms, normal]
+      - [120,set,outgoing , 10Mbps ,  0.1ms, normal]
 
     - iterator: epochs #  in epochs
-      10: [set,outgoing , 1Mbps, 10ms]
-      20: [set,outgoing , 1000Mbps, 0.1ms]
+      commands:
+      - [10,set,outgoing , 1Mbps, 10ms]
+      - [20,set,outgoing , 1000Mbps, 0.1ms]
 
 clients:
         #  - dev_type: LattePandaDelta3
