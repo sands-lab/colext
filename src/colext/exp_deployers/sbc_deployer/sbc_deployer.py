@@ -192,8 +192,8 @@ class SBCDeployer(DeployerBase):
                                         log.debug(f"script saved")
                                 else:
                                     json_str = json.dumps(dynamic[iter], indent=4)
-                                    log.debug(f"saving json: {json_str} into {group_path}/{iter}_{network}_json.py")
-                                    with open(f"{group_path}/{iter}_{network}_json.py", "w") as f:
+                                    log.debug(f"saving json: {json_str} into {group_path}/{iter}_{network}_dynrules.json")
+                                    with open(f"{group_path}/{iter}_{network}_dynrules.json", "w") as f:
                                         f.write(json_str)
                                         log.debug(f"json saved")
                         # if dynamic doesnt exist then save static of that network
