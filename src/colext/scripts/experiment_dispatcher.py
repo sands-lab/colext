@@ -263,24 +263,30 @@ def read_validate_dynamic(net):
                 print(f"Script file {entry['script']} does not exist.")
                 sys.exit(1)
             entry_temp["script"] = entry['script']
-        else:
+        elif 'commands' in entry:
             entry_temp["script"] = False
             entry_temp["commands_dict"] = {}
-            # Process each command entry excluding 'structure' and 'iterator'
-            for key, command in entry.items():
+
+            for command in entry["commands"]:
+                #parse it into key: values
+                if not isinstance(command, list) or len(command) < 3:
+                    print(f"Invalid command format: {command} in {tag}")
+                    sys.exit(1)
+                key = command[0]
+                value = command[1:]
+
                 if key in ['structure', 'iterator']:
                     continue
-                if not check_command(command, entry_temp["structure"]):
-                    print(f"Invalid command: {command} in {tag}")
+                if not check_command(value, entry_temp["structure"]):
+                    print(f"Invalid command: {value} in {tag}")
                     sys.exit(1)
 
                 #check if the key is already there if it is then we add it to the list instead
                 if key in entry_temp["commands_dict"]:
-                    entry_temp["commands_dict"][key].append(command)
+                    entry_temp["commands_dict"][key].append(value)
                 else:
-                    entry_temp["commands_dict"][key] = [command]    
+                    entry_temp["commands_dict"][key] = [value]    
 
-                #TODO some values may have -1 and that should be checked and removed accordingly
 
         
         dynamic_config[iterator] = entry_temp

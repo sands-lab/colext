@@ -170,7 +170,7 @@ class SBCDeployer(DeployerBase):
                     if not isinstance(network_tags[i],str):
                         log.error(f"network tags should be a string or a list of strings")
                         sys.exit(1)
-                
+                #TODO the function can be divided into 2 functions
                 #variable to store all the network static rules for each client group
                 static_network_rules = {"upstream": [], "downstream": []}
                 for network in network_tags:
