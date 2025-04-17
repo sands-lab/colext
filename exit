@@ -1,0 +1,645 @@
+[33mcommit ab32a68849ba5126b3283c15643bc6daeb8c01cd[m[33m ([m[1;36mHEAD[m[33m)[m
+Author: o0n1x <127759471+o0n1x@users.noreply.github.com>
+Date:   Tue Mar 25 16:53:01 2025 +0300
+
+    Delete Miniforge3-Linux-x86_64.sh
+
+[33mcommit c6969d0a89d2ae2c4e9e5c31848a17125212bf82[m
+Author: abdullah-alamoudi <abdullah.alamoudi.1@kaust.edu.sa>
+Date:   Tue Mar 25 16:52:02 2025 +0300
+
+    removed miniforge
+
+[33mcommit 0c07585c65b94bbd3839cf9d5f7fd82045451081[m
+Author: abdullah-alamoudi <abdullah.alamoudi.1@kaust.edu.sa>
+Date:   Tue Mar 25 16:00:30 2025 +0300
+
+    the modifications done for the static part
+
+[33mcommit b35ae20ac807a9626beb6d1ca8ed87197a4e42fb[m
+Author: Amandio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Wed Feb 26 18:09:56 2025 +0300
+
+    Update CoLExT schema image. Added white background.
+
+[33mcommit 6871c08879ddf49556185245306603467aba130f[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Mon Feb 17 15:59:31 2025 +0300
+
+    Update README.md
+
+[33mcommit df41b21d1bccd3d3800f686ee16111b1bac6395c[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Feb 5 09:42:53 2025 +0300
+
+    Readded CoLExT datasets env to local deployer
+
+[33mcommit 816630aebdd60edfdf6984608623d4893d7881c5[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Feb 4 16:06:50 2025 +0300
+
+    Fix code path to be relative to config file location.
+
+[33mcommit eaca76566c5ab1381bae23ac03e14086dfa99523[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Tue Feb 4 15:08:40 2025 +0300
+
+    Update README.md
+
+[33mcommit 2af2e52cbef0500980e9a890172c7785ee56262f[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Feb 4 15:07:04 2025 +0300
+
+    Improve specification of clients + Add option to add client specific args
+
+[33mcommit 27f14beefaeedb4398dbf223c5e2dcab3d84da57[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jan 12 17:16:56 2025 +0300
+
+    Renamed CoLExT datasets folder to COLEXT_DATASETS
+
+[33mcommit e321cb67d432d52ea66640a15277b293a56a1c0d[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jan 12 10:36:30 2025 +0300
+
+    Specify default user for DB access when running colext_launch_job
+
+[33mcommit dc2599bdd73d3b7d3467615c861fcef2a8888ae2[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu Jan 9 16:39:43 2025 +0300
+
+    Merged entrypoint + args into command in config file
+
+[33mcommit c0a00a299f54f0366baf68b6cadfbb4cd7bda430[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jan 8 10:44:16 2025 +0300
+
+    Update README.md
+    
+    Fixed typos
+
+[33mcommit 0e78e1a9ef27efad77b452e704ef0a28c427c565[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jan 5 09:41:38 2025 +0300
+
+    Remove figures from jupyter notebook
+
+[33mcommit 13b75760b1c0e7c2be89f25a3bd95f9b0bae70f3[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Tue Dec 17 07:59:48 2024 +0300
+
+    Update README.md
+
+[33mcommit bfddec605ace94604e643dda12674ed17959fa5e[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Dec 16 16:39:59 2024 +0300
+
+    Added smart plug energy measurements with tapo package
+
+[33mcommit 707e50272bdf7b4c88f76416719eb2eb572a0698[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Dec 16 16:39:19 2024 +0300
+
+    Fix for flwr 1.8
+
+[33mcommit 99ee733a4b36b77fee5ae20286bfcc6ffb562863[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Dec 16 16:37:04 2024 +0300
+
+    Fix plotting issues
+
+[33mcommit a71a6dc35368929f09ca9291b837ac04fd967499[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Nov 13 17:18:49 2024 +0300
+
+    Remove ssh req when installing package in dockerfile
+
+[33mcommit 80b13cd7f2161d88c7685bef410da55b9db5910b[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Wed Nov 13 14:35:02 2024 +0300
+
+    Update README.md
+
+[33mcommit 8d7dd3d4068b02c8164b2257814115746e933605[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Nov 13 14:04:37 2024 +0300
+
+    Added support for flwr 1.8
+
+[33mcommit 48a31df0f30eba6a6ca683c502f20d2dd4c9dce3[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Nov 13 12:29:10 2024 +0300
+
+    Fix db issues with local deployer
+
+[33mcommit 9cbe4377b878a6a00345f3c570733e5538cfc056[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Nov 10 13:47:41 2024 +0300
+
+    Improve DB logic + Misc changes
+
+[33mcommit a907196fc1916ecdbef520b671494f1204daeb27[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Oct 16 16:40:31 2024 +0300
+
+    Updated README
+
+[33mcommit b9fdf11291be93d8880994b427d3fd43ac8e7015[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Thu Sep 26 16:41:35 2024 +0300
+
+    Update README.md
+
+[33mcommit 595fca472cdd53ab39e0bd67e8104e2fbb559325[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Thu Sep 26 16:29:40 2024 +0300
+
+    Update README.md
+
+[33mcommit 178abcd01a0dfc5fc0d33d640a5da74e69b0ae06[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Sep 3 19:04:54 2024 +0300
+
+    CoLexT is now public!
+
+[33mcommit 5bc3495094aa432a5e35cd44d3d299318d6a21a0[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Sep 3 18:49:04 2024 +0300
+
+    improve database security
+
+[33mcommit 5f916fe277836684526f70c83d33a3a93c687601[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Sep 1 15:27:38 2024 +0300
+
+    quick fix hostname change
+
+[33mcommit 31399e1634a822b9227e602b187b2a14cc790315[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Sun Aug 4 14:21:04 2024 +0300
+
+    Update README.md
+
+[33mcommit 7c819e56c362fefa030ec29789f483264a0d0944[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jul 31 16:37:22 2024 +0300
+
+    Update README.md
+
+[33mcommit cef04f9306001a29833f1131f97506576bcd8c6f[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jul 31 10:29:39 2024 +0300
+
+    Update README.md
+
+[33mcommit 4e015005d63899fddb1a55c63b3b33f6cc6b4df1[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Jul 30 17:02:38 2024 +0300
+
+    Associate projects with jobs + updated readme
+
+[33mcommit 9222bf1c1c38c58a6d676ebfc6e93dec2bc66807[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Jul 30 11:25:18 2024 +0300
+
+    Updated README
+
+[33mcommit 8a7550d719c73a7f153064699ea018b6444315ed[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Jul 30 09:54:51 2024 +0300
+
+    saving grafana dashboard snapshot
+
+[33mcommit 44dc8420b045dc58ef3e17736fa69d7263342fbd[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 29 10:20:39 2024 +0300
+
+    Improved units for ps plots
+
+[33mcommit a5c97393fed22b1e84e95b530317c7e190d4d4f0[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 29 12:12:39 2024 +0300
+
+    Update README.md
+
+[33mcommit 70f89d7b505b79a2e4ac27f1bf9620eb26aaf9a7[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jul 28 22:53:28 2024 +0300
+
+    Update README + small adjustments
+
+[33mcommit 3afab397ec1c03c22c9afab841a6a4cb1b85db31[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jul 28 22:51:59 2024 +0300
+
+    Get metrics now produces summary and plots
+
+[33mcommit f4ef6ffca8796268130aee23fd6846f9e88c5eb6[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 22 15:41:30 2024 +0300
+
+    Cleaned up plots
+
+[33mcommit 3de0617446d161979278964e1008050fa3e3551f[m
+Merge: f4a8e47 77366d0
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 22 15:34:32 2024 +0300
+
+    Merge pull request #3 from sands-lab/sbc
+    
+    Make SBC the main branch - merge with Android later
+
+[33mcommit 77366d0964c9823cf44aa2bb64749680fd0c4feb[m
+Merge: e889fec f4a8e47
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 22 15:34:15 2024 +0300
+
+    Merge branch 'main' into sbc
+
+[33mcommit e889fec0f147e8f59d9c3dfdfdc71bc14a00deb3[m
+Merge: 93db080 53d2e25
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 22 15:31:37 2024 +0300
+
+    Merge pull request #2 from sands-lab/Nandinski-patch-1
+    
+    Update README.md
+
+[33mcommit 53d2e252c64fd2fbbfc7b85b6337f3719e8c4a23[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 22 15:30:38 2024 +0300
+
+    Update README.md
+
+[33mcommit 93db0807e4b49d68d4f16702b61b1f5750c0fe03[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jul 22 14:41:00 2024 +0300
+
+    Code folder reorganization + cleaned up README
+
+[33mcommit a5bb4bb7061b085b77e39e1e085aff7e7d79a093[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Fri Jun 21 14:26:14 2024 +0300
+
+    Bug fixes. CPU + memory metrics were not correct, measure self was always true
+
+[33mcommit 6e6908c570cbc7535f1e407b8112567aa94c4835[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sat Jun 15 21:20:41 2024 +0300
+
+    Checkpoint plotting code
+
+[33mcommit 1f8c4e071ea404a26d3d2f6bd0f39a1a03552c63[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu Jun 13 10:40:03 2024 +0300
+
+    Added missing env COLEXT_N_CLIENTS to local_deployer
+
+[33mcommit 2d4c32272f9e37fc6a53d6eec6fc2bed9d152674[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu Jun 13 10:30:24 2024 +0300
+
+    hacky fix for fjord - passing accuracy as None string - now we try and cast acc to float before sending it to db
+
+[33mcommit b9b27c703f50999a30f0eccdedd2b85f9ba90bb4[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jun 12 22:14:03 2024 +0300
+
+    Add support for jetson nano with pytorch 1.13 + python 3.10
+
+[33mcommit 4cf187d5a3a18a91cfedf9e77e36858078c875fa[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jun 12 15:51:18 2024 +0300
+
+    save plotting code
+
+[33mcommit ec9e886d48e03809242b2af421bb627a2ac7564a[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jun 12 15:50:43 2024 +0300
+
+    minor tweaks
+
+[33mcommit 8d00798d47c0815ee24f8e1b1fda841ca4bfeceb[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sat Jun 8 20:08:33 2024 +0300
+
+    Skip copying original requirements.txt after modification
+
+[33mcommit b91fd931fcf6ff29b107bc9cf6429021f279cf7f[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sat Jun 8 20:07:39 2024 +0300
+
+    DB now keeps track of srv_accuracy + distributed acc
+
+[33mcommit 99965785baabdaa401caa0c25acbb0dae0a7cb95[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sat Jun 8 16:16:26 2024 +0300
+
+    Fix setuptools + minor tweaks
+
+[33mcommit 9f21bc6cc8950161cc5029f59ad6c866c6ae3e9c[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu Jun 6 12:21:19 2024 +0300
+
+    Automatically collect accuracy data from flwr decorator
+
+[33mcommit 6661bd78f7b2c2ba7b05789c78fd4f96db847922[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jun 5 12:28:36 2024 +0300
+
+    local_deploy timing fix
+
+[33mcommit f1df65658978cd4fe47bf7e68c40b338de50d527[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jun 5 12:28:29 2024 +0300
+
+    rm unnecessary docker ignores
+
+[33mcommit fe1e70a3175c7daadbb304a149d68c527537d4e4[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jun 5 10:49:47 2024 +0300
+
+    Allow pods to restart once - temp fix for client pods crashing at the beginning due to grpc
+
+[33mcommit 872cf0429a8449305db78a290d922778be5e90d1[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Jun 5 10:34:27 2024 +0300
+
+    Terminate exp if clients keep running too long after server finished
+
+[33mcommit ebe93440f5f4bcca061789eb24ce884c6d78d178[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Jun 3 18:07:34 2024 +0300
+
+    Big repo restructure. Added Deployers. Add local_py deployer
+
+[33mcommit e575d827f5ea098e6e6151dc108a981bd4208035[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jun 2 13:08:21 2024 +0300
+
+    clean up ignore files
+
+[33mcommit 7baa9a9bfa59e9653d4f520d464004ab262c28cd[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jun 2 13:07:36 2024 +0300
+
+    Add support for python3.10 for jetson nano
+
+[33mcommit f14d8cd8bd807ba1dff8751f5c0e83efd529011b[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Jun 2 13:07:18 2024 +0300
+
+    Added plotting code
+
+[33mcommit 1ce81cdc45474e3ea8e08b7e424201f2d26a1632[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu May 30 16:21:15 2024 +0300
+
+    speed up pod termination
+
+[33mcommit f999686cf93646f560b5b5251339735d2e77edff[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu May 30 16:11:58 2024 +0300
+
+    fix evaluate round timings
+
+[33mcommit 1f2d53774acde8d9f6c80321219853225c869f50[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed May 29 17:34:11 2024 +0300
+
+    Add plotting code
+
+[33mcommit c3bb47171d69d42de46a381f3369029b7267c54f[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed May 29 17:32:57 2024 +0300
+
+    Added support for multiple examples
+
+[33mcommit a3266266172cceabb3d3f83320c60ec3847f302c[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed May 29 17:29:34 2024 +0300
+
+    hw scraper is now properly seperated from the main app
+
+[33mcommit c9d2fbf1c4624233e29b8c8c6bcfcb6a0c48922a[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed May 22 16:43:02 2024 +0300
+
+    cleanup  exp_dispatcher
+
+[33mcommit ebdd09778284b08f07b95e1e8b9e707731ca8adb[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed May 22 16:42:04 2024 +0300
+
+    Updated README
+
+[33mcommit c0cfe3b5ad5277ba96512c90f463ea568af0dcf2[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon May 20 13:35:07 2024 +0300
+
+    skip eval round when there's no client_instructions
+
+[33mcommit 6d423735675a40615fa1f0c31373d08a63ea41ce[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon May 20 13:34:10 2024 +0300
+
+    client will now fail if it does not receive CIR_ID from server
+
+[33mcommit 617b9a46c0168436a5dbe36f5a308a13b10cb258[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun May 19 17:20:20 2024 +0300
+
+    Move location of ARG COLEXT_COMMIT_HASH down to reuse caching
+
+[33mcommit aca3b9eb74a77d84fcc7e2aaa11d8b0534934edb[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun May 19 17:14:33 2024 +0300
+
+    Give server more time to boot
+
+[33mcommit f1e763de16d6111173d2665a40b680e50e4cf307[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun May 19 13:19:29 2024 +0300
+
+    Support for python3.8 + pass colext commit to dockerfile
+
+[33mcommit b031255306152f1e715de23fe8a709d8330a9540[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun May 19 10:34:58 2024 +0300
+
+    colext_config code path defaults to path to config
+
+[33mcommit 04cb02d24e4d5bb583b9230bc0714f963a73af32[m
+Merge: 2ec7ee0 5d8c902
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue May 14 16:08:38 2024 +0300
+
+    Merge branch 'sbc' of github.com:sands-lab/colext into sbc
+
+[33mcommit 2ec7ee02835a4f5fd3276d31083f3ef335e71379[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue May 14 14:15:46 2024 +0300
+
+    Empty spaces + add verify feasibility
+
+[33mcommit 6648b22e099670b005b9e55e918f619eb50a176c[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue May 14 14:01:45 2024 +0300
+
+    Now supporting 28 SBCs
+
+[33mcommit 5d8c9024815b680e68445374c41fab6668011e59[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Wed May 8 10:39:16 2024 +0300
+
+    Update README.md
+
+[33mcommit 8e19a5fbe6ae783dafa7e8c5a6442308d8dbca8d[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue May 7 19:11:31 2024 +0300
+
+    Only create required containers for req devices (not all)
+
+[33mcommit 61b6f7c088e0e8064b9343091d54fe8613dec04a[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon May 6 12:33:41 2024 +0300
+
+    Update client model. Using a larger model that can be easily scaled.
+
+[33mcommit a8e96b32da6bf9d3be4c5c31dd4b0e1c481b27a3[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon May 6 12:32:10 2024 +0300
+
+    Update docker bake file for simpler setup
+
+[33mcommit c181f0686a4c89d36d7f5990589da4b334478b31[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon May 6 12:31:00 2024 +0300
+
+    Update readme
+
+[33mcommit 5c130fb3cb72278aa96d98fc888299b0886de465[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun May 5 14:39:32 2024 +0300
+
+    Collect energy measurements from LattePanda
+
+[33mcommit 0a1a4020190413cc9099a32234cde6f6e05647f7[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Apr 17 22:43:57 2024 +0300
+
+    Add suport for jetson nano! + SBC deployer
+
+[33mcommit 1a0dde38180d315084b9c9b76af31d8f5006a3a4[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Apr 14 17:34:50 2024 +0300
+
+    revert back to rss. vms is not as accurate when cuda is used (overallocations)
+
+[33mcommit 2da79efd3d9b6f7e2c5f0b21e34acc960e2a7ddb[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Apr 14 14:54:11 2024 +0300
+
+    Fix depency versions
+
+[33mcommit a0f0e8ca6f62f1f09d461a033fecf8dc99c06b06[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Apr 14 14:34:16 2024 +0300
+
+    Split generic image into cpu and gpu version
+
+[33mcommit 7eda15e2c12914370f8477b6f6bce72816c7e2a2[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Apr 14 13:11:39 2024 +0300
+
+    Forward ssh agent to docker build for requirements installation
+
+[33mcommit 01b263a89abc47d9fc603a78586233b00ad83f94[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Sun Apr 14 13:11:10 2024 +0300
+
+    Recording VMS instead of RMS
+
+[33mcommit 71919a188c317157d5b0c25e3896c774faff0de2[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Fri Apr 12 16:03:44 2024 +0300
+
+    Changed pytorch to be base image for generic devices
+
+[33mcommit ff701c6d3fa9e53768d4fd9bafa340f3898cc63b[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Apr 8 18:45:47 2024 +0300
+
+    fix CIR_ID mapping
+
+[33mcommit 8042f12860ea5b43703cb156f0de44c10424dd08[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Apr 8 13:28:45 2024 +0300
+
+    Fix parallel metric push with DB pool
+
+[33mcommit dc2b24752c526f9bd8c29b83b6bb12b8fd9c07a5[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu Apr 4 17:50:49 2024 +0300
+
+    Added client round timings to DB + colext_get_metrics
+
+[33mcommit 898713788630a9abaecc310562cef1257988e8eb[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Apr 3 13:21:30 2024 +0300
+
+    Added network monitoring
+
+[33mcommit 5ce0a149a757fc6efa858f95a27e1ceac6bea66b[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Apr 2 15:58:58 2024 +0300
+
+    colext_get_metrics also returns client_info
+
+[33mcommit 541b52129ff7ab0c7ef4b242417e8e049f7b0d8d[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Apr 2 13:12:54 2024 +0300
+
+    colext_get_metrics also retrieves round timestamps
+
+[33mcommit 11fac3d87a99dc52aadf10931a8bacc32001e13b[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Wed Mar 20 15:04:11 2024 +0300
+
+    Renames + record job finish times
+
+[33mcommit f4a8e472f663c781d709f0fabe00d2a425e919a3[m
+Author: Amândio Faustino <amandio.faustino@kaust.edu.sa>
+Date:   Wed Mar 20 15:10:22 2024 +0300
+
+    Update README.md
+
+[33mcommit 24bfa0cb5777e9f3e29451e7dfcc59a797ca1efa[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Mon Mar 11 10:43:12 2024 +0300
+
+    Renamed project to colext + metric retrieval command
+
+[33mcommit b89a8a47ff2de7fb41309e9f191098f8e4ffc5c5[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Thu Feb 8 15:20:37 2024 +0300
+
+    Initial python package with fltb_launch_job command
+
+[33mcommit 9ff9e66e4fa4f4f4f2a1a92676d25e73576551f5[m
+Author: Nandinski <amandio.faustino@kaust.edu.sa>
+Date:   Tue Jan 16 12:36:02 2024 +0300
+
+    Base ansible automation
+
+[33mcommit 0bb36e27fdf741320c8c300b82ad65ccbfe4287a[m
+Author: Amândio Faustino <nando_14sclm@hotmail.com>
+Date:   Sun Oct 29 12:44:08 2023 +0300
+
+    SBC initial version
+
+[33mcommit 293a3ef13360b8a3ecbf7232dc6ed356b06a17de[m
+Author: Amândio Faustino <nando_14sclm@hotmail.com>
+Date:   Sun Oct 29 12:44:08 2023 +0300
+
+    Initial commit
