@@ -273,7 +273,13 @@ def read_validate_dynamic(net):
                 if not check_command(command, entry_temp["structure"]):
                     print(f"Invalid command: {command} in {tag}")
                     sys.exit(1)
-                entry_temp["commands_dict"][key] = command
+
+                #check if the key is already there if it is then we add it to the list instead
+                if key in entry_temp["commands_dict"]:
+                    entry_temp["commands_dict"][key].append(command)
+                else:
+                    entry_temp["commands_dict"][key] = [command]    
+                    
                 #TODO some values may have -1 and that should be checked and removed accordingly
 
         
