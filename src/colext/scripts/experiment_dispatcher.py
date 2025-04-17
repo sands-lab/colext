@@ -279,7 +279,7 @@ def read_validate_dynamic(net):
                     entry_temp["commands_dict"][key].append(command)
                 else:
                     entry_temp["commands_dict"][key] = [command]    
-                    
+
                 #TODO some values may have -1 and that should be checked and removed accordingly
 
         
@@ -293,7 +293,8 @@ def check_command(command, structure):
     '''
     
     command_split = command.split() if isinstance(command, str) else command
-    if len(command_split) - 2 != len(structure):
+    #check first if it is more than or equal to 2 to check for del/set
+    if len(command_split)  < 2:
         print("Invalid command length")
         return False
     
@@ -308,6 +309,9 @@ def check_command(command, structure):
     #since del does not require any values we can skip the rest of the checks
     if command_split[0] == "del":
         return True
+    elif len(command_split) != len(structure) + 2:
+        print(f"Invalid command length: {command} for {structure}")
+        return False
 
     for i, rule in enumerate(structure):
         if command_split[i + 2] == -1:
