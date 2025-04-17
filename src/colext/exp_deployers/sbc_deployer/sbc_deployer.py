@@ -139,7 +139,7 @@ class SBCDeployer(DeployerBase):
             return pod_config
 
 
-        
+
         # this function is called for every client group to generate the network configmap for it
         # clientgroup is the name of the client group aka client_prototype
         def generate_network_configmap_folder(clientgroup,group_id):
@@ -164,7 +164,11 @@ class SBCDeployer(DeployerBase):
                     f.write("")
                 if isinstance(network_tags,str): # if there is only one network make it a list
                     network_tags = [network_tags]
-
+                #check each network and make sure its a string to verify
+                for i in range(len(network_tags)):
+                    if not isinstance(network_tags[i],str):
+                        log.error(f"network tags should be a string or a list of strings")
+                        sys.exit(1)
 
                 #variable to store all the network static rules for each client group
                 static_network_rules = {"upstream": [], "downstream": []}
@@ -172,7 +176,7 @@ class SBCDeployer(DeployerBase):
                         log.debug(f"network tag: {network_tags}")
                         log.info(f"group {group_id} is in {network}")
                         #save dynamic network configs first
-                        
+
                         log.debug(f"network config: {self.config['networks'][network]}")
                         log.debug(f" network keys: {self.config['networks'][network].keys()}")
 
