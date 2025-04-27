@@ -8,6 +8,7 @@ from colext.common.utils import get_colext_env_var_or_exit
 from colext.metric_collection.metric_manager import MetricManager
 from colext.metric_collection.typing import StageMetrics
 import subprocess
+from network_manager import NetworkManager , NetworkPubSub
 
 
 # Class inheritence inside a decorator was inspired by:
@@ -38,25 +39,15 @@ def MonitorFlwrClient(FlwrClientClass):
             mm_proc_ready_event.wait()
             
             # Network setup
-            #TODO: make a class for this and the dynamic part
-            NET_CONF_PATH = "network/networkrules.txt"
-            if os.path.exists(NET_CONF_PATH):
-                log.info(f"Applying network configuration from {NET_CONF_PATH}")
-                try:
-                    with open(NET_CONF_PATH, "r") as f:
-                        tc_commands = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+            net_mngr = NetworkManager()
+            #Parse static rules and create the generators
+            #static
+            net_mngr.ParseStaticRules("network/networkrules.txt")
+            #dynamic
+            net_mngr.ParseDynamicRules()
 
-                    for cmd in tc_commands:
-                        log.debug(f"Running network command: {cmd}")
-                        result = subprocess.run(cmd.split(), capture_output=True, text=True)
-                        if result.returncode != 0:
-                            log.error(f"Network command failed: {result.stderr}")
-                        else:
-                            log.debug(f"Network command output: {result.stdout}")
-                except Exception as e:
-                    log.error(f"Failed to apply network configuration: {e}")
-            else:
-                log.info(f"No network configuration found at {NET_CONF_PATH}")
+
+            
 
 
             # We might be able to cleanup better if the server tells us this is the last round
