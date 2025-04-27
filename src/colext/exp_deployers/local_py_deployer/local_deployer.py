@@ -24,6 +24,7 @@ class LocalDeployer(DeployerBase):
     def deploy_setup(self, job_id: int):
         server_launch_cmd, server_env   = self.prepare_server(job_id)
         client_launch_cmds, client_envs = self.prepare_clients(job_id)
+        code_path = self.config["code"]["path"]
 
         # Prepare logs
         logs_dir = Path("logs")
@@ -39,8 +40,9 @@ class LocalDeployer(DeployerBase):
         self.log_file_handles.append(server_log_handle)
 
         log.info(f"{server_launch_cmd=}")
-        self.server_proc = subprocess.Popen(server_launch_cmd, shell=True, env=server_env,
-                                        stdout=server_log_handle, stderr=server_log_handle)
+        self.server_proc = subprocess.Popen(server_launch_cmd,
+                                            shell=True, env=server_env, cwd=code_path,
+                                            stdout=server_log_handle, stderr=server_log_handle)
         log.info("Waiting 3 sec for server startup")
         time.sleep(3)
         log.info("Deploying clients")
@@ -53,8 +55,9 @@ class LocalDeployer(DeployerBase):
             client_log_handle = open(client_log_path, 'w', encoding='UTF-8')
             self.log_file_handles.append(client_log_handle)
 
-            c_proc = subprocess.Popen(client_launch_cmds[c_id], shell=True, env=client_envs[c_id],
-                                        stdout=client_log_handle, stderr=client_log_handle)
+            c_proc = subprocess.Popen(client_launch_cmds[c_id],
+                                      shell=True, env=client_envs[c_id], cwd=code_path,
+                                      stdout=client_log_handle, stderr=client_log_handle)
             self.client_procs.append(c_proc)
 
     def prepare_server(self, job_id: int):
