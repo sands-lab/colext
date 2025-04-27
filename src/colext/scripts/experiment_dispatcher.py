@@ -16,6 +16,8 @@ def get_args():
                         help="Test deployment in test environment.")
     parser.add_argument('-p', '--prepare_only', default=False, action='store_true',
                         help="Only prepare experiment for launch.")
+    parser.add_argument('-d', '--deployer', type=str,
+                        help="Change deployer without changing config. Example: --deployer=local_py")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
                         help="Wait for experiment to finish.")
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
@@ -24,7 +26,7 @@ def get_args():
 
     return args
 
-def read_config(config_file):
+def read_config(config_file, args):
     db = DBUtils()
 
     try:
@@ -60,6 +62,10 @@ def read_config(config_file):
     } # intervals are in seconds
     # Override defaults by whatever is in the config
     config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
+
+    # Overrides
+    if args.deployer:
+        config_dict["deployer"] = args.deployer
 
     # Validate
     if "project" not in config_dict:
@@ -120,7 +126,7 @@ def launch_experiment():
     print("Preparing to launch CoLExT")
 
     args = get_args()
-    config_dict = read_config(args.config_file)
+    config_dict = read_config(args.config_file, args)
 
     Deployer = get_deployer(config_dict["deployer"])
     deployer = Deployer(config_dict, args.test_env)
