@@ -34,51 +34,16 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.pub_epoch = NetworkPubSub("epoch")
             self.pub_time = NetworkPubSub("time")
 
-            self.is_publish_time = True
-            #start time publishing in a separate thread
-            
-            self.time_publishing_thread = threading.Thread(target=self.start_time_publishing, daemon=True)
-            self.time_publishing_thread.start()
+            # this is the init time for the client
+            self.pub_time.publish(0)
 
 
             # Temp variable to hold eval round id between evaluate and configure_evaluate
             self.eval_round_id = None
 
-        def start_time_publishing(self):
-            # Start a thread to publish the start time of the round
-            log.debug("Starting time publishing thread")
-            
-            start_time = time.time()
-            elapsed_time = 0
-            next_publish_time = start_time + 1
+        
 
-            while self.is_publish_time:
-                # Publish the time every second
-                self.pub_time.publish(elapsed_time)
-                elapsed_time += 1
-                
-                # Calculate time to wait until next publish time it wont be exactly 1 second
-                # because of time taken to publish msg and to execute time.time()
-                time_to_sleep = next_publish_time - time.time()
-                
-                if time_to_sleep > 0:
-                    time.sleep(time_to_sleep)
-                    
-                next_publish_time += 1
-
-
-        # on delete we stop the thread and close the connection
-        def network_clean_up(self):
-            log.debug("Stopping time publishing thread")
-            self.is_publish_time = False
-            self.time_publishing_thread.join(timeout=1.0)
-
-            # Stop the network manager
-            self.pub_epoch.close()
-            self.pub_time.close()
-            log.debug("Network manager stopped")
-
-
+        
         def create_db_connection(self):
             # DB parameters are read from env variables
             return psycopg.connect()
@@ -92,6 +57,10 @@ def MonitorFlwrStrategy(FlwrStrategy):
             round_id = cursor.fetchone()[0]
             self.DB_CONNECTION.commit()
             cursor.close()
+
+            if server_round == 0:
+                # publish 1 at the start of round which is the first time iter to be used in client
+                self.pub_time.publish(1)
 
             return round_id
 
@@ -130,14 +99,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
 
             return client_instructions
         
-        def __del__(self):
-            try:
-                self.network_clean_up()
-            except Exception as e:
-                # During shutdown, some modules might already be unloaded
-                # so exceptions are possible
-                pass
-
+        
         # ====== Flower functions ======
 
         def configure_fit(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, FitIns]]:
