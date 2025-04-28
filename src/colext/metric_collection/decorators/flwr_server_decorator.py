@@ -8,6 +8,10 @@ from flwr.server.client_proxy import ClientProxy
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
 
+from colext.metric_collection.network_manager import NetworkPubSub
+import time
+import threading
+
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
 def MonitorFlwrStrategy(FlwrStrategy):
@@ -26,8 +30,54 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.DB_CONNECTION = self.create_db_connection()
             self.clients_cid_to_db_id = {}
 
+            #publishing
+            self.pub_epoch = NetworkPubSub("epoch")
+            self.pub_time = NetworkPubSub("time")
+
+            self.is_publish_time = True
+            #start time publishing in a separate thread
+            
+            self.time_publishing_thread = threading.Thread(target=self.start_time_publishing, daemon=True)
+            self.time_publishing_thread.start()
+
+
             # Temp variable to hold eval round id between evaluate and configure_evaluate
             self.eval_round_id = None
+
+        def start_time_publishing(self):
+            # Start a thread to publish the start time of the round
+            log.debug("Starting time publishing thread")
+            
+            start_time = time.time()
+            elapsed_time = 0
+            next_publish_time = start_time + 1
+
+            while self.is_publish_time:
+                # Publish the time every second
+                self.pub_time.publish(elapsed_time)
+                elapsed_time += 1
+                
+                # Calculate time to wait until next publish time it wont be exactly 1 second
+                # because of time taken to publish msg and to execute time.time()
+                time_to_sleep = next_publish_time - time.time()
+                
+                if time_to_sleep > 0:
+                    time.sleep(time_to_sleep)
+                    
+                next_publish_time += 1
+
+
+        # on delete we stop the thread and close the connection
+        def network_clean_up(self):
+            log.debug("Stopping time publishing thread")
+            self.is_publish_time = False
+            self.time_publishing_thread.join(timeout=1.0)
+
+            # Stop the network manager
+            self.pub_epoch.close()
+            self.pub_time.close()
+            log.debug("Network manager stopped")
+
 
         def create_db_connection(self):
             # DB parameters are read from env variables
@@ -63,6 +113,10 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.DB_CONNECTION.commit()
             cursor.close()
 
+            #network recording
+            self.pub_epoch.publish(server_round)
+
+
         def configure_clients_in_round(self, client_instructions: List[Tuple[ClientProxy, FitIns]], round_id: int) -> List[Tuple[ClientProxy, FitIns]]:
             # For some reason flwr decided to have all FitIns point to a single dataclass
             # This prevents specifying a different config per client
@@ -75,6 +129,14 @@ def MonitorFlwrStrategy(FlwrStrategy):
                 fit_ins.config["COLEXT_ROUND_ID"] = round_id
 
             return client_instructions
+        
+        def __del__(self):
+            try:
+                self.network_clean_up()
+            except Exception as e:
+                # During shutdown, some modules might already be unloaded
+                # so exceptions are possible
+                pass
 
         # ====== Flower functions ======
 
