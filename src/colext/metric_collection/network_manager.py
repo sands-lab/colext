@@ -115,12 +115,6 @@ class NetworkGenerator:
         pass
     
 
-def JsonCallback(ch, method, properties, body):
-    
-    pass
-def ScriptCallback(ch, method, properties, body):
-    
-    pass
 
     
 
@@ -185,6 +179,7 @@ class NetworkManager:
             sub = NetworkPubSub(type)
             sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type]))
             self.Subscribers[type] = sub
+    
         
 
 
