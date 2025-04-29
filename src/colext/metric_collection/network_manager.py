@@ -179,10 +179,10 @@ class NetworkManager:
         log.info("Parsing dynamic rules")
         for type in self.generatorstype:
             #create a subscriber for each generator type
-            log.debug(f"Creating subscriber for {type} type")
+            log.info(f"Creating subscriber for {type} type")
             sub = NetworkPubSub(type)
 
-            log.debug(f" generatorstype: {self.generatorstype[type]}")
+            log.info(f" generatorstype: {self.generatorstype[type]}")
             sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type))
             self.Subscribers[type] = sub
     
@@ -215,7 +215,7 @@ def CreateCallback(ch,method,properties,body,generators,type=None,state=None):
         #check if the current iter is in the state
         if str(current_iter) in state[key]:
             for cmd in state[key][str(current_iter)]:
-                log.debug(f"Executing command for time {current_iter}: {cmd}")
+                log.info(f"Executing command from {key} {current_iter}: {cmd}")
                 result = subprocess.run(cmd.split(), capture_output=True, text=True)
                 if result.returncode != 0:
                     log.error(f"Network command failed: {result.stderr}")
@@ -253,13 +253,13 @@ def time_loop(generators, state):
             #check if the current iter is in the state
             if str(current_iter) in state[key]:
                 for cmd in state[key][str(current_iter)]:
-                    log.debug(f"Executing command for time {current_iter}: {cmd}")
+                    log.info(f"Executing command for time {current_iter}: {cmd}")
                     result = subprocess.run(cmd.split(), capture_output=True, text=True)
                     if result.returncode != 0:
                         log.error(f"Network command failed: {result.stderr}")
 
                     else:
-                        log.debug(f"Network command output: {result.stdout}")
+                        log.info(f"Network command output: {result.stdout}")
                         generators_not_done = True
             else:
                 try:
