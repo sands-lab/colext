@@ -329,6 +329,11 @@ class NetworkPubSub:
                 self.consumer_thread.join(timeout=1.0)
 
     def publish(self, message):
+        # check if string
+        if not isinstance(message, str):
+            message = str(message)
+            
+        
         self.channel.basic_publish(exchange='network', routing_key=f'sync.{self.topic}',
                                     body=message, properties=pika.BasicProperties(
                                         delivery_mode=2,  # make message persistent
