@@ -211,9 +211,13 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
     # TODO : support for scripts for time iters aka time = 0 , 1 and so on
 
 
+    keys_to_remove = []
+
     for key , gen in generators.items():
         if key not in state:
             state[key] = {}
+
+
         #check if the current iter is in the state
         if str(current_iter) in state[key]:
             for cmd in state[key][str(current_iter)]:
@@ -232,7 +236,11 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
                 state[key][keygen].append(command)
             except StopIteration:
                 # No more commands in the generator delete from generators list
-                del generators[key]
+                keys_to_remove.append(key)
+    
+    for key in keys_to_remove:
+        del generators[key]
+    
 
 def time_loop(generators, state):
     """
