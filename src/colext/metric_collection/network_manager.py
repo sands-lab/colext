@@ -195,9 +195,15 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
     
      the generators are passed as a dictionary of generators with the index as the key
     """
-    log.info(f"Received message in {type_iter} topic: {body.decode('utf-8')}")
 
     current_iter = int(body.decode('utf-8'))
+    
+    if type_iter == "time" and current_iter > 1:
+        # Silently ignore time messages with values > 1
+        return
+
+    log.info(f"Received message in {type_iter} topic: {body.decode('utf-8')}")
+
     if state is None:
         state = {}
     
@@ -324,8 +330,10 @@ class NetworkPubSub:
         '''
         given a callback function, subscribe to the topic and call the callback function when a message is received
         '''
-        self.channel.queue_declare(queue="", durable=True)
-        self.channel.queue_bind(exchange='network', queue="", routing_key=f'sync.{self.topic}')
+        queue = self.channel.queue_declare(queue="", durable=True)
+
+        queue_name = queue.method.queue
+        self.channel.queue_bind(exchange='network', queue=queue_name, routing_key=f'sync.{self.topic}')
         self.channel.basic_consume(queue="", on_message_callback=callback, auto_ack=True)
         log.info(f" [*] Waiting for messages in {self.topic} topic.")
 
