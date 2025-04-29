@@ -243,6 +243,10 @@ def time_loop(generators, state):
     while generators_not_done:
         #check if all the generators are done
         generators_not_done = False
+
+        #a list of keys to be deleted after loop
+        keys_to_remove = []
+
         for key , gen in generators.items():
             if key not in state:
                 state[key] = {}
@@ -267,8 +271,12 @@ def time_loop(generators, state):
                     generators_not_done = True
                 except StopIteration:
                     # No more commands in the generator
-                    del generators[key]
+                    keys_to_remove.append(key)
         
+        #remove the entries from the dict 
+        for key in keys_to_remove:
+            del generators[key]
+
         #sleep for 1 second
         time_to_sleep = next_time - time.time()
         if time_to_sleep > 0:
