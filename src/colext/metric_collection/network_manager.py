@@ -40,12 +40,14 @@ class NetworkGenerator:
         self.type = filesplit[0]
         
 
-        
+        log.debug(f"Network generator created with file {self.file} and type {self.type}")
         if self.filetype == "json":
             self.json_parser()
             self.generator = self.MakeGenerator()
+            log.debug(f"Network generator with json : {self.generator}")
         elif self.filetype == "script":
             self.generator = self.MakeGenerator()
+            log.debug(f"Network generator with script : {self.generator}")
   
     def json_parser(self):
         '''
