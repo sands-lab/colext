@@ -318,10 +318,7 @@ class NetworkPubSub:
             
     def consume_thread(self):
         
-        try:
-            self.channel.start_consuming()
-        except Exception as e:
-            print(f"Consuming thread error: {e}")
+        self.channel.start_consuming()
 
 
     def stop_consuming(self):
