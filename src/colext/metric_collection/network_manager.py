@@ -138,7 +138,7 @@ class NetworkManager:
         files = [f for f in files if f.endswith(".json") or f.endswith(".py")]
         #create the generators for each file
         for file in files:
-            self.generators[file] = NetworkGenerator(file)
+            self.generators[file] = NetworkGenerator(folder_path + file)
             #get the type of the generator and add it to the list of generators
             if self.generators[file].type in self.generatorstype:
                 self.generatorstype[self.generators[file].type].append(self.generators[file])
