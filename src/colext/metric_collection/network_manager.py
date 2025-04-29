@@ -334,7 +334,7 @@ class NetworkPubSub:
 
         queue_name = queue.method.queue
         self.channel.queue_bind(exchange='network', queue=queue_name, routing_key=f'sync.{self.topic}')
-        self.channel.basic_consume(queue="", on_message_callback=callback, auto_ack=True)
+        self.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
         log.info(f" [*] Waiting for messages in {self.topic} topic.")
 
 
