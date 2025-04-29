@@ -189,13 +189,13 @@ class NetworkManager:
         
 
 
-def CreateCallback(ch,method,properties,body,generators,type=None,state=None):
+def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=None):
     """
      create a callback function that iterates over all the generators for a specific type
     
      the generators are passed as a dictionary of generators with the index as the key
     """
-    log.info(f"Received message in {type} topic: {body.decode('utf-8')}")
+    log.info(f"Received message in {type_iter} topic: {body.decode('utf-8')}")
 
     current_iter = int(body.decode('utf-8'))
     if state is None:
