@@ -49,7 +49,7 @@ network:
       - [100, set ,outgoing , 1000Mbps, 0.1ms, normal]
       - [120,set,outgoing , 10Mbps ,  0.1ms, normal]
 
-    - iterator: epochs #  in epochs
+    - iterator: epoch #  in epochs
       commands:
       - [10,set,outgoing , 1Mbps, 10ms]
       - [20,set,outgoing , 1000Mbps, 0.1ms]

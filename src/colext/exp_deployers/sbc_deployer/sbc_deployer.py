@@ -33,7 +33,7 @@ class SBCDeployer(DeployerBase):
         self.server_service_path = os.path.join(dirname, 'microk8s/server_service.yaml')
 
         #network pubsub broker paths
-        
+
 
         # Get Docker bake file dir
         parent_dir = Path(__file__).parent.resolve()
@@ -187,6 +187,7 @@ class SBCDeployer(DeployerBase):
                         if "dynamic" in self.config["networks"][network].keys():
                             dynamic = self.config["networks"][network]['dynamic']
                             for iter in dynamic.keys():
+
                                 log.debug(f"saving scripts of : {network} {dynamic[iter]}")
                                 # check if script is provided then save script else save the dict as json to be used
                                 if dynamic[iter]["script"] != False :

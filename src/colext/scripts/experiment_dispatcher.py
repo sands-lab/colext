@@ -35,6 +35,7 @@ VALIDATION_MAPPING = {
     "limit": r"^\d+$"
 }
 
+VALID_ITERS = ["time", "epoch"]
 
 
 
@@ -240,7 +241,7 @@ def read_validate_dynamic(net):
         
         #validate the iterator
         iterator = entry.get('iterator')
-        if not iterator or iterator not in ['time', 'epochs']:
+        if not iterator or iterator not in VALID_ITERS:
             print(f"Invalid or missing iterator in {tag}")
             sys.exit(1)
         if iterator in dynamic_config:
