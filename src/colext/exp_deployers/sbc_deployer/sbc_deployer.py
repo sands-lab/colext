@@ -32,6 +32,9 @@ class SBCDeployer(DeployerBase):
         self.server_template = jinja_env.get_template("server.yaml.jinja")
         self.server_service_path = os.path.join(dirname, 'microk8s/server_service.yaml')
 
+        #network pubsub broker paths
+        
+
         # Get Docker bake file dir
         parent_dir = Path(__file__).parent.resolve()
         self.hcl_file_dir = os.path.join(parent_dir, "Dockerfiles", "pip")

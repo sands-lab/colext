@@ -1,0 +1,15 @@
+# ConfigMap for RabbitMQ Broker
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  labels:
+    app: rabbitmq
+    cotext-component: message-broker
+data:
+  rabbitmq.conf: |
+    listeners.tcp.default = 6942
+    management.tcp.port = 15672
+    loopback_users = none
+    default_user = guest
+    default_pass = guest
