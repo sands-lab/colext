@@ -185,6 +185,7 @@ class NetworkManager:
             log.info(f" generatorstype: {self.generatorstype[type]}")
             sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type))
             self.Subscribers[type] = sub
+            
     
         
 
@@ -359,10 +360,15 @@ class NetworkPubSub:
 
     def publish(self, message):
         # check if string
+
+        log.info(f"Publishing message '{message}' to topic {self.topic}")
+
         if not isinstance(message, str):
             message = str(message)
             
-        
+        log.info(f"Publishing message '{message}' to topic {self.topic}")
+
+
         self.channel.basic_publish(exchange='network', routing_key=f'sync.{self.topic}',
                                     body=message, properties=pika.BasicProperties(
                                         delivery_mode=2,  # make message persistent
