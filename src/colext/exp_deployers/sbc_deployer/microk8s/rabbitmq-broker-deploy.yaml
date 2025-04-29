@@ -3,9 +3,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rabbitmq
+  namespace: rabbitmq-system
+
   labels:
     app: rabbitmq
-    cotext-component: message-broker
 spec:
   replicas: 1
   selector:
@@ -15,7 +16,6 @@ spec:
     metadata:
       labels:
         app: rabbitmq
-        cotext-component: message-broker
     spec:
       containers:
       - name: rabbitmq

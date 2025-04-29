@@ -3,9 +3,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rabbitmq-config
+  namespace: rabbitmq-system
+
   labels:
     app: rabbitmq
-    cotext-component: message-broker
 data:
   rabbitmq.conf: |
     listeners.tcp.default = 6942
