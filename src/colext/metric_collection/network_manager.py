@@ -174,10 +174,13 @@ class NetworkManager:
          make a subscriber for each generator type and call the generator function depending on the type
         '''
 
+        log.info("Parsing dynamic rules")
         for type in self.generatorstype:
             #create a subscriber for each generator type
-            
+            log.debug(f"Creating subscriber for {type} type")
             sub = NetworkPubSub(type)
+
+            log.debug(f" generatorstype: {self.generatorstype[type]}")
             sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type))
             self.Subscribers[type] = sub
     
