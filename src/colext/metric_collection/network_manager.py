@@ -12,7 +12,7 @@ import json
 import os
 from colext.common.logger import log
 import subprocess
-
+import time
 
 class NetworkGenerator:
 
@@ -177,13 +177,13 @@ class NetworkManager:
             #create a subscriber for each generator type
             
             sub = NetworkPubSub(type)
-            sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type]))
+            sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type))
             self.Subscribers[type] = sub
     
         
 
 
-def CreateCallback(ch,method,properties,body,generators,state=None):
+def CreateCallback(ch,method,properties,body,generators,type=None,state=None):
     """
      create a callback function that iterates over all the generators for a specific type
     
@@ -193,8 +193,16 @@ def CreateCallback(ch,method,properties,body,generators,state=None):
     if state is None:
         state = {}
     
-    # restructure the generatoer to be a dictionary of generators
     
+    # check if iter is 0 and if so, call the time loop and pass generators and state to it
+    if type == "time":
+        if current_iter == 0:
+            #start the time loop
+            time_loop(generators, state)
+        return
+    # TODO : support for scripts for time iters aka time = 0 , 1 and so on
+
+
     for key , gen in generators.items():
         if key not in state:
             state[key] = {}
@@ -217,6 +225,50 @@ def CreateCallback(ch,method,properties,body,generators,state=None):
             except StopIteration:
                 # No more commands in the generator
                 del generators[key]
+
+def time_loop(generators, state):
+    """
+    a loop that is called after the time iter = 0 is recieved
+    """
+    current_iter = 0
+    start_time = time.time()
+    next_time = start_time + 1
+    generators_not_done = True
+    while generators_not_done:
+        #check if all the generators are done
+        generators_not_done = False
+        for key , gen in generators.items():
+            if key not in state:
+                state[key] = {}
+            #check if the current iter is in the state
+            if str(current_iter) in state[key]:
+                for cmd in state[key][str(current_iter)]:
+                    log.debug(f"Executing command for time {current_iter}: {cmd}")
+                    result = subprocess.run(cmd.split(), capture_output=True, text=True)
+                    if result.returncode != 0:
+                        log.error(f"Network command failed: {result.stderr}")
+
+                    else:
+                        log.debug(f"Network command output: {result.stdout}")
+                        generators_not_done = True
+            else:
+                try:
+                    keygen, command = next(gen.generator)
+                    #save it in state if its not the current iter
+                    if keygen not in state[key]:
+                        state[key][keygen] = []
+                    state[key][keygen].append(command)
+                    generators_not_done = True
+                except StopIteration:
+                    # No more commands in the generator
+                    del generators[key]
+        
+        #sleep for 1 second
+        time_to_sleep = next_time - time.time()
+        if time_to_sleep > 0:
+                time.sleep(time_to_sleep)
+        current_iter += 1
+        next_time = start_time + current_iter
 
     
 import threading
