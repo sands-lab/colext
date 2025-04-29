@@ -28,8 +28,9 @@ class NetworkGenerator:
         self.rules = None
         self.struct = None
         self.script = True
+        filename = os.path.basename(file)
         #determine types by splitting the file name
-        filesplit = file.split("_")
+        filesplit = filename.split("_")
         if filesplit[-1].endswith(".json"):
             self.filetype = "json"
         elif filesplit[-1].endswith(".py"):
