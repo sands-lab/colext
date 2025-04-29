@@ -279,7 +279,7 @@ class NetworkPubSub:
     channel = None
     topic = None
 
-    HOST = None
+    HOST = "rabbitmq-broker.rabbitmq-system"
     PORT = 6942
 
     def __init__(self,topic):
