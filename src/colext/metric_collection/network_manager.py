@@ -127,8 +127,8 @@ class NetworkManager:
 
         '''
         self.generators = {}
-        self.generatorstype = {"epoch": [],
-                                "time": []}
+        self.generatorstype = {"epoch": {},
+                                "time": {}}
         
         self.Subscribers = {}
 
@@ -141,10 +141,10 @@ class NetworkManager:
             self.generators[file] = NetworkGenerator(folder_path + file)
             #get the type of the generator and add it to the list of generators
             if self.generators[file].type in self.generatorstype:
-                self.generatorstype[self.generators[file].type].append(self.generators[file])
+                self.generatorstype[self.generators[file].type][file] = self.generators[file]
             else:
                 # assume that iter type verification is done
-                self.generatorstype[self.generators[file].type] = [self.generators[file]]
+                self.generatorstype[self.generators[file].type][file] = self.generators[file]
 
 
         
@@ -223,7 +223,7 @@ def CreateCallback(ch,method,properties,body,generators,type=None,state=None):
                     state[key][keygen] = []
                 state[key][keygen].append(command)
             except StopIteration:
-                # No more commands in the generator
+                # No more commands in the generator delete from generators list
                 del generators[key]
 
 def time_loop(generators, state):
