@@ -2,10 +2,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: rabbitmq
+  name: rabbitmq-broker
+  namespace: rabbitmq-system
+
   labels:
     app: rabbitmq
-    cotext-component: message-broker
 spec:
   selector:
     app: rabbitmq
