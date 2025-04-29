@@ -21,11 +21,9 @@ code:
 network:
   - tag: default
     upstream:
-      bandwidth: 100Mbps
-      latency: 1ms
+      bandwidth: 50Mbps
     downstream:
-      bandwidth: 100Mbps
-      latency: 1ms
+      bandwidth: 50Mbps
   - tag: slow
     upstream:
       bandwidth: 1Mbps
@@ -62,10 +60,10 @@ clients:
         #add_args: "--max_step_count=50"
         #network: veryslow
 
-    - dev_type: JetsonOrinNano
-      count: 2
-      add_args: "--max_step_count=200"
-      network: slow
+    #- dev_type: JetsonOrinNano
+     # count: 2
+     # add_args: "--max_step_count=200"
+     # network: slow
 
     - dev_type: OrangePi5B
       count: 2
