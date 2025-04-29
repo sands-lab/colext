@@ -310,7 +310,8 @@ class SBCDeployer(DeployerBase):
         server_pod_dict = yaml.safe_load(self.server_template.render(server_pod_config))
         self.k_utils.create_from_dict(server_pod_dict)
         self.k_utils.create_from_yaml(self.server_service_path)
-
+        log.debug(f"Server pod config: {server_pod_config}")
+        log.debug(f"Server pod dict: {server_pod_dict}")
         log.debug(f"Deploying Client pods")
 
 
