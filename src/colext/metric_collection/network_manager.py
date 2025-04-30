@@ -279,7 +279,7 @@ def time_loop(generators, state):
                 log.info(f"Executing command for time {current_iter} for {key}")
                 for cmd in state[key][str(current_iter)]:
                     log.info(f"Executing command for time {current_iter}: {cmd}")
-                    result = subprocess.run(cmd.split(), capture_output=True, text=True)
+                    result = subprocess.run(cmd[0].split(), capture_output=True, text=True)
                     if result.returncode != 0:
                         log.error(f"Network command failed: {result.stderr}")
                         del state[key][str(current_iter)]
