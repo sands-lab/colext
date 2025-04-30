@@ -61,7 +61,8 @@ def MonitorFlwrStrategy(FlwrStrategy):
             if server_round == 0:
                 # publish 1 at the start of round which is the first time iter to be used in client
                 self.pub_time.publish(1)
-
+            #network recording
+            self.pub_epoch.publish(server_round)
             return round_id
 
         def record_end_round(self, server_round: int, round_type: str, dist_accuracy: float = None, srv_accuracy: float = None):
@@ -82,8 +83,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.DB_CONNECTION.commit()
             cursor.close()
 
-            #network recording
-            self.pub_epoch.publish(server_round)
+            
 
 
         def configure_clients_in_round(self, client_instructions: List[Tuple[ClientProxy, FitIns]], round_id: int) -> List[Tuple[ClientProxy, FitIns]]:
