@@ -218,39 +218,42 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
     
     
     keys_to_remove = []
-
-    log.info(f"Current iter: {current_iter} for {type_iter}")
-    log.info(f"Generators: {generators}")
-
+    log.info(f"Current iter: {current_iter}")
     for key , gen in generators.items():
+        log.info(f"Current iter inside time loop: {current_iter} for {key}")
         if key not in state:
             state[key] = {}
-
-        log.info(f"Current iter: {current_iter} for {key}")
         #check if the current iter is in the state
+        log.info(f"State: {state}")
         if str(current_iter) in state[key]:
+            log.info(f"Executing command for time {current_iter} for {key}")
             for cmd in state[key][str(current_iter)]:
-                log.info(f"Executing command from {key} {current_iter}: {cmd}")
-                result = subprocess.run(cmd.split(), capture_output=True, text=True)
+                log.info(f"Executing command for time {current_iter}: {cmd}")
+                result = subprocess.run(cmd[0].split(), capture_output=True, text=True)
                 if result.returncode != 0:
                     log.error(f"Network command failed: {result.stderr}")
+                    
+
                 else:
-                    log.debug(f"Network command output: {result.stdout}")
-        else:
-            try:
+                    log.info(f"Network command output: {result.stdout}")
+                    del state[key][str(current_iter)]
+        
+        try:
+            if state[key] == {}:
                 keygen, command = next(gen.generator)
                 #save it in state if its not the current iter
                 if keygen not in state[key]:
                     state[key][keygen] = []
                 state[key][keygen].append(command)
-            except StopIteration:
-                # No more commands in the generator delete from generators list
-                keys_to_remove.append(key)
+        except StopIteration:
+            # No more commands in the generator
+            keys_to_remove.append(key)
     
+    #remove the entries from the dict 
     for key in keys_to_remove:
-        log.info(f"Deleting generator {key} from generators")
         del generators[key]
-    
+
+
 
 def time_loop(generators, state):
     """
