@@ -171,7 +171,7 @@ class NetworkManager:
         else:
             log.info(f"No network configuration found at {file}")
 
-    def ParseDynamicRules(self):
+    def ParseDynamicRules(self,client_id="None"):
         '''
          make a subscriber for each generator type and call the generator function depending on the type
         '''
@@ -183,7 +183,7 @@ class NetworkManager:
             sub = NetworkPubSub(type)
 
             log.info(f" generatorstype: {self.generatorstype[type]}")
-            sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type))
+            sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type),queue_prefix=client_id)
             self.Subscribers[type] = sub
             
     
@@ -318,6 +318,7 @@ class NetworkPubSub:
         input topic (epoch, time) 
         '''
         self.topic = topic
+        self.id = id
         self.connection = pika.BlockingConnection(
         pika.ConnectionParameters(host=self.HOST, port=self.PORT))
         self.channel = self.connection.channel()
@@ -327,13 +328,13 @@ class NetworkPubSub:
         self.running = False
 
 
-    def subscribe(self, callback):
+    def subscribe(self, callback, queue_prefix=None):
         '''
         given a callback function, subscribe to the topic and call the callback function when a message is received
         '''
-        queue = self.channel.queue_declare(queue="", durable=True)
+        queue_name = queue_prefix +"-"+ self.topic
+        queue = self.channel.queue_declare(queue=queue_name, durable=True)
 
-        queue_name = queue.method.queue
         self.channel.queue_bind(exchange='network', queue=queue_name, routing_key=f'sync.{self.topic}')
         self.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
         log.info(f" [*] Waiting for messages in {self.topic} topic.")
