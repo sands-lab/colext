@@ -282,11 +282,12 @@ def time_loop(generators, state):
                     result = subprocess.run(cmd[0].split(), capture_output=True, text=True)
                     if result.returncode != 0:
                         log.error(f"Network command failed: {result.stderr}")
-                        del state[key][str(current_iter)]
+                        
 
                     else:
                         log.info(f"Network command output: {result.stdout}")
                         rules_not_done = True
+                        del state[key][str(current_iter)]
             
             try:
                 if state[key] == {}:
