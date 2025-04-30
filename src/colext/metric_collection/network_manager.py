@@ -180,11 +180,10 @@ class NetworkManager:
         for type in self.generatorstype:
             #create a subscriber for each generator type
             log.info(f"Creating subscriber for {type} type")
-            sub = NetworkPubSub(type)
+            self.Subscribers[type] = NetworkPubSub(type)
 
             log.info(f" generatorstype: {self.generatorstype[type]}")
-            sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type),queue_prefix=client_id)
-            self.Subscribers[type] = sub
+            self.Subscribers[type].subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type),queue_prefix=client_id)
             log.info(f"Subscriber for {type} type created")
             log.info(f"sub list: {self.Subscribers}")
             
