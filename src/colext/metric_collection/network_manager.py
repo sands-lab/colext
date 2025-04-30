@@ -207,8 +207,6 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None):
     if state is None:
         state = {}
 
-    if state[type_iter] is None:
-        state[type_iter] = {}
 
     if type_iter == "time" :
         if current_iter > 0 and current_iter < 2:
