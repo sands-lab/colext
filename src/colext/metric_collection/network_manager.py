@@ -183,7 +183,7 @@ class NetworkManager:
             self.Subscribers[iter] = NetworkPubSub(iter)
 
             log.info(f" generatorstype: {self.generatorstype[iter]}")
-            self.Subscribers[iter].subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type),queue_prefix=client_id)
+            self.Subscribers[iter].subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[iter], iter),queue_prefix=client_id)
             log.info(f"Subscriber for {iter} type created")
             log.info(f"sub list: {self.Subscribers}")
             
