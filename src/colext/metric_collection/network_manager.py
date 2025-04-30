@@ -282,22 +282,23 @@ def time_loop(generators, state):
                     result = subprocess.run(cmd.split(), capture_output=True, text=True)
                     if result.returncode != 0:
                         log.error(f"Network command failed: {result.stderr}")
+                        del state[key][str(current_iter)]
 
                     else:
                         log.info(f"Network command output: {result.stdout}")
                         generators_not_done = True
-            else:
-                try:
-                    if state[key] == {}:
-                        keygen, command = next(gen.generator)
-                        #save it in state if its not the current iter
-                        if keygen not in state[key]:
-                            state[key][keygen] = []
-                        state[key][keygen].append(command)
-                        generators_not_done = True
-                except StopIteration:
-                    # No more commands in the generator
-                    keys_to_remove.append(key)
+            
+            try:
+                if state[key] == {}:
+                    keygen, command = next(gen.generator)
+                    #save it in state if its not the current iter
+                    if keygen not in state[key]:
+                        state[key][keygen] = []
+                    state[key][keygen].append(command)
+                    generators_not_done = True
+            except StopIteration:
+                # No more commands in the generator
+                keys_to_remove.append(key)
         
         #remove the entries from the dict 
         for key in keys_to_remove:
