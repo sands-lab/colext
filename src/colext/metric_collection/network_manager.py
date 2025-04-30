@@ -181,10 +181,8 @@ class NetworkManager:
             
             self.Subscribers[iter] = NetworkPubSub(iter)
 
-            log.info(f" generatorstype: {self.generatorstype[iter]}")
             self.Subscribers[iter].subscribe(create_callback_for_type(self.generatorstype[iter],iter),queue_prefix=client_id)
             log.info(f"Subscriber for {iter} type created")
-            log.info(f"sub list: {self.Subscribers}")
 
 #function specificly to avoid the lambda issue with closures
 def create_callback_for_type(generators, type_name):
@@ -202,7 +200,6 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None):
     """
 
     current_iter = int(body.decode('utf-8'))
-    log.info(f"Received message in {type_iter} topic: {current_iter}")
     global state
     if state is None:
         state = {}
@@ -219,24 +216,17 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None):
     
     
     keys_to_remove = []
-    log.info(f"Current iter: {current_iter}")
     for key , gen in generators.items():
-        log.info(f"Current iter inside time loop: {current_iter} for {key}")
         if key not in state:
             state[key] = {}
         #check if the current iter is in the state
-        log.info(f"State: {state}")
         if str(current_iter) in state[key]:
-            log.info(f"Executing command for time {current_iter} for {key}")
             for cmd in state[key][str(current_iter)]:
                 log.info(f"Executing command for time {current_iter}: {cmd}")
                 result = subprocess.run(cmd[0].split(), capture_output=True, text=True)
                 if result.returncode != 0:
                     log.error(f"Network command failed: {result.stderr}")
-                    
-
                 else:
-                    log.info(f"Network command output: {result.stdout}")
                     del state[key][str(current_iter)]
         
         try:
@@ -264,7 +254,6 @@ def time_loop(generators, state):
     start_time = time.time()
     next_time = start_time + 1
     rules_not_done = True
-    log.info("Starting time loop")
     while rules_not_done:
         #check if all the generators are done
         rules_not_done = False
@@ -272,15 +261,11 @@ def time_loop(generators, state):
         # but since the generator is exhausted, it will not be called again and thus rules will not be executed
         #a list of keys to be deleted after loop
         keys_to_remove = []
-        log.info(f"Current iter: {current_iter}")
         for key , gen in generators.items():
-            log.info(f"Current iter inside time loop: {current_iter} for {key}")
             if key not in state:
                 state[key] = {}
             #check if the current iter is in the state
-            log.info(f"State: {state}")
             if str(current_iter) in state[key]:
-                log.info(f"Executing command for time {current_iter} for {key}")
                 for cmd in state[key][str(current_iter)]:
                     log.info(f"Executing command for time {current_iter}: {cmd}")
                     result = subprocess.run(cmd[0].split(), capture_output=True, text=True)
@@ -289,7 +274,6 @@ def time_loop(generators, state):
                         
 
                     else:
-                        log.info(f"Network command output: {result.stdout}")
                         rules_not_done = True
                         del state[key][str(current_iter)]
             
@@ -349,11 +333,9 @@ class NetworkPubSub:
         queue_name = queue_prefix +"-"+ self.topic
         queue = self.channel.queue_declare(queue=queue_name, durable=True)
 
-        log.info(f" [*] Created queue {queue_name} for topic {self.topic}")
         
 
         self.channel.queue_bind(exchange='network', queue=queue_name, routing_key=f'sync.{self.topic}')
-        log.info(f" [*] Binding queue {queue_name} to topic {self.topic}")
         self.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
         log.info(f" [*] Subscribed to topic {self.topic}")
         log.info(f" [*] Waiting for messages in {self.topic} topic.")
@@ -381,7 +363,6 @@ class NetworkPubSub:
     def publish(self, message):
         # check if string
 
-        log.info(f"Publishing message '{message}' to topic {self.topic}")
 
         if not isinstance(message, str):
             message = str(message)
