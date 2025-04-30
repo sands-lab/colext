@@ -192,9 +192,9 @@ def create_callback_for_type(generators, type_name):
         ch, method, properties, body, generators, type_name)
     
         
+state = {}
 
-
-def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=None):
+def CreateCallback(ch,method,properties,body,generators,type_iter=None):
     """
      create a callback function that iterates over all the generators for a specific type
     
@@ -203,9 +203,12 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
 
     current_iter = int(body.decode('utf-8'))
     log.info(f"Received message in {type_iter} topic: {current_iter}")
-
+    global state
     if state is None:
         state = {}
+
+    if state[type_iter] is None:
+        state[type_iter] = {}
 
     if type_iter == "time" :
         if current_iter > 0 and current_iter < 2:
