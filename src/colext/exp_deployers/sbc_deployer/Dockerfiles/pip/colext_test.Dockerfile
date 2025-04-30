@@ -13,7 +13,7 @@ RUN python3 -m pip install --no-cache-dir --upgrade pip==24.0 setuptools==69.5.1
 
 #Network Setup
 RUN apt install -y iproute2 
-RUN python3 -m pip install --no-cache-dir tcconfig
+RUN python3 -m pip install --no-cache-dir tcconfig pika
 
 # DOCKER file assumes the context is set to root of the fltb project
 COPY $TEST_REL_DIR/requirements.txt test_code/requirements.txt
