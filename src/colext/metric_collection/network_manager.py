@@ -178,12 +178,17 @@ class NetworkManager:
 
         log.info("Parsing dynamic rules")
         for iter in self.generatorstype:
+            
+            # Create a local copy that won't be affected by the loop
+            current_iter = iter 
+            current_generators = self.generatorstype[iter]
+
             #create a subscriber for each generator type
             log.info(f"Creating subscriber for {iter} type")
             self.Subscribers[iter] = NetworkPubSub(iter)
 
             log.info(f" generatorstype: {self.generatorstype[iter]}")
-            self.Subscribers[iter].subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[iter], iter),queue_prefix=client_id)
+            self.Subscribers[iter].subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, current_generators, current_iter),queue_prefix=client_id)
             log.info(f"Subscriber for {iter} type created")
             log.info(f"sub list: {self.Subscribers}")
             
@@ -201,24 +206,17 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
     current_iter = int(body.decode('utf-8'))
     log.info(f"Received message in {type_iter} topic: {current_iter}")
 
-    if type_iter == "time" and current_iter > 1:
-        # Silently ignore time messages with values > 1
+    if type_iter == "time" :
+        if current_iter > 0 and current_iter < 2:
+            #start the time loop
+            time_loop(generators, state)
         return
-
+        # Silently ignore time messages with values > 1
+        # TODO : support for scripts for time iters aka time = 0 , 1 and so on
 
     if state is None:
         state = {}
     
-    
-    # check if iter is 0 and if so, call the time loop and pass generators and state to it
-    if type_iter == "time":
-        if current_iter > 0:
-            #start the time loop
-            time_loop(generators, state)
-        return
-    # TODO : support for scripts for time iters aka time = 0 , 1 and so on
-
-
     keys_to_remove = []
 
     log.info(f"Current iter: {current_iter} for {type_iter}")
