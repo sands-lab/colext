@@ -185,6 +185,8 @@ class NetworkManager:
             log.info(f" generatorstype: {self.generatorstype[type]}")
             sub.subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, self.generatorstype[type], type),queue_prefix=client_id)
             self.Subscribers[type] = sub
+            log.info(f"Subscriber for {type} type created")
+            log.info(f"sub list: {self.Subscribers}")
             
     
         
@@ -219,6 +221,9 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
 
 
     keys_to_remove = []
+
+    log.info(f"Current iter: {current_iter} for {type_iter}")
+    log.info(f"Generators: {generators}")
 
     for key , gen in generators.items():
         if key not in state:
