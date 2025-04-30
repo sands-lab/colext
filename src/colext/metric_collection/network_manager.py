@@ -259,11 +259,11 @@ def time_loop(generators, state):
     current_iter = 0
     start_time = time.time()
     next_time = start_time + 1
-    generators_not_done = True
+    rules_not_done = True
     log.info("Starting time loop")
-    while generators_not_done:
+    while rules_not_done:
         #check if all the generators are done
-        generators_not_done = False
+        rules_not_done = False
         # TODO: there is a logical error here, the generators are called regardless of the time and state and updated
         # but since the generator is exhausted, it will not be called again and thus rules will not be executed
         #a list of keys to be deleted after loop
@@ -286,7 +286,7 @@ def time_loop(generators, state):
 
                     else:
                         log.info(f"Network command output: {result.stdout}")
-                        generators_not_done = True
+                        rules_not_done = True
             
             try:
                 if state[key] == {}:
@@ -295,7 +295,7 @@ def time_loop(generators, state):
                     if keygen not in state[key]:
                         state[key][keygen] = []
                     state[key][keygen].append(command)
-                    generators_not_done = True
+                    rules_not_done = True
             except StopIteration:
                 # No more commands in the generator
                 keys_to_remove.append(key)
@@ -303,6 +303,9 @@ def time_loop(generators, state):
         #remove the entries from the dict 
         for key in keys_to_remove:
             del generators[key]
+
+        if state != {}:
+            rules_not_done = True
 
         #sleep for 1 second
         time_to_sleep = next_time - time.time()
