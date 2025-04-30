@@ -313,9 +313,6 @@ import threading
 
 class NetworkPubSub:
 
-    connection = None
-    channel = None
-    topic = None
 
     HOST = "rabbitmq-broker.rabbitmq-system"
     PORT = 6942
@@ -325,7 +322,6 @@ class NetworkPubSub:
         input topic (epoch, time) 
         '''
         self.topic = topic
-        self.id = id
         self.connection = pika.BlockingConnection(
         pika.ConnectionParameters(host=self.HOST, port=self.PORT))
         self.channel = self.connection.channel()
