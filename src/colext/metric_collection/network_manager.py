@@ -288,12 +288,13 @@ def time_loop(generators, state):
                         generators_not_done = True
             else:
                 try:
-                    keygen, command = next(gen.generator)
-                    #save it in state if its not the current iter
-                    if keygen not in state[key]:
-                        state[key][keygen] = []
-                    state[key][keygen].append(command)
-                    generators_not_done = True
+                    if state[key] == {}:
+                        keygen, command = next(gen.generator)
+                        #save it in state if its not the current iter
+                        if keygen not in state[key]:
+                            state[key][keygen] = []
+                        state[key][keygen].append(command)
+                        generators_not_done = True
                 except StopIteration:
                     # No more commands in the generator
                     keys_to_remove.append(key)
