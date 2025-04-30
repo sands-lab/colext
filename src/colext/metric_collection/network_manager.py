@@ -183,15 +183,16 @@ class NetworkManager:
             current_iter = iter 
             current_generators = dict(self.generatorstype[iter])
 
-            #create a subscriber for each generator type
-            log.info(f"Creating subscriber for {iter} type")
-            self.Subscribers[iter] = NetworkPubSub(iter)
 
             log.info(f" generatorstype: {self.generatorstype[iter]}")
-            self.Subscribers[iter].subscribe(lambda ch, method, properties, body: CreateCallback(ch, method, properties, body, current_generators, current_iter),queue_prefix=client_id)
+            self.Subscribers[iter].subscribe(create_callback_for_type(self.generatorstype[iter],iter),queue_prefix=client_id)
             log.info(f"Subscriber for {iter} type created")
             log.info(f"sub list: {self.Subscribers}")
-            
+
+#function specificly to avoid the lambda issue with closures
+def create_callback_for_type(generators, type_name):
+    return lambda ch, method, properties, body: CreateCallback(
+        ch, method, properties, body, generators, type_name)
     
         
 
