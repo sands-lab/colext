@@ -36,6 +36,7 @@ def MonitorFlwrStrategy(FlwrStrategy):
 
             # this is the init time for the client
             self.pub_time.publish(0)
+            log.debug("Publishing time 0")
 
 
             # Temp variable to hold eval round id between evaluate and configure_evaluate
@@ -61,8 +62,10 @@ def MonitorFlwrStrategy(FlwrStrategy):
             if server_round == 0:
                 # publish 1 at the start of round which is the first time iter to be used in client
                 self.pub_time.publish(1)
+                log.debug("Publishing time 1")
             #network recording
             self.pub_epoch.publish(server_round)
+            log.debug(f"Publishing epoch {server_round}")
             return round_id
 
         def record_end_round(self, server_round: int, round_type: str, dist_accuracy: float = None, srv_accuracy: float = None):
