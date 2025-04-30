@@ -8,7 +8,7 @@ from colext.common.utils import get_colext_env_var_or_exit
 from colext.metric_collection.metric_manager import MetricManager
 from colext.metric_collection.typing import StageMetrics
 import subprocess
-from network_manager import NetworkManager , NetworkPubSub
+from colext.metric_collection.network_manager import NetworkManager , NetworkPubSub
 
 
 # Class inheritence inside a decorator was inspired by:
