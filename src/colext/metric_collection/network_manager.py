@@ -212,7 +212,7 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
     
     # check if iter is 0 and if so, call the time loop and pass generators and state to it
     if type_iter == "time":
-        if current_iter == 0:
+        if current_iter > 0:
             #start the time loop
             time_loop(generators, state)
         return
@@ -271,10 +271,13 @@ def time_loop(generators, state):
         keys_to_remove = []
         log.info(f"Current iter: {current_iter}")
         for key , gen in generators.items():
+            log.info(f"Current iter inside time loop: {current_iter} for {key}")
             if key not in state:
                 state[key] = {}
             #check if the current iter is in the state
+            log.info(f"State: {state}")
             if str(current_iter) in state[key]:
+                log.info(f"Executing command for time {current_iter} for {key}")
                 for cmd in state[key][str(current_iter)]:
                     log.info(f"Executing command for time {current_iter}: {cmd}")
                     result = subprocess.run(cmd.split(), capture_output=True, text=True)
@@ -337,8 +340,13 @@ class NetworkPubSub:
         queue_name = queue_prefix +"-"+ self.topic
         queue = self.channel.queue_declare(queue=queue_name, durable=True)
 
+        log.info(f" [*] Created queue {queue_name} for topic {self.topic}")
+        
+
         self.channel.queue_bind(exchange='network', queue=queue_name, routing_key=f'sync.{self.topic}')
+        log.info(f" [*] Binding queue {queue_name} to topic {self.topic}")
         self.channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=True)
+        log.info(f" [*] Subscribed to topic {self.topic}")
         log.info(f" [*] Waiting for messages in {self.topic} topic.")
 
 
