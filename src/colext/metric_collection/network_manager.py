@@ -198,12 +198,12 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
     """
 
     current_iter = int(body.decode('utf-8'))
-    
+    log.info(f"Received message in {type_iter} topic: {current_iter}")
+
     if type_iter == "time" and current_iter > 1:
         # Silently ignore time messages with values > 1
         return
 
-    log.info(f"Received message in {type_iter} topic: {body.decode('utf-8')}")
 
     if state is None:
         state = {}
@@ -224,7 +224,7 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
         if key not in state:
             state[key] = {}
 
-
+        log.info(f"Current iter: {current_iter} for {key}")
         #check if the current iter is in the state
         if str(current_iter) in state[key]:
             for cmd in state[key][str(current_iter)]:
@@ -246,6 +246,7 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
                 keys_to_remove.append(key)
     
     for key in keys_to_remove:
+        log.info(f"Deleting generator {key} from generators")
         del generators[key]
     
 
@@ -257,13 +258,14 @@ def time_loop(generators, state):
     start_time = time.time()
     next_time = start_time + 1
     generators_not_done = True
+    log.info("Starting time loop")
     while generators_not_done:
         #check if all the generators are done
         generators_not_done = False
 
         #a list of keys to be deleted after loop
         keys_to_remove = []
-
+        log.info(f"Current iter: {current_iter}")
         for key , gen in generators.items():
             if key not in state:
                 state[key] = {}
