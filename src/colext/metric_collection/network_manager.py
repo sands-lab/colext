@@ -179,10 +179,7 @@ class NetworkManager:
         log.info("Parsing dynamic rules")
         for iter in self.generatorstype:
             
-            # Create a local copy that won't be affected by the loop
-            current_iter = iter 
-            current_generators = dict(self.generatorstype[iter])
-
+            self.Subscribers[iter] = NetworkPubSub(iter)
 
             log.info(f" generatorstype: {self.generatorstype[iter]}")
             self.Subscribers[iter].subscribe(create_callback_for_type(self.generatorstype[iter],iter),queue_prefix=client_id)
