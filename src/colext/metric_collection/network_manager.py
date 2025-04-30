@@ -206,6 +206,9 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
     current_iter = int(body.decode('utf-8'))
     log.info(f"Received message in {type_iter} topic: {current_iter}")
 
+    if state is None:
+        state = {}
+
     if type_iter == "time" :
         if current_iter > 0 and current_iter < 2:
             #start the time loop
@@ -214,8 +217,7 @@ def CreateCallback(ch,method,properties,body,generators,type_iter=None,state=Non
         # Silently ignore time messages with values > 1
         # TODO : support for scripts for time iters aka time = 0 , 1 and so on
 
-    if state is None:
-        state = {}
+    
     
     keys_to_remove = []
 
@@ -264,7 +266,8 @@ def time_loop(generators, state):
     while generators_not_done:
         #check if all the generators are done
         generators_not_done = False
-
+        # TODO: there is a logical error here, the generators are called regardless of the time and state and updated
+        # but since the generator is exhausted, it will not be called again and thus rules will not be executed
         #a list of keys to be deleted after loop
         keys_to_remove = []
         log.info(f"Current iter: {current_iter}")
