@@ -44,7 +44,7 @@ def MonitorFlwrClient(FlwrClientClass):
             #static
             net_mngr.ParseStaticRules("network/networkrules.txt")
             #dynamic
-            net_mngr.ParseDynamicRules(self.client_id)
+            net_mngr.ParseDynamicRules(str(self.client_id))
 
 
             
