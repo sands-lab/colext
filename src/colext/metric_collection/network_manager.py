@@ -181,7 +181,7 @@ class NetworkManager:
             
             # Create a local copy that won't be affected by the loop
             current_iter = iter 
-            current_generators = self.generatorstype[iter]
+            current_generators = dict(self.generatorstype[iter])
 
             #create a subscriber for each generator type
             log.info(f"Creating subscriber for {iter} type")
