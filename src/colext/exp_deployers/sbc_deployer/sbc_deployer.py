@@ -32,6 +32,9 @@ class SBCDeployer(DeployerBase):
         self.server_template = jinja_env.get_template("server.yaml.jinja")
         self.server_service_path = os.path.join(dirname, 'microk8s/server_service.yaml')
 
+        #network pubsub broker paths
+
+
         # Get Docker bake file dir
         parent_dir = Path(__file__).parent.resolve()
         self.hcl_file_dir = os.path.join(parent_dir, "Dockerfiles", "pip")
@@ -87,7 +90,9 @@ class SBCDeployer(DeployerBase):
                             push=True)
 
     def clear_prev_experiment(self) -> None:
+        
         log.info("Clearing previous experiment")
+        self.k_utils.delete_all_config_maps()
         self.k_utils.delete_fl_service()
         self.k_utils.delete_experiment_pods()
 
@@ -125,20 +130,151 @@ class SBCDeployer(DeployerBase):
             pod_config["monitoring_push_interval"] = self.config["monitoring"]["push_interval"]
             pod_config["monitoring_scrape_interval"] = self.config["monitoring"]["scraping_interval"]
             pod_config["monitoring_measure_self"] = self.config["monitoring"]["measure_self"]
+            
+            # add volume for the configmap
+            pod_config["network_volumeMount"] = {"name": f"group-{client_prototype['group_id']}-network-config",
+                                                  "mountPath": "/fl_testbed/test_code/network"}
+            pod_config["network_volume"] = {"name": f"group-{client_prototype['group_id']}-network-config",
+                                            "configMap": {"name": f"group-{client_prototype['group_id']}-network-config"}}
 
             # Add IP of smartplug in case it exists
             pod_config["SP_IP_ADDRESS"] = SMART_PLUGS_HOST_SP_IP_MAP.get(dev_hostname, None)
 
             return pod_config
 
+
+        
+        # this function is called for every client group to generate the network configmap for it
+        # clientgroup is the name of the client group aka client_prototype
+        def generate_network_configmap_folder(clientgroup,group_id):
+                if os.path.exists(f"networktemp/group-{group_id}"):
+                    for file in os.listdir(f"networktemp/group-{group_id}"):
+                        os.remove(os.path.join(f"networktemp/group-{group_id}", file))
+                else:
+                    os.makedirs(f"networktemp/group-{group_id}")
+
+                group_path = f"networktemp/group-{group_id}"
+
+                log.info(f"Generating network configmap for {group_id}")
+                log.debug(f"group dict: {clientgroup}")
+
+                network_tags = {}
+                if 'network' in clientgroup.keys():
+                    network_tags = clientgroup['network']
+
+                #save the network rules for each client group in a folder
+                
+                with open(f"{group_path}/networkrules.txt", 'w') as f:
+                    f.write("")
+                if isinstance(network_tags,str): # if there is only one network make it a list
+                    network_tags = [network_tags]
+                #check each network and make sure its a string to verify
+                for i in range(len(network_tags)):
+                    if not isinstance(network_tags[i],str):
+                        log.error(f"network tags should be a string or a list of strings")
+                        sys.exit(1)
+                #TODO the function can be divided into 2 functions
+                #variable to store all the network static rules for each client group
+                static_network_rules = {"upstream": [], "downstream": []}
+                for network in network_tags:
+                        log.debug(f"network tag: {network_tags}")
+                        log.info(f"group {group_id} is in {network}")
+                        #save dynamic network configs first
+                        
+                        log.debug(f"network config: {self.config['networks'][network]}")
+                        log.debug(f" network keys: {self.config['networks'][network].keys()}")
+
+                        if "dynamic" in self.config["networks"][network].keys():
+                            dynamic = self.config["networks"][network]['dynamic']
+                            for iter in dynamic.keys():
+
+                                log.debug(f"saving scripts of : {network} {dynamic[iter]}")
+                                # check if script is provided then save script else save the dict as json to be used
+                                if dynamic[iter]["script"] != False :
+                                    log.debug(f"saving script: {dynamic[iter]['script']} into {group_path}/{iter}_{network}_script.py")
+                                    script = ""
+                                    with open(dynamic[iter]["script"], 'r') as s:
+                                        script = s.read()
+                                    with open(f"{group_path}/{iter}_{network}_script.py", "w") as f:
+                                        f.write(script)
+                                        log.debug(f"script saved")
+                                else:
+                                    json_str = json.dumps(dynamic[iter], indent=4)
+                                    log.debug(f"saving json: {json_str} into {group_path}/{iter}_{network}_dynrules.json")
+                                    with open(f"{group_path}/{iter}_{network}_dynrules.json", "w") as f:
+                                        f.write(json_str)
+                                        log.debug(f"json saved")
+                        # if dynamic doesnt exist then save static of that network
+                        else:
+                            #save static rules
+                            static_network_rules["upstream"] = self.config["networks"][network]["commands"]["upstream"]
+                            static_network_rules["downstream"] = self.config["networks"][network]["commands"]["downstream"]
+                
+                # merge the static rules into one rule for each client group
+                upstream, downstream = merge_static_network_rules(static_network_rules)
+                # save the merged rules to the configmap
+                with open(f"{group_path}/networkrules.txt", 'a') as f:
+                    f.write(f"tcset eth0 --direction outgoing {upstream} \n")
+                    f.write(f"tcset eth0 --direction incoming {downstream} --change \n")
+
+        def merge_static_network_rules(network):
+            # given a network tag output 2 static rules for upstream and downstream
+            #TODO this is not comptible with input ips and ports yet
+            
+            upstream_list = network["upstream"]
+            downstream_list = network["downstream"]
+            log.debug(upstream_list)
+            log.debug(downstream_list)
+
+
+            merged_upstream_dict = {}
+            merged_downstream_dict = {}
+
+            for rules in upstream_list:
+                rule, value = rules.split()
+                merged_upstream_dict[rule] = value
+            for rules in downstream_list:
+                rule, value = rules.split()
+                merged_downstream_dict[rule] = value
+
+            # merge the rules into one rule
+            upstream = " ".join([f"--{key} {value}" for key, value in merged_upstream_dict.items()])
+            downstream = " ".join([f"--{key} {value}" for key, value in merged_downstream_dict.items()])
+
+            return upstream, downstream
+
+            
+
+
+
         pod_configs = []
+        pod_configs_volumes = []
         client_id = 0
+        group_id = 0 # needed to map the netowkr configmap to the client groups
+
+        # check if networktemp file exists
+        #delete previous networktemp files if it does exist
+        if os.path.exists("networktemp"):
+            for file in os.listdir("networktemp"):
+                for file2 in os.listdir(os.path.join("networktemp",file)):
+                    os.remove(os.path.join("networktemp", file,file2))
+        else:
+            os.makedirs("networktemp")
+
         for client_prototype in self.config["clients"]:
+            
+            client_prototype["group_id"] = group_id
+            generate_network_configmap_folder(client_prototype,group_id)
+            
+            group_id += 1
             for _ in range(client_prototype["count"]):
                 pod_configs.append(prepare_client(client_prototype, client_id))
                 client_id += 1
+        
+        
 
         log.debug(f"Generated {len(pod_configs)} pod configs")
+        log.debug(f"config: {pod_configs}")
         return pod_configs
 
     IMAGE_BY_DEV_TYPE = {
@@ -170,7 +306,7 @@ class SBCDeployer(DeployerBase):
             Launch experiment in kubernetes cluster
             Prepares and deployes client pods and fl service
         """
-
+        
         self.clear_prev_experiment()
 
         log.info(f"Deploying FL server and service")
@@ -178,14 +314,26 @@ class SBCDeployer(DeployerBase):
         server_pod_dict = yaml.safe_load(self.server_template.render(server_pod_config))
         self.k_utils.create_from_dict(server_pod_dict)
         self.k_utils.create_from_yaml(self.server_service_path)
-
+        log.debug(f"Server pod config: {server_pod_config}")
+        log.debug(f"Server pod dict: {server_pod_dict}")
         log.debug(f"Deploying Client pods")
+
+
+
         client_pod_configs = self.prepare_clients_for_launch(job_id)
+
+        
+
+        
+        # create config map for each client group
+        for client_prototype in self.config["clients"]:
+            self.k_utils.create_config_map_from_dict(f"group-{client_prototype['group_id']}-network-config", f"networktemp/group-{client_prototype['group_id']}")
+        
         for pod_config in client_pod_configs:
             # log.debug(f"Deploying Client pod = {pod_config}")
             client_pod_dict = yaml.safe_load(self.client_template.render(pod_config))
             self.k_utils.create_from_dict(client_pod_dict)
-
+        
         log.info(f"Experiment deployed. It can be canceled with 'mk delete pods --all'")
 
     def get_available_devices_by_type(self, dev_types):

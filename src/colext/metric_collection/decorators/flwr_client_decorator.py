@@ -7,6 +7,9 @@ from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
 from colext.metric_collection.metric_manager import MetricManager
 from colext.metric_collection.typing import StageMetrics
+import subprocess
+from colext.metric_collection.network_manager import NetworkManager , NetworkPubSub
+
 
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
@@ -34,6 +37,18 @@ def MonitorFlwrClient(FlwrClientClass):
             self.mm_proc.start()
             # Wait for metric manager to finish startup
             mm_proc_ready_event.wait()
+            
+            # Network setup
+            net_mngr = NetworkManager()
+            #Parse static rules and create the generators
+            #static
+            net_mngr.ParseStaticRules("network/networkrules.txt")
+            #dynamic
+            net_mngr.ParseDynamicRules(str(self.client_id))
+
+
+            
+
 
             # We might be able to cleanup better if the server tells us this is the last round
             atexit.register(self.clean_up)
