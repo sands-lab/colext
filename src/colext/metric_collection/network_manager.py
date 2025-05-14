@@ -1,12 +1,3 @@
-# TODO:
-'''
-1- make a class for pub sub
-2- make a class for the rules and make it have a generator for the commands
-3- the second class should accept either script or json file as input
-
-
-'''
-
 import pika
 import json
 import os
