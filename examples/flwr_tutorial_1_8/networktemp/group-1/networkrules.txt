@@ -1,0 +1,2 @@
+tcset eth0 --direction outgoing ['rate 100Mbps', 'delay 1ms'] --change 
+tcset eth0 --direction incoming ['rate 100Mbps', 'delay 1ms'] --change 

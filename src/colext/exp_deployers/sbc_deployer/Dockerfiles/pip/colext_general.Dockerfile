@@ -15,6 +15,10 @@ RUN apt update && apt install -y git
 #     && install -m 0600 -d ~/.ssh \
 #     && ssh-keyscan -p 443 ssh.github.com >> ~/.ssh/known_hosts
 
+#Network Setup
+RUN apt install -y iproute2 && mkdir -p /network
+RUN python3 -m pip install --no-cache-dir tcconfig
+
 ARG COLEXT_COMMIT_HASH
 # Install the colext package
 RUN python3 -m pip install \

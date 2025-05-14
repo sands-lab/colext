@@ -10,6 +10,10 @@ from flwr.server.client_proxy import ClientProxy
 from colext.common.logger import log
 from colext.common.utils import get_colext_env_var_or_exit
 
+from colext.metric_collection.network_manager import NetworkPubSub
+import time
+import threading
+
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
 def MonitorFlwrStrategy(FlwrStrategy):
@@ -27,6 +31,15 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.JOB_ID = get_colext_env_var_or_exit("COLEXT_JOB_ID")
             self.DB_CONNECTION = self.create_db_connection()
             self.clients_cid_to_db_id = {}
+
+            #publishing
+            self.pub_epoch = NetworkPubSub("epoch")
+            self.pub_time = NetworkPubSub("time")
+
+            # this is the init time for the client
+            self.pub_time.publish(0)
+            log.debug("Publishing time 0")
+
 
             # Temp variable to hold eval round id between fit/evaluate and configure_[fit/evaluate]
             self.current_round_id = None
@@ -52,6 +65,13 @@ def MonitorFlwrStrategy(FlwrStrategy):
             self.DB_CONNECTION.commit()
             cursor.close()
 
+            if server_round == 0:
+                # publish 1 at the start of round which is the first time iter to be used in client
+                self.pub_time.publish(1)
+                log.debug("Publishing time 1")
+            #network recording
+            self.pub_epoch.publish(server_round)
+            log.debug(f"Publishing epoch {server_round}")
             return round_id
 
         def record_end_round(self, server_round: int, round_type: str, dist_accuracy: float = None, srv_accuracy: float = None):
@@ -101,7 +121,8 @@ def MonitorFlwrStrategy(FlwrStrategy):
                 fit_ins.config["COLEXT_ROUND_ID"] = self.current_round_id
 
             return client_instructions
-
+        
+        
         # ====== Flower functions ======
 
         def configure_fit(self, server_round: int, parameters: Parameters, client_manager: ClientManager) -> List[Tuple[ClientProxy, FitIns]]:
