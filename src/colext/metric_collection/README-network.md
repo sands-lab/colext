@@ -175,10 +175,10 @@ note: groupid is created and saved as a key entry for each clientgroup. it is us
 
 after files for each clientgroup is create it is then converted to a configmap using create_config_map_from_dict() function from kubernetes_utils with its clientgroup id its specified to.
 
-### network_manager.py
+## network_manager.py
 
 
-#### we have 3 classes:
+### we have 3 classes:
 
 - network generator: a class to hold all functions needed with geenrators
 - network manager: main class managing all generators and subscribers
@@ -188,29 +188,63 @@ after files for each clientgroup is create it is then converted to a configmap u
 
 
 
-**publisher/server side**
+### publisher/server side
 
-in the decorator a PubSub object is created for a speicifc iter, then the publish function is called when we want to publish
+in the server decorator, it will create a PubSub object for each iteration and publish accordingly.
+both time and epoch publishers publishes 0 at the init function of the decorator.
+
+Note: publishers for an iter is hardcoded as each publisher will need a unique loop mechnaism and thus making it sufficient.
+
+time publishers will publish only once at time=1 at the start of the first round
+
+epoch publisher will publish at the start of each round in the record_start_round() function.
 
 
+### subscriber/client side
 
-**subscriber/client side**
+client decorator will create a networkmanager object and call 2 functions: ParseStaticRules and ParseDynamicRules. 
 
-client decorator create a networkmanager object and call 2 functions: ParseStaticRules and ParseDynamicRules
- ParseStaticRules accepts a file and just parse it and apply the network rules
+Note: all files sent via configmaps will resort in the Networks folder in the node.
 
- PraseDynamicRules is more complicated..
+**Static Rules:**
 
- When NetworkManagwer is created it automatically fetchs all the files from the configmap and convert all files ending with json or py (dynamic rules and dynamic script respectivaly) into generators and make them ready in a dict of generators
+ParseStaticRules will accept a file (should be .txt file) and parse it executing every line using a subprocess.
 
- ParseDynamicRules loops to all iteration type and make a subscriber for it and then passed a callback function with all the generatos and the iter type
 
- CreateCallback function is used to generate and correct callback function for the type.
- FunFact: this is the only schenario where lambda function is actually essential and useful
+**Dynamic Rules:**
 
- the callback function is called everytime for epoch and loops through the generators is an efficient manner with a state dict to safe future results we got when generating
+When NetworkManager is created it automatically fetchs all the files from the Networks folder and convert all files ending with json or py (dynamic rules and dynamic script respectivly) into generators and make them store them a dictionary with iters as keys and a list of generators as value.
 
- time_loop is called when we get time=1 which loops through the generator for time iter each second with the same manner
+Note: the iterators defined is not hardcoded and fully dependant on the file names as the start of the file name is the iter type for example: time_DynFast_... 
+
+ParseDynamicRules loops the dictionary keys (basicly all available iterators) and make a subscriber for each and then pass a custom Callback function generated using create_callback_for_type function.
+
+create_callback_for_type function returns an anonymous callback function that wraps the CreateCallback function (which is a callback function with generators and iter passed as parameters).
+
+the callback function is called everytime the subscriber gets a value and loops through the generators in efficiently using a state dict to save future results we got when generating previously.
+
+time_loop is called when we get time=1 which loops through the generator for time iter each second with the same manner.
+
+Note: since time is only published twice (time=0,1) the time_loop will be called at time=1 making it called only once.
+
+
+Dynamic Rules are applied in a similar way to how static rules are applied using Subprocesses.
+
+
+# missing features and odd bugs
+
+### bugs to be fixed
+
+dynamic network seem to not be able to have around more than 20 commands staticly typed. having more than 20 prevents from executing the commands in the node for some reason
+
+having only dynamic network and not include a static network seems to not work and prevent dynamic rules executing.
+
+
+### missing features:
+
+scripts for dynamic network: not fully implemented yet, but the system is ready and only just missing the conversion of scripts to generators to work.
+
+
 
 
 
