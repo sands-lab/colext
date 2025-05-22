@@ -76,6 +76,20 @@ spec:
       - mountPath: /run/jtop.sock
         name: jtop-socket
     {% endif %}
+    {% if network_volumeMount %}
+      - name: "{{network_volumeMount.name}}"
+        mountPath: "{{network_volumeMount.mountPath}}"
+        subPath: "{{network_volumeMount.subPath}}"
+      - name: lib-modules
+        mountPath: /lib/modules
+      - name: dev
+        mountPath: /dev
+    securityContext:
+      capabilities:
+        add:
+        - NET_ADMIN
+    {% endif %}
+
   volumes:
     - name: pgcreds
       secret:
@@ -94,6 +108,19 @@ spec:
       hostPath:
         path: /run/jtop.sock
         type: Socket
+    {% endif %}
+    {% if network_volume %}
+    - name: "{{network_volume.name}}"
+      configMap:
+        name: "{{network_volume.configMap.name}}"
+    - name: lib-modules
+      hostPath:
+        path: /lib/modules
+        type: Directory
+    - name: dev
+      hostPath:
+        path: /dev
+        type: Directory
     {% endif %}
   {# restartPolicy: Never #}
   restartPolicy: OnFailure

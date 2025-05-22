@@ -6,6 +6,38 @@ import yaml
 from colext.common.logger import log
 from colext.exp_deployers import get_deployer
 from colext.exp_deployers.db_utils import DBUtils
+import re
+
+
+#Network variables
+
+network_dir = "./network_scripts"
+
+# Global mappings for commands and validation regexes
+COMMAND_MAPPING = {
+    "bandwidth": "rate", "speed": "rate", "rate": "rate",
+    "delay": "delay", "delay-time": "delay", "latency": "delay", "latency-time": "delay",
+    "delay-distribution": "delay-distribution", "delay-distro": "delay-distro",
+    "loss": "loss", "duplicate": "duplicate", "corrupt": "corrupt",
+    "reordering": "reordering", "reorder": "reordering", "limit": "limit"
+}
+
+TIME_UNITS = r"(h|hour|hours|m|min|mins|minute|minutes|s|sec|secs|second|seconds|ms|msec|msecs|millisecond|milliseconds|us|usec|usecs|microsecond|microseconds)"
+VALIDATION_MAPPING = {
+    "rate": r"^\d{1,4}(\.\d+)?(Kbps|Mbps|Gbps)$",
+    "delay": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
+    "delay-distro": r"^\d+(\.\d+)?" + TIME_UNITS + "$",
+    "delay-distribution": r"^(normal|pareto|paretonormal|Normal|Pareto|ParetoNormal)$",
+    "loss": r"^\d+(\.\d+)?%$",
+    "duplicate": r"^\d+(\.\d+)?%$",
+    "corrupt": r"^\d+(\.\d+)?%$",
+    "reordering": r"^\d+(\.\d+)?%$",
+    "limit": r"^\d+$"
+}
+
+VALID_ITERS = ["time", "epoch"]
+
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='Run an experiment on the FL Testbed')
@@ -20,6 +52,7 @@ def get_args():
                         help="Change deployer without changing config. Example: --deployer=local_py")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
                         help="Wait for experiment to finish.")
+    parser.add_argument('-n', '--network_dir', type=str, default=network_dir,)
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
     args = parser.parse_args()
@@ -104,9 +137,218 @@ def read_config(config_file, args):
 
     config_dict["req_dev_types"] = list(set([client["dev_type"] for client in config_dict["clients"]]))
     config_dict["n_clients"] = sum(client["count"] for client in config_dict["clients"])
+    
+    config_dict["networks"] = read_network(config_dict)
 
     print("CoLExT configuration read successfully")
     return config_dict
+
+# given in input dictonary config it will output a new dict with all the networks
+def read_network(config):
+    networks = config['network']
+    clients = config['clients']
+    
+    # Create a mapping from network tag to clients using that tag.
+    network_tags = {}
+    
+    # Process static network commands
+    for net in networks:
+        tag = net['tag']
+        network_tags[tag] = {}
+        if "dynamic" in net:
+            network_tags[tag]["dynamic"] = {}  # prepare dict for dynamic config
+            continue
+        network_tags[tag]["commands"] = read_static(net)
+        
+    
+    # Validate commands for non-dynamic networks
+    for tag, net in network_tags.items():
+        if "dynamic" not in net:
+            for direction in ["upstream", "downstream"]:
+                net["commands"][direction] = validate_static_commands(net["commands"][direction], tag)
+    
+
+
+    # Process dynamic network configuration and validate
+    for net in [n for n in networks if "dynamic" in n]:
+        tag = net['tag']
+        network_tags[tag]["dynamic"] = read_validate_dynamic(net)
+
+
+    print("Network tags:", network_tags)
+    return network_tags
+
+def read_static(net):
+    # Build commands for upstream and downstream directions
+    network_commands = {"upstream": [], "downstream": []}
+    
+    
+    for direction in ["upstream", "downstream"]:
+        cmd_value = net.get(direction)
+        if isinstance(cmd_value, str):
+            # example: (upstream/downstream): 2000Mbps 3ms 50% normal 
+            # each string is a token
+            tokens = cmd_value.split()
+            if tokens:
+                if len(tokens) > 0:
+                    network_commands[direction].append(f"rate {tokens[0]}")
+                if len(tokens) > 1:
+                    network_commands[direction].append(f"delay {tokens[1]}")
+                if len(tokens) > 2:
+                    network_commands[direction].append(f"loss {tokens[2]}")
+                if len(tokens) > 3:
+                    network_commands[direction].append(f"delay-distribution {tokens[3]}")
+        elif isinstance(cmd_value, dict):
+            for rule, value in cmd_value.items():
+                network_commands[direction].append(f"{rule} {value}")
+    return network_commands
+
+def validate_static_commands(commands, network_name):
+    """
+    Validate a list of command strings for a given network.
+    input commands should be a list of command strings
+    Returns a list of validated and formatted command strings.
+    """
+    # commands is the attributes defined for each network
+    # example 
+    validated = []
+    for command in commands:
+        command_split = command.split()
+        if len(command_split) < 2:
+            print(f"Missing value for command in network:{network_name}")
+            sys.exit(1)
+        if len(command_split) > 2:
+            print(f"Too many tokens in command in network:{network_name}")
+            sys.exit(1)
+        
+        rule_name = command_split[0]
+        if rule_name not in COMMAND_MAPPING:
+            print(f"Invalid command {rule_name} in network:{network_name}")
+            sys.exit(1)
+        
+        rule_name = COMMAND_MAPPING[rule_name]
+        if not re.match(VALIDATION_MAPPING[rule_name], command_split[1]):
+            print(f"Invalid {rule_name} format: {command_split[1]} in network:{network_name}")
+            sys.exit(1)
+        
+        validated.append(f"{rule_name} {command_split[1]}")
+    return validated
+
+def read_validate_dynamic(net):
+    '''
+    Read and validate dynamic network configuration from the given dict. 
+    input net should be a dict that contains the original network config
+    Returns a dict with validated and formatted dynamic network config.
+    '''
+    dynamic_config = {}
+    tag = net['tag']
+    #looping through the dynamic config and validating each entry aka each iterator defined with its list of commands
+    for entry in net['dynamic']:
+        
+        #validate the iterator
+        iterator = entry.get('iterator')
+        if not iterator or iterator not in VALID_ITERS:
+            print(f"Invalid or missing iterator in {tag}")
+            sys.exit(1)
+        if iterator in dynamic_config:
+            print(f"Iterator {iterator} already exists in {tag} ignoring this entry")
+            continue
+        
+
+        
+        entry_temp = {}
+        #validate structure
+        structure = entry.get("structure", ['rate', 'delay']) # default to [rate,delay] if structure is not defined
+        corrected = check_rules(structure)
+        
+        entry_temp["structure"] = corrected
+        
+
+        #check for script else take commands
+        if 'script' in entry:
+            if not os.path.exists(network_dir + entry["script"]):
+                print(f"Script file {entry['script']} does not exist.")
+                sys.exit(1)
+            entry_temp["script"] = entry['script']
+        elif 'commands' in entry:
+            entry_temp["script"] = False
+            entry_temp["commands_dict"] = {}
+
+            for command in entry["commands"]:
+                #parse it into key: values
+                if not isinstance(command, list) or len(command) < 3:
+                    print(f"Invalid command format: {command} in {tag}")
+                    sys.exit(1)
+                key = command[0]
+                value = command[1:]
+
+                if key in ['structure', 'iterator']:
+                    continue
+                if not check_command(value, entry_temp["structure"]):
+                    print(f"Invalid command: {value} in {tag}")
+                    sys.exit(1)
+
+                #check if the key is already there if it is then we add it to the list instead
+                if key in entry_temp["commands_dict"]:
+                    entry_temp["commands_dict"][key].append(value)
+                else:
+                    entry_temp["commands_dict"][key] = [value]    
+
+
+        
+        dynamic_config[iterator] = entry_temp
+    return dynamic_config
+
+def check_command(command, structure):
+    '''
+    checks if the list of commands follow the given structure
+    Returns True if the command is valid else False
+    '''
+    
+    command_split = command.split() if isinstance(command, str) else command
+    #check first if it is more than or equal to 2 to check for del/set
+    if len(command_split)  < 2:
+        print("Invalid command length")
+        return False
+    
+    if command_split[0] not in ['set', 'del']:
+        print(f"Invalid command name: {command_split[0]} in {command} only 'set' and 'del' are allowed")
+        return False
+
+    if command_split[1] not in ["incoming", "outgoing"]:
+        print(f"Invalid direction: {command_split[1]} in {command} only 'incoming' and 'outgoing' are allowed")
+        return False
+    
+    #since del does not require any values we can skip the rest of the checks
+    if command_split[0] == "del":
+        return True
+    elif len(command_split) != len(structure) + 2:
+        print(f"Invalid command length: {command} for {structure}")
+        return False
+
+    for i, rule in enumerate(structure):
+        if command_split[i + 2] == -1:
+            continue
+        if not re.match(VALIDATION_MAPPING[rule], command_split[i + 2]):
+            print(f"Invalid {rule} format: {command_split[i + 2]}")
+            return False
+    return True
+
+def check_rules(structure):
+    """
+    Validate and correct a list of rule names using COMMAND_MAPPING.
+    Returns a tuple (is_valid, corrected_structure).
+    """
+    corrected = []
+    for rule in structure:
+        if rule not in COMMAND_MAPPING:
+            print(f"Invalid rule: {rule}. Valid rules are: {', '.join(COMMAND_MAPPING.keys())}")
+            sys.exit(1)
+        corrected.append(COMMAND_MAPPING[rule])
+    return corrected
+
+
+
 
 def print_err(msg):
     print(f"ERR: {msg}")
@@ -127,7 +369,7 @@ def launch_experiment():
 
     args = get_args()
     config_dict = read_config(args.config_file, args)
-
+    network_dir = args.network_dir
     Deployer = get_deployer(config_dict["deployer"])
     deployer = Deployer(config_dict, args.test_env)
 

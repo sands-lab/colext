@@ -1,0 +1,19 @@
+# Service to expose RabbitMQ AMQP port
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-broker
+  namespace: rabbitmq-system
+
+  labels:
+    app: rabbitmq
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+  - port: 6942
+    targetPort: 6942
+    name: amqp
+  - port: 15672
+    targetPort: 15672
+    name: management
