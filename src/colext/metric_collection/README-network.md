@@ -68,7 +68,7 @@ this is the list of network rules that can be defined:
 
 Note: network rules follows tcconfig formatting - (https://tcconfig.readthedocs.io/en/latest/pages/usage/tcset/index.html)
 
-dynamic network defining:
+Dynamic network defining:
 -
 dynamic network with defined ruleset:
 ```yaml
@@ -98,7 +98,7 @@ the commands follow this structure [iterator time, command type, direction , rul
 - rule values: define the valeus of the rule structure defined.
  
 
-network applying:
+Applying network to nodes:
 -
 
 ```yaml
@@ -127,7 +127,7 @@ Note: make sure that the network tags is synactially correct as defined as it is
 The system has 3 main sections. it first reads and validates the colext config file in experiment_dispartcher.py. Then, it translates and deploy those network rules as files to the nodes in sbc_deployer folder. Lastly, the network rules are excuted at the specified time in the network manager.
 
 
-### experiment_dispatcher.py
+## experiment_dispatcher.py
 
 - static
     - read static
@@ -136,50 +136,115 @@ The system has 3 main sections. it first reads and validates the colext config f
     - validating structure
     - validating commands
 
-explain overall structure
+
+before processing the network, it checked if its either static or dynamic in the read_network() function before calling the suitable function.
 
 **static:**
-explain how its read and validated
+for static networks, its processing is divided into 2 seperate functions. Read_static() will accept a dict of the static network. it checks for each direciton if its a string (simplified input) or a dictonary (complete input) and convert each direction into a single network rule to be applied.
+
+the resultant network rule commands is then passed to the validate_static_commands() function to validate the command using the deinfe constant mapping defined like COMMAND_MAPPING and VALIDATION_MAPPING for the rule and its value respectively. then it will output either correctly formatted command or give an error for invalid inputs.
+
 
 **dynamic:**
-explain how its read and validated
+for dynamic network, its processing are all packed into a single function with 2 helper functions. the main functions , named read_validate_dynamic(), will accept a dict of the dynamic network and loop through all the key value pairs in the dynamic section. 
+it checks for 3 main sections:
+
+- iterator: check it's from the VALID_ITERS constant
+- structure: validates this structure is valid by validating each rule name in the structure using the helper function check_rules()
+- commands/script: if it's a script then pass the script path. else then parse the commands given the structure similar to the static rule parsing but instead save it as a dict.
 
 
 
-### sbc_deployer folder
+## sbc_deployer folder
 
 - rabbitmq-broker
 - kubernetes_utils.py
-- sub_deployer.py
+- sbc_deployer.py
+
 
 **rabbitmq broker**
-explain what is it and its perpose
+for the publish subscribe to work. we need a broker to receive and send msgs between the publishers and subscribers. rabbitmq broker folder has all the files needed to start a broker with the specified used ports and service name.
 
 **kuberentes functions**
-explain the kubernetes functions needed and why
+2 main functions in kubernetes utils is used to create and delete configmaps respectively.
 
 **sbc_deployment**
-explain how the cinfg dict and read and applied and deployed
+in deployment, prepare_clients_for_launch functions includes 2 network functions to finalize and generate the files to be send via configmaps. the generate_network_configmap_folder is called with an input of the dict of a clientgroup and their groupid (group id is created right before this function is called at the end). this function will generate files for each assigned network in the clientgroup both static and dynamic. static networks are merged before converted to a file using the merge_static_network_rules() function.
+
+note: groupid is created and saved as a key entry for each clientgroup. it is used to define the name of the files and its location locally before converted to a configmap.
+
+after files for each clientgroup is create it is then converted to a configmap using create_config_map_from_dict() function from kubernetes_utils with its clientgroup id its specified to.
+
+## network_manager.py
 
 
-### network_manager.py
+### we have 3 classes:
 
-- Generator
-- PubSub
-    - client decorator
-    - server decorator
+- network generator: a class to hold all functions needed with geenrators
+- network manager: main class managing all generators and subscribers
+- pubsub: wrapper class for pika (python package for rabbitmq) publish subscribe functions
 
-**client decorator**
-explain what is done in the client deco
 
-**server decorator**
-explain what is done in the server deco
 
-**PubSub**
-explain the pubsub and how it interacts with broker and decorators
 
-**generator**
-explain how generators is created and used in realation with the sub
+
+### publisher/server side
+
+in the server decorator, it will create a PubSub object for each iteration and publish accordingly.
+both time and epoch publishers publishes 0 at the init function of the decorator.
+
+Note: publishers for an iter is hardcoded as each publisher will need a unique loop mechnaism and thus making it sufficient.
+
+time publishers will publish only once at time=1 at the start of the first round
+
+epoch publisher will publish at the start of each round in the record_start_round() function.
+
+
+### subscriber/client side
+
+client decorator will create a networkmanager object and call 2 functions: ParseStaticRules and ParseDynamicRules. 
+
+Note: all files sent via configmaps will resort in the Networks folder in the node.
+
+**Static Rules:**
+
+ParseStaticRules will accept a file (should be .txt file) and parse it executing every line using a subprocess.
+
+
+**Dynamic Rules:**
+
+When NetworkManager is created it automatically fetchs all the files from the Networks folder and convert all files ending with json or py (dynamic rules and dynamic script respectivly) into generators and make them store them a dictionary with iters as keys and a list of generators as value.
+
+Note: the iterators defined is not hardcoded and fully dependant on the file names as the start of the file name is the iter type for example: time_DynFast_... 
+
+ParseDynamicRules loops the dictionary keys (basicly all available iterators) and make a subscriber for each and then pass a custom Callback function generated using create_callback_for_type function.
+
+create_callback_for_type function returns an anonymous callback function that wraps the CreateCallback function (which is a callback function with generators and iter passed as parameters).
+
+the callback function is called everytime the subscriber gets a value and loops through the generators in efficiently using a state dict to save future results we got when generating previously.
+
+time_loop is called when we get time=1 which loops through the generator for time iter each second with the same manner.
+
+Note: since time is only published twice (time=0,1) the time_loop will be called at time=1 making it called only once.
+
+
+Dynamic Rules are applied in a similar way to how static rules are applied using Subprocesses.
+
+
+# missing features and odd bugs
+
+### bugs to be fixed
+
+dynamic network seem to not be able to have around more than 20 commands staticly typed. having more than 20 prevents from executing the commands in the node for some reason
+
+having only dynamic network and not include a static network seems to not work and prevent dynamic rules executing.
+
+
+### missing features:
+
+scripts for dynamic network: not fully implemented yet, but the system is ready and only just missing the conversion of scripts to generators to work.
+
+
 
 
 
