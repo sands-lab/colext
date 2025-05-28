@@ -13,12 +13,13 @@ from colext.common.utils import get_colext_env_var_or_exit
 # Class inheritence inside a decorator was inspired by:
 # https://stackoverflow.com/a/18938008
 def MonitorFlwrStrategy(FlwrStrategy):
-    COLEXT_ENV = os.getenv("COLEXT_ENV", "0")
-    if not COLEXT_ENV:
-        log.debug("Decorator used outside of COLEXT_ENV environment. Not decorating.")
+    # If we're not under the CoLExT environment, don't make any modifications to the class
+    colext_env = os.getenv("COLEXT_ENV", "False") == "True"
+    if not colext_env:
+        log.info("CoLExT environment disabled. Skipping decoration.")
         return FlwrStrategy
 
-    log.debug("Decorating user Flower server class with Monitor class")
+    log.info("Decorating user Flower server class with Monitor class")
     class _MonitorFlwrStrategy(FlwrStrategy):
         def __init__(self, *args, **kwargs):
             log.debug("init function")

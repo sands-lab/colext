@@ -93,7 +93,7 @@ class SBCDeployer(DeployerBase):
 
     def prepare_server_for_launch(self, job_id):
         config = self.config
-        server_pod_config = self.get_base_pod_config("Server", config)
+        server_pod_config = self.get_base_pod_config("Server")
 
         server_pod_config["job_id"] = job_id
         server_pod_config["n_clients"] = config["n_clients"]
@@ -108,7 +108,7 @@ class SBCDeployer(DeployerBase):
 
         def prepare_client(client_prototype, client_id):
             dev_type = client_prototype["dev_type"]
-            pod_config = self.get_base_pod_config(dev_type, self.config)
+            pod_config = self.get_base_pod_config(dev_type)
             dev_id, dev_hostname = self.get_device_hostname_by_type(available_devices_by_type, dev_type)
             client_additional_args = client_prototype.get("add_args", "")
 
@@ -154,12 +154,15 @@ class SBCDeployer(DeployerBase):
     def get_image_for_dev_type(self, dev_type: str):
         return self.IMAGE_BY_DEV_TYPE[dev_type]
 
-    def get_base_pod_config(self, dev_type, config: Dict[str, str]):
+    def get_base_pod_config(self, dev_type):
+        config = self.config
         pod_config = {}
         project_name = config["project"]
 
         pod_image_name = self.get_image_for_dev_type(dev_type)
         pod_config["image"] =  f"{REGISTY}/{project_name}/{pod_image_name}:latest"
+        pod_config["colext_env"] = config["colext"]["monitor_job"]
+        pod_config["log_level"] = config["colext"]["log_level"]
         pod_config["std_datasets_path"] = STD_DATASETS_PATH
         pod_config["pytorch_datasets_path"] = PYTORCH_DATASETS_PATH
 

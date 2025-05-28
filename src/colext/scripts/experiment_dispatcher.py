@@ -16,8 +16,10 @@ def get_args():
                         help="Test deployment in test environment.")
     parser.add_argument('-p', '--prepare_only', default=False, action='store_true',
                         help="Only prepare experiment for launch.")
-    parser.add_argument('-d', '--deployer', type=str,
-                        help="Change deployer without changing config. Example: --deployer=local_py")
+    parser.add_argument('-l', '--local_deployer', action='store_true',
+                        help="Use a local deployer to debug experiment")
+    parser.add_argument('-j', '--just_launcher', default=False, action='store_true',
+                        help="If set, only uses the CoLExT launcher to deploy the experiment.")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
                         help="Wait for experiment to finish.")
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
@@ -27,8 +29,6 @@ def get_args():
     return args
 
 def read_config(config_file, args):
-    db = DBUtils()
-
     try:
         print(f"Trying to read CoLExT configuration file from '{config_file}'")
         with open(config_file, "r", encoding="utf-8") as stream:
@@ -60,22 +60,26 @@ def read_config(config_file, args):
         "scraping_interval": 0.3,
         "measure_self": False,
     } # intervals are in seconds
-    # Override defaults by whatever is in the config
-    config_dict["monitoring"] = {**monitoring_defaults, **config_dict.get("monitoring", {})}
+    add_config_defaults(config_dict, "monitoring", monitoring_defaults)
+
+    colext_defaults = {
+        # "deployer": "sbc",
+        "log_level": "INFO", # ERROR/INFO/DEBUG
+        "just_launcher": "False" # True/False: True to only use the CoLExT launcher without collecting metrics
+    }
+    add_config_defaults(config_dict, "colext", colext_defaults)
 
     # Overrides
-    if args.deployer:
-        config_dict["deployer"] = args.deployer
+    if args.local_deployer:
+        config_dict["deployer"] = "local_py"
+    
+    if args.just_launcher:
+        config_dict["colext"]["just_launcher"] = "True"
 
     # Validate
     if "project" not in config_dict:
         print("Please specify the project name to associate this job with.")
         sys.exit(1)
-    else:
-        project_name = config_dict['project']
-        if not db.project_exists(project_name):
-            print_err(f"Could not find project named {project_name}. Please use a valid project name.")
-            sys.exit(1)
 
     if "clients" not in config_dict:
         print_err("Please specify at least one client in the config file.")
@@ -91,11 +95,22 @@ def read_config(config_file, args):
         print_err(f"deployer can  only be set to {valid_deployers}")
         sys.exit(1)
 
+    valid_log_levels = ["ERROR", "INFO", "DEBUG"]
+    if config_dict["colext"]["log_level"] not in valid_log_levels:
+        print_err(f"colext.log_level can  only be set to {valid_log_levels}")
+        sys.exit(1)
+    
+    valid_just_launcher_options = ["True", "False"]
+    if config_dict["colext"]["just_launcher"] not in valid_just_launcher_options:
+        print_err(f"colext.just_launcher can  only be set to {valid_just_launcher_options}")
+        sys.exit(1)
+
     # Add fields
     config_dir_path = os.path.dirname(os.path.realpath(config_file))
     config_dict["code"]["path"] = os.path.join(config_dir_path, config_dict["code"]["path"])
     print(f'Code path = {config_dict["code"]["path"]}')
 
+    config_dict["colext"]["monitor_job"] = str(config_dict["colext"]["just_launcher"] != "True")
 
     client_defaults = {
         "count": 1
@@ -110,6 +125,9 @@ def read_config(config_file, args):
 
 def print_err(msg):
     print(f"ERR: {msg}")
+
+def add_config_defaults(config_dict, key, defaults):
+    config_dict[key] = {**defaults, **config_dict.get(key, {})}
 
 def print_dashboard_url(extra_grafana_vars: dict  = None):
     DASHBOARD_URL_BASE = ("http://colext:3000/d/c9b9dcd9-9304-47d7-8dd2-92b8529725c8/colext-dashboard?"
@@ -140,14 +158,15 @@ def launch_experiment():
     print("\n")
     print(f"Launched experiment with {job_id=}")
 
-    grafana_vars = {
-        "project": config_dict["project"],
-        "jobid": job_id,
-        "round_n": "All",
-        "clientid": "All",
-        "show_stages": "True",
-    }
-    print_dashboard_url(grafana_vars)
+    if config_dict["colext"]["monitor_job"] == "True":
+        grafana_vars = {
+            "project": config_dict["project"],
+            "jobid": job_id,
+            "round_n": "All",
+            "clientid": "All",
+            "show_stages": "True",
+        }
+        print_dashboard_url(grafana_vars)
 
     print("\nExperiment running...")
     if args.wait_for_experiment:

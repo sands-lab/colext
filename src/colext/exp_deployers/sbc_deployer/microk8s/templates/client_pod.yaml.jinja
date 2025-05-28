@@ -21,7 +21,9 @@ spec:
     args: ["{{ command }}"]
     env:
       - name: COLEXT_ENV
-        value: "1"
+        value: "{{colext_env}}"
+      - name: COLEXT_LOG_LEVEL
+        value: "{{log_level}}"
       - name: COLEXT_SERVER_ADDRESS
         value: "{{server_address}}"
       - name: COLEXT_JOB_ID

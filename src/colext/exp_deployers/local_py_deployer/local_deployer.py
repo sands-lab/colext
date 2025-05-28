@@ -6,6 +6,8 @@ import time
 
 from colext.common.logger import log
 from colext.exp_deployers.deployer_base import DeployerBase
+from colext.common.vars import STD_DATASETS_PATH, PYTORCH_DATASETS_PATH
+
 
 class LocalDeployer(DeployerBase):
     """Local deployer for experimentation"""
@@ -60,44 +62,18 @@ class LocalDeployer(DeployerBase):
                                       stdout=client_log_handle, stderr=client_log_handle)
             self.client_procs.append(c_proc)
 
-    def prepare_server(self, job_id: int):
-        current_env = os.environ.copy()
-        env_vars = {
-            "COLEXT_ENV": "1",
-            "COLEXT_JOB_ID": str(job_id),
-            "COLEXT_DEVICE_TYPE": "FLServer",
-            "COLEXT_LOG_LEVEL": "DEBUG",
-
-            "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
-
-            "COLEXT_DATASETS": "/colext/datasets",
-            "COLEXT_PYTORCH_DATASETS": "/colext/pytorch_datasets",
-
-            "PGHOSTADDR": "127.0.0.1",
-            "PGDATABASE": "colext_db",
-            "PGUSER": "colext_user",
-        }
-
-        server_code = self.config["code"]["server"]
-        # server_command = [sys.executable, server_code["entrypoint"], server_code["args"]]
-        server_command = [server_code['command']]
-
-        return server_command, {**current_env, **env_vars}
-
-
-    def prepare_clients(self, job_id: int):
-        current_env = os.environ.copy()
+    def get_base_env_vars(self, job_id):
         base_env_vars = {
-            "COLEXT_ENV": "1",
+            "COLEXT_ENV": str(self.config["colext"]["monitor_job"]),
             "COLEXT_JOB_ID": str(job_id),
-            "COLEXT_DEVICE_TYPE": "FLServer", # clients run on the server
+            "COLEXT_DEVICE_TYPE": "FLServer", # both clients and server run on the server
             "COLEXT_LOG_LEVEL": "DEBUG",
 
             "COLEXT_SERVER_ADDRESS": "0.0.0.0:8080",
             "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
 
-            "COLEXT_DATASETS": "/colext/datasets",
-            "COLEXT_PYTORCH_DATASETS": "/colext/pytorch_datasets",
+            "COLEXT_DATASETS": STD_DATASETS_PATH,
+            "COLEXT_PYTORCH_DATASETS": PYTORCH_DATASETS_PATH,
 
             "COLEXT_MONITORING_LIVE_METRICS": str(self.config["monitoring"]["live_metrics"]),
             "COLEXT_MONITORING_PUSH_INTERVAL": str(self.config["monitoring"]["push_interval"]),
@@ -108,6 +84,22 @@ class LocalDeployer(DeployerBase):
             "PGDATABASE": "colext_db",
             "PGUSER": "colext_user",
         }
+        print(base_env_vars)
+
+        return base_env_vars
+
+    def prepare_server(self, job_id: int):
+        env_vars = self.get_base_env_vars(job_id)
+        current_env = os.environ.copy()
+
+        server_code = self.config["code"]["server"]
+        # server_command = [sys.executable, server_code["entrypoint"], server_code["args"]]
+        server_command = [server_code['command']]
+
+        return server_command, {**current_env, **env_vars}
+
+    def prepare_clients(self, job_id: int):
+        base_env_vars = self.get_base_env_vars(job_id)
 
         client_envs = []
         client_commands = []
@@ -124,6 +116,7 @@ class LocalDeployer(DeployerBase):
             return client_cmd, client_env
 
         client_id = 0
+        current_env = os.environ.copy()
         for client in self.config["clients"]:
             for _ in range(client["count"]):
                 client_cmd, client_env = prepare_client(client_id)
@@ -153,5 +146,3 @@ class LocalDeployer(DeployerBase):
         # Close file handles
         for f in self.log_file_handles:
             f.close()
-
-

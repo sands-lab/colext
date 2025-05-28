@@ -12,13 +12,13 @@ from colext.metric_collection.typing import StageMetrics
 # https://stackoverflow.com/a/18938008
 def MonitorFlwrClient(FlwrClientClass):
     """ Decorator that monitors flwr clients """
-    # If we're not under the FL testbed environment, don't make any modifications to the class
-    colext_env = os.getenv("COLEXT_ENV", None)
+    # If we're not under the CoLExT environment, don't make any modifications to the class
+    colext_env = os.getenv("COLEXT_ENV", "False") == "True"
     if not colext_env:
-        log.debug("Decorator used outside of COLEXT environment. Not decorating.")
+        log.info("CoLExT environment disabled. Skipping decoration.")
         return FlwrClientClass
 
-    log.debug(f"Decorating user client class ({FlwrClientClass.__name__}) with CoLExt monitor")
+    log.info(f"Decorating user client class ({FlwrClientClass.__name__}) with CoLExt monitor")
     class _MonitorFlwrClient(FlwrClientClass):
         def __init__(self, *args, **kwargs):
             log.debug("init function")
