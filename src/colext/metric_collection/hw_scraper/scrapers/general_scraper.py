@@ -44,7 +44,9 @@ class GeneralScrapper(ScraperBase):
             p_metrics = self._scrape_psutils()
 
         end_scrape_time = time.time()
-        log.debug(f"scrape_process_metrics time = {end_scrape_time - start_scrape_time}")
+        scrape_duration = end_scrape_time - start_scrape_time
+        if scrape_duration > self.collection_interval_s:
+            log.warning(f"scrape_process_metrics time exceeded colection interval = {scrape_duration}")
 
         return p_metrics
 
