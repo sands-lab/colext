@@ -140,7 +140,6 @@ def print_dashboard_url(extra_grafana_vars: dict  = None):
     print(dashboard_url)
 
 def launch_experiment():
-    log.setLevel(logging.DEBUG)
     print("Preparing to launch CoLExT")
 
     args = get_args()
