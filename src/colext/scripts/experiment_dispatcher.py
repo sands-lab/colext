@@ -154,8 +154,7 @@ def launch_experiment():
         return
 
     job_id = deployer.start()
-    print("\n")
-    print(f"Launched experiment with {job_id=}")
+    print(f"\nLaunched experiment with {job_id=}")
 
     if config_dict["colext"]["monitor_job"] == "True":
         grafana_vars = {
