@@ -72,7 +72,7 @@ def read_config(config_file, args):
     # Overrides
     if args.local_deployer:
         config_dict["deployer"] = "local_py"
-    
+
     if args.just_launcher:
         config_dict["colext"]["just_launcher"] = "True"
 
@@ -99,7 +99,7 @@ def read_config(config_file, args):
     if config_dict["colext"]["log_level"] not in valid_log_levels:
         print_err(f"colext.log_level can  only be set to {valid_log_levels}")
         sys.exit(1)
-    
+
     valid_just_launcher_options = ["True", "False"]
     if config_dict["colext"]["just_launcher"] not in valid_just_launcher_options:
         print_err(f"colext.just_launcher can  only be set to {valid_just_launcher_options}")
@@ -171,7 +171,6 @@ def launch_experiment():
     print("\nExperiment running...")
     if args.wait_for_experiment:
         print("Waiting for experiment.")
-        print("Note that pods can take up to 10 minutes to start.")
         deployer.wait_for_job(job_id)
         print("Experiment complete.")
     else:

@@ -210,4 +210,5 @@ class SBCDeployer(DeployerBase):
 
     def wait_for_clients(self, job_id):
         """ Wait for all pods with label colext-job-id """
+        print("Note that pods can take up to 10 minutes to start.")
         self.k_utils.wait_for_pods(f"colext-job-id={job_id}")
