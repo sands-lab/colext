@@ -1,3 +1,4 @@
+import sys
 import time
 from dataclasses import dataclass
 from collections import defaultdict
@@ -12,14 +13,18 @@ class DeployerBase(ABC):
         See functions: register_client_in_db, get_available_devices_by_type
     """
     def __init__(self, config, test_env=False):
-        self.db_utils = DBUtils()
         self.config = config
         self.test_env = test_env
+        self.launch_only = config['colext']['just_launcher'] == "True"
+
+        if not self.launch_only:
+            self.db_utils = DBUtils()
+            self.check_project_in_db()
 
     def start(self):
         """ Start the deployment process """
         self.prepare_deployment()
-        job_id = self.db_utils.create_job(self.config)
+        job_id = self.create_job_in_db()
         self.deploy_setup(job_id)
 
         return job_id
@@ -46,9 +51,33 @@ class DeployerBase(ABC):
             Wait for clients to finish
         """
 
+    def check_project_in_db(self):
+        if self.launch_only:
+            return
+        
+        project_name = self.config['project']
+        if not self.db_utils.project_exists(project_name):
+            print(f"Could not find project named {project_name}. Please use a valid project name.")
+            sys.exit(1)
+
+    def create_job_in_db(self):
+        if self.launch_only:
+            return "14" # Fake placeholder data
+        else:
+            return self.db_utils.create_job(self.config)
+        
     def register_client_in_db(self, client_id: int, dev_id: int, job_id: int) -> str:
         """ Register client in DB """
+        if self.launch_only:
+            return "2116" # Fake placeholder data
+        
         return self.db_utils.register_client(client_id, dev_id, job_id)
+    
+    def finish_job_in_db(self, job_id):
+        if self.launch_only:
+            return
+        self.db_utils.finish_job(job_id)
+
 
     def get_available_devices_by_type(self, client_types):
         clients = self.db_utils.get_current_available_clients(client_types)
@@ -62,6 +91,6 @@ class DeployerBase(ABC):
     def wait_for_job(self, job_id):
         """ Hand until job is finished and mark job as finished """
         # Give some buffer for experiment launch
-        time.sleep(1)
+        time.sleep(2)
         self.wait_for_clients(job_id)
-        self.db_utils.finish_job(job_id)
+        self.finish_job_in_db(job_id)
