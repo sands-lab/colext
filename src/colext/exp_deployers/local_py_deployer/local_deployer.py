@@ -41,14 +41,14 @@ class LocalDeployer(DeployerBase):
         server_log_handle = open(server_log_path, 'w', encoding='UTF-8')
         self.log_file_handles.append(server_log_handle)
 
-        log.info(f"{server_launch_cmd=}")
+        log.debug(f"{server_launch_cmd=}")
         self.server_proc = subprocess.Popen(server_launch_cmd,
                                             shell=True, env=server_env, cwd=code_path,
                                             stdout=server_log_handle, stderr=server_log_handle)
         log.info("Waiting 3 sec for server startup")
         time.sleep(3)
         log.info("Deploying clients")
-        log.info(f"{client_launch_cmds=}")
+        log.debug(f"{client_launch_cmds=}")
         for c_id in range(self.config["n_clients"]):
             if c_id == 0:
                 time.sleep(3) # weird flower bug
@@ -84,7 +84,6 @@ class LocalDeployer(DeployerBase):
             "PGDATABASE": "colext_db",
             "PGUSER": "colext_user",
         }
-        print(base_env_vars)
 
         return base_env_vars
 
