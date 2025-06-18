@@ -72,8 +72,8 @@ class LocalDeployer(DeployerBase):
             "COLEXT_SERVER_ADDRESS": "0.0.0.0:8080",
             "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
 
-            "COLEXT_DATASETS": STD_DATASETS_PATH,
-            "COLEXT_PYTORCH_DATASETS": PYTORCH_DATASETS_PATH,
+            "COLEXT_DATASETS": os.getenv("COLEXT_DATASETS", STD_DATASETS_PATH),
+            "COLEXT_PYTORCH_DATASETS": os.getenv("PYTORCH_DATASETS_PATH", PYTORCH_DATASETS_PATH),
 
             "COLEXT_MONITORING_LIVE_METRICS": str(self.config["monitoring"]["live_metrics"]),
             "COLEXT_MONITORING_PUSH_INTERVAL": str(self.config["monitoring"]["push_interval"]),
