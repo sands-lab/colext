@@ -143,15 +143,15 @@ $ colext_get_dev_count
 ### Exposed environment variables
 CoLExT exposes several bash environment variables that are passed to the execution environment. These can be used as arguments in the `args` section of the client and server code by expanding the variables as `${ENV_VAR}`. See the [usage example](#using-colext) for an example.
 
-| Name                    | Description                       |
-| ----------------------- | --------------------------------- |
-| COLEXT_CLIENT_ID        | ID of the client (0..n_clients)   |
-| COLEXT_N_CLIENTS        | Number of clients in experiment   |
-| COLEXT_DEVICE_TYPE      | Hardware type of the client       |
-| COLEXT_SERVER_ADDRESS   | Server address (host:port)        |
-| COLEXT_DATASETS         | FL datasets naturally partitioned |
-| COLEXT_PYTORCH_DATASETS | Pytorch datasets caching path     |
-| COLEXT_JOB_ID           | Experiment job ID                 |
+| Name                    | Description                            |
+| ----------------------- | ---------------------------------------|
+| COLEXT_CLIENT_ID        | ID of the client (0..n_clients)        |
+| COLEXT_N_CLIENTS        | Number of clients in experiment        |
+| COLEXT_DEVICE_TYPE      | Hardware type of the client            |
+| COLEXT_SERVER_ADDRESS   | Server address (host:port)             |
+| COLEXT_DATASETS         | Naturally partitioned FL datasets path |
+| COLEXT_PYTORCH_DATASETS | Pytorch datasets caching path          |
+| COLEXT_JOB_ID           | Experiment job ID                      |
 
 
 ### Performance monitoring options
