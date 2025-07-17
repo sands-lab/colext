@@ -67,7 +67,7 @@ class LocalDeployer(DeployerBase):
             "COLEXT_ENV": str(self.config["colext"]["monitor_job"]),
             "COLEXT_JOB_ID": str(job_id),
             "COLEXT_DEVICE_TYPE": "FLServer", # both clients and server run on the server
-            "COLEXT_LOG_LEVEL": "DEBUG",
+            "COLEXT_LOG_LEVEL": os.getenv("COLEXT_LOG_LEVEL", self.config["colext"]["log_level"]),
 
             "COLEXT_SERVER_ADDRESS": "0.0.0.0:8080",
             "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
