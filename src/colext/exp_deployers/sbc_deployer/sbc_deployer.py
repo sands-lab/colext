@@ -3,14 +3,13 @@ import json
 from importlib.metadata import distribution
 import sys
 from pathlib import Path
-from typing import Dict
 from collections import defaultdict
 import yaml
 from python_on_whales import docker
 from jinja2 import Environment, FileSystemLoader
 
 from colext.common.logger import log
-from colext.common.vars import REGISTY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH, SMART_PLUGS_HOST_SP_IP_MAP
+from colext.common.vars import REGISTRY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH
 from colext.exp_deployers.deployer_base import DeployerBase
 from .kubernetes_utils import KubernetesUtils
 
@@ -75,7 +74,7 @@ class SBCDeployer(DeployerBase):
         docker.buildx.bake( targets=targets,
                             files=os.path.join(self.hcl_file_dir, "docker-bake.hcl"),
                             variables={
-                                "REGISTY": REGISTY,
+                                "REGISTRY": REGISTRY,
                                 "PROJECT_NAME": project_name,
                                 "CONTEXT": context,
                                 "INHERITANCE_TARGET": inheritance_target,
@@ -160,7 +159,7 @@ class SBCDeployer(DeployerBase):
         project_name = config["project"]
 
         pod_image_name = self.get_image_for_dev_type(dev_type)
-        pod_config["image"] =  f"{REGISTY}/{project_name}/{pod_image_name}:latest"
+        pod_config["image"] =  f"{REGISTRY}/{project_name}/{pod_image_name}:latest"
         pod_config["colext_env"] = config["colext"]["monitor_job"]
         pod_config["log_level"] = config["colext"]["log_level"]
         pod_config["std_datasets_path"] = STD_DATASETS_PATH

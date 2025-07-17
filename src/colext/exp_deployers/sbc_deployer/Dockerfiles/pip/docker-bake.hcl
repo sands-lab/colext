@@ -1,5 +1,5 @@
 // Variables are set in sbc_deployer.py
-variable "REGISTY" {
+variable "REGISTRY" {
   default = null
 }
 
@@ -61,19 +61,19 @@ target "generic-cpu" {
   }
 
   platforms = ["linux/amd64", "linux/arm64"]
-  tags = ["${REGISTY}/${PROJECT_NAME}/generic-cpu:latest"]
+  tags = ["${REGISTRY}/${PROJECT_NAME}/generic-cpu:latest"]
 }
 
 target "generic-cpu-x86" {
   inherits = ["generic-cpu"]
   platforms = ["linux/amd64"]
-  tags = ["${REGISTY}/${PROJECT_NAME}/generic-cpu-x86:latest"]
+  tags = ["${REGISTRY}/${PROJECT_NAME}/generic-cpu-x86:latest"]
 }
 
 target "generic-cpu-arm" {
   inherits = ["generic-cpu"]
   platforms = ["linux/arm64"]
-  tags = ["${REGISTY}/${PROJECT_NAME}/generic-cpu-arm:latest"]
+  tags = ["${REGISTRY}/${PROJECT_NAME}/generic-cpu-arm:latest"]
 }
 
 target "generic-gpu" {
@@ -85,7 +85,7 @@ target "generic-gpu" {
   }
 
   platforms = ["linux/amd64"]
-  tags = ["${REGISTY}/${PROJECT_NAME}/generic-gpu:latest"]
+  tags = ["${REGISTRY}/${PROJECT_NAME}/generic-gpu:latest"]
 }
 
 target "jetson" {
@@ -102,7 +102,7 @@ target "jetson" {
     BUILD_TYPE: "jetson"
   }
   platforms = ["linux/arm64"]
-  tags = ["${REGISTY}/${PROJECT_NAME}/jetson:latest"]
+  tags = ["${REGISTRY}/${PROJECT_NAME}/jetson:latest"]
 }
 
 target "jetson-nano" {
@@ -114,5 +114,5 @@ target "jetson-nano" {
       "colext:5000/colext/jetson-nano:torch1.13-r32.7.1-py310"
     )
   }
-  tags = ["${REGISTY}/${PROJECT_NAME}/jetson-nano:latest"]
+  tags = ["${REGISTRY}/${PROJECT_NAME}/jetson-nano:latest"]
 }
