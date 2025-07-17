@@ -127,7 +127,7 @@ class SBCDeployer(DeployerBase):
             pod_config["monitoring_measure_self"] = self.config["monitoring"]["measure_self"]
 
             # Add IP of smartplug in case it exists
-            pod_config["SP_IP_ADDRESS"] = SMART_PLUGS_HOST_SP_IP_MAP.get(dev_hostname, None)
+            pod_config["SP_IP_ADDRESS"] = self.smart_plug_host_map.get(dev_hostname, None)
 
             return pod_config
 

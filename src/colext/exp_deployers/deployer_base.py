@@ -1,8 +1,9 @@
 import sys
 import time
-from dataclasses import dataclass
+import json
 from collections import defaultdict
 from abc import ABC, abstractmethod
+from colext.common.vars import SMART_PLUG_HOST_MAP_FILE
 from .db_utils import DBUtils
 
 
@@ -16,6 +17,7 @@ class DeployerBase(ABC):
         self.config = config
         self.test_env = test_env
         self.launch_only = config['colext']['just_launcher'] == "True"
+        self.smart_plug_host_map = get_smart_plug_host_map()
 
         if not self.launch_only:
             self.db_utils = DBUtils()
@@ -54,7 +56,7 @@ class DeployerBase(ABC):
     def check_project_in_db(self):
         if self.launch_only:
             return
-        
+
         project_name = self.config['project']
         if not self.db_utils.project_exists(project_name):
             print(f"Could not find project named {project_name}. Please use a valid project name.")
@@ -65,14 +67,14 @@ class DeployerBase(ABC):
             return "14" # Fake placeholder data
         else:
             return self.db_utils.create_job(self.config)
-        
+
     def register_client_in_db(self, client_id: int, dev_id: int, job_id: int) -> str:
         """ Register client in DB """
         if self.launch_only:
             return "2116" # Fake placeholder data
-        
+
         return self.db_utils.register_client(client_id, dev_id, job_id)
-    
+
     def finish_job_in_db(self, job_id):
         if self.launch_only:
             return
@@ -94,3 +96,16 @@ class DeployerBase(ABC):
         time.sleep(2)
         self.wait_for_clients(job_id)
         self.finish_job_in_db(job_id)
+
+def get_smart_plug_host_map():
+    try:
+        with open(SMART_PLUG_HOST_MAP_FILE, encoding='utf-8') as f:
+            ip_map = json.load(f)
+    except FileNotFoundError:
+        ip_map = {}
+    except json.JSONDecodeError:
+        print("Could not decode json. Try using a json validator tool.")
+        raise
+
+    return ip_map
+
