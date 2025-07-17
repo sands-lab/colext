@@ -6,6 +6,6 @@ dist
 logs
 *.log
 data
-build
+build/
 *.pdf
 torch_wheels
