@@ -37,7 +37,7 @@ class LocalDeployer(DeployerBase):
         self.log_file_handles = []
 
         log.info("Deploying server")
-        server_log_path = logs_dir.joinpath("server.out")
+        server_log_path = logs_dir.joinpath("server.log")
         server_log_handle = open(server_log_path, 'w', encoding='UTF-8')
         self.log_file_handles.append(server_log_handle)
 
@@ -53,7 +53,7 @@ class LocalDeployer(DeployerBase):
             if c_id == 0:
                 time.sleep(3) # weird flower bug
 
-            client_log_path = logs_dir.joinpath(f"client_{c_id}.out")
+            client_log_path = logs_dir.joinpath(f"client_{c_id}.log")
             client_log_handle = open(client_log_path, 'w', encoding='UTF-8')
             self.log_file_handles.append(client_log_handle)
 
