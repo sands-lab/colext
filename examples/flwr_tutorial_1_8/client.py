@@ -1,4 +1,5 @@
 # Copied from: https://github.com/adap/flower/blob/dcffb484fb7d1e712f65d414fb31aa021f0a760e/examples/quickstart-pytorch/client.py
+import os
 import argparse
 import warnings
 from collections import OrderedDict
@@ -20,7 +21,6 @@ from colext import MonitorFlwrClient
 
 warnings.filterwarnings("ignore", category=UserWarning)
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
 class Net(nn.Module):
     """Model (simple CNN adapted from 'PyTorch: A 60 Minute Blitz')"""
@@ -87,7 +87,8 @@ def test(net, testloader):
 
 def load_data(partition_id):
     """Load partition CIFAR10 data."""
-    fds = FederatedDataset(dataset="cifar10", partitioners={"train": 3})
+    n_partitions = int(os.getenv("COLEXT_N_CLIENTS"))
+    fds = FederatedDataset(dataset="cifar10", partitioners={"train": n_partitions})
     partition = fds.load_partition(partition_id)
     # Divide data on each node: 80% train, 20% test
     partition_train_test = partition.train_test_split(test_size=0.2)
@@ -103,6 +104,7 @@ def load_data(partition_id):
     partition_train_test = partition_train_test.with_transform(apply_transforms)
     trainloader = DataLoader(partition_train_test["train"], batch_size=32, shuffle=True)
     testloader = DataLoader(partition_train_test["test"], batch_size=32)
+
     return trainloader, testloader
 
 
@@ -111,15 +113,15 @@ def load_data(partition_id):
 # #############################################################################
 
 # Get partition id
-parser = argparse.ArgumentParser(description="Flower")
-parser.add_argument(
-    "--partition-id",
-    choices=[0, 1, 2],
-    default=0,
-    type=int,
-    help="Partition of the dataset divided into 3 iid partitions created artificially.",
-)
-partition_id = parser.parse_known_args()[0].partition_id
+# parser = argparse.ArgumentParser(description="Flower")
+# parser.add_argument(
+#     "--partition-id",
+#     choices=[0, 1, 2],
+#     default=0,
+#     type=int,
+#     help="Partition of the dataset divided into 3 iid partitions created artificially.",
+# )
+partition_id = int(os.getenv("COLEXT_CLIENT_ID"))
 
 # Load model and data (simple CNN, CIFAR-10)
 net = Net().to(DEVICE)
@@ -164,7 +166,7 @@ def get_args():
                     description='Starts the FL client')
 
     parser.add_argument('--flserver_address', type=str, default="127.0.0.1:8080", help="FL server address ip:port")
-    parser.add_argument('--max_step_count', default=3000, type=int, help="Configure number of steps for train and test")
+    parser.add_argument('--max_step_count', default=1000, type=int, help="Configure number of steps for train and test")
     args = parser.parse_args()
     return args
 
