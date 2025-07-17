@@ -25,8 +25,8 @@ class GeneralScrapper(ScraperBase):
 
         try:
             self.smart_plug = SmartPlug()
-        except ValueError as e:
-            log.error(f"Failed to initialize smart plug plugin. Will not use it. {e}")
+        except EnvironmentError as e:
+            log.warning(e)
             self.smart_plug = None
 
     def scrape_process_metrics(self) -> ProcessMetrics:

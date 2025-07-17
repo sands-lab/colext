@@ -18,9 +18,9 @@ class SmartPlug:
         ip_address = os.getenv("SP_IP_ADDRESS")
 
         if tapo_username is None or tapo_password is None or ip_address is None:
-            raise ValueError(
-                "SmartPlugPlugin requires the TAPO_USERNAME, TAPO_PASSWORD and SP_IP_ADDRESS "
-                "env vars to be set"
+            raise EnvironmentError(
+                "SmartPlugPlugin requires the environment variables below to be set:\n" \
+                "TAPO_USERNAME, TAPO_PASSWORD and SP_IP_ADDRESS "
             )
 
         self.client = ApiClient(tapo_username, tapo_password)
@@ -32,6 +32,8 @@ class SmartPlug:
         Retrieves the power consumption of the smart plug device in Milliwatts.
         """
 
+        # Getting current power from get_energy_usage because it's in mW.
+        #         get_current_power has less precision. It's in W
         # Made call sync and we later run it concurrently using ThreadPoolExecutor
         energy_usage = self.asyncio_loop.run_until_complete(self.device.get_energy_usage())
         return energy_usage.current_power
