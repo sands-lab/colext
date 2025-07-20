@@ -1,3 +1,4 @@
+import os
 import time
 import queue
 import threading
@@ -51,13 +52,19 @@ class HWScraper():
     @staticmethod
     def get_scrapper_agent_for_device() -> ScraperBase:
         dev_type = get_colext_env_var_or_exit("COLEXT_DEVICE_TYPE")
+        has_smart_plug = HWScraper.has_smart_plug()
 
-        scrapper_agent = GeneralScrapper
+        scrapper_class = GeneralScrapper # Default
+
         if "Jetson" in dev_type:
             from .scrapers.jetson_scraper import JetsonScraper
-            scrapper_agent = JetsonScraper
-        elif "LattePanda" in dev_type:
+            scrapper_class = JetsonScraper
+        elif "LattePanda" in dev_type and not has_smart_plug:
             from .scrapers.latte_scraper import LatteScraper
-            scrapper_agent = LatteScraper
+            scrapper_class = LatteScraper
 
-        return scrapper_agent
+        return scrapper_class
+
+    @staticmethod
+    def has_smart_plug() -> bool:
+        return os.getenv("SP_IP_ADDRESS") is not None

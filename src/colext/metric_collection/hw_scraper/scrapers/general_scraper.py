@@ -11,7 +11,7 @@ from .scraper_base import ScraperBase, ProcessMetrics
 class GeneralScrapper(ScraperBase):
     """
         Base scraper using psutil.
-        This scraper tries to collect power consumption using the smart plug plugin.
+        This scraper tries to collect power consumption using smart plugs.
         It does not capture GPU utilization
     """
     def __init__(self, pid:int , collection_interval_s: float):
