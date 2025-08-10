@@ -29,7 +29,7 @@ class LocalDeployer(DeployerBase):
         code_path = self.config["code"]["path"]
 
         # Prepare logs
-        logs_dir = Path("logs")
+        logs_dir = Path(self.config["code"]["path"]) / "logs"
         # Clear previous logs
         shutil.rmtree(logs_dir, ignore_errors=True)
         os.makedirs(logs_dir, exist_ok=True)
@@ -61,6 +61,9 @@ class LocalDeployer(DeployerBase):
                                       shell=True, env=client_envs[c_id], cwd=code_path,
                                       stdout=client_log_handle, stderr=client_log_handle)
             self.client_procs.append(c_proc)
+
+        log.info("Experiment deployed")
+        log.info(f"Logs are being streamed to {logs_dir}")
 
     def get_base_env_vars(self, job_id):
         base_env_vars = {
