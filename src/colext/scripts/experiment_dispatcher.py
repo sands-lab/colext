@@ -19,12 +19,20 @@ def get_args():
     parser.add_argument('-l', '--local_deployer', action='store_true',
                         help="Use a local deployer to debug experiment")
     parser.add_argument('-j', '--just_launcher', default=False, action='store_true',
-                        help="If set, only uses the CoLExT launcher to deploy the experiment.")
+                        help="If set, only uses the CoLExT launcher to deploy the experiment, without any monitoring. This is useful to test the experiment code without any interference from the CoLExT monitoring system.")
+    parser.add_argument('-d', '--debug_local', action='store_true',
+                        help="Run a local deployer using CoLExT just as the launcher for debugging outside of the colext environment. Equivalent to `--local_deployer --just_launcher`")
     parser.add_argument('-w', '--wait_for_experiment', default=True, action='store_true',
                         help="Wait for experiment to finish.")
     # parser.add_argument('-d', '--delete_on_end', default=True, action='store_true', help="Delete FL pods .")
 
     args = parser.parse_args()
+
+    if args.debug_local:
+        if args.local_deployer or args.just_launcher:
+            print("Warning: '-d'/'--debug_local' forces '--local_deployer --just_launcher'.")
+        args.local_deployer = True
+        args.just_launcher = True
 
     return args
 
