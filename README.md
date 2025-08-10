@@ -217,12 +217,20 @@ Here are the contents for each CSV:
 ### Summary data
 Coming soon...
 
-# Tips for SBC deployment
-The SBC deployment containerizes user code and deploys it using Kubernetes.
-Before starting the deployment process, it's recommended to make sure that a local deployment is working as expected.
-Local deployment can be used by changing the deployer to `local_py`. More information on setting the deployer [here](#python-version-and-deployers).
+## Tips for SBC deployment
 
-Once this is verified, check the containerization is working as expected by running the `colext_launch_job` command in the "prepare" mode.
+### Debug deployment
+Before deploying to CoLExT devices, verify your code works locally by running an experiment on your development machine using a colext_config.yaml.
+Use the following command to launch a local debug job with the CoLExT launcher. Environment variables (e.g. COLEXT_CLIENT_ID and COLEXT_N_CLIENTS) will still be available.
+```bash
+colext_launch_job -d
+```
+
+### Debug containerization
+The SBC deployment containerizes your code and deploys it using Kubernetes.
+Before deploying, ensure that a local deployment is working as expected (see above).
+
+Once confirmed, vaidate the containerization by running the `colext_launch_job` command in prepare mode.
 This mode will perform checks and containerize the application, ensuring all the dependencies can be installed in the container.
 ```Bash
 # Prepares app for deployment
