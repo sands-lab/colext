@@ -130,20 +130,23 @@ class LocalDeployer(DeployerBase):
 
     def wait_for_clients(self, job_id: int) -> None:
         # Wait for bg processes
-        log.info("Waiting for server proc to finish")
+        log.info("Waiting for server process to finish")
         exit_code = self.server_proc.wait()
         if exit_code != 0:
             log.error(f"Server process exited with error different than 0. Error = {exit_code}")
         else:
             log.info("Server finished successfully")
 
-        log.info("Waiting for server proc to finish")
-        exit_codes = [c_proc.wait() for c_proc in self.client_procs]
-        for i, exit_code in enumerate(exit_codes):
-            if exit_code != 0:
-                log.error(f"Client {i} exited with error different than 0. Error = {exit_code}")
-            else:
-                log.info(f"Client {i} finished successfully")
+        log.info("Waiting for client processes to finish")
+        with ThreadPoolExecutor() as executor:
+            futures = {executor.submit(c_proc.wait): client_i for client_i, c_proc in enumerate(self.client_procs)}
+            for future in as_completed(futures):
+                client_i = futures[future]
+                exit_code = future.result()
+                if exit_code != 0:
+                    log.error(f"Client {client_i} exited with error = {exit_code}")
+                else:
+                    log.info(f"Client {client_i} finished successfully")
 
         # Close file handles
         for f in self.log_file_handles:
