@@ -48,7 +48,16 @@ def read_config(config_file, args):
         print(f"Error parsing configuration file: {yaml_err}")
         sys.exit(1)
 
-    # Apply defaults
+    config_dict = apply_config_defaults(config_dict)
+    config_dict = apply_config_overrides(config_dict, args)
+    config_dict = validate_config(config_dict)
+    config_dict = add_config_fields(config_dict, config_file)
+
+    print("CoLExT configuration read successfully")
+    return config_dict
+
+
+def apply_config_defaults(config_dict):
     if "path" not in config_dict["code"]:
         config_dict["code"]["path"] = "."
         print("Could not find 'code.path' in config file. Assuming code is in same dir as config file.")
@@ -57,10 +66,6 @@ def read_config(config_file, args):
         default_py_version = "3.10"
         config_dict["code"]["python_version"] = default_py_version
         print(f"Could not find 'code.python_version' in config file. Assuming {default_py_version}")
-
-    if "deployer" not in config_dict:
-        default_deployer = "sbc"
-        config_dict["deployer"] = default_deployer
 
     monitoring_defaults = {
         "live_metrics": True,
@@ -71,20 +76,26 @@ def read_config(config_file, args):
     add_config_defaults(config_dict, "monitoring", monitoring_defaults)
 
     colext_defaults = {
-        # "deployer": "sbc",
+        "deployer": "sbc",
         "log_level": "INFO", # ERROR/INFO/DEBUG
         "just_launcher": "False" # True/False: True to only use the CoLExT launcher without collecting metrics
     }
     add_config_defaults(config_dict, "colext", colext_defaults)
 
-    # Overrides
+    return config_dict
+
+
+def apply_config_overrides(config_dict, args):
     if args.local_deployer:
         config_dict["deployer"] = "local_py"
 
     if args.just_launcher:
         config_dict["colext"]["just_launcher"] = "True"
 
-    # Validate
+    return config_dict
+
+
+def validate_config(config_dict):
     if "project" not in config_dict:
         print("Please specify the project name to associate this job with.")
         sys.exit(1)
@@ -113,9 +124,13 @@ def read_config(config_file, args):
         print_err(f"colext.just_launcher can  only be set to {valid_just_launcher_options}")
         sys.exit(1)
 
-    # Add fields
-    config_dir_path = os.path.dirname(os.path.realpath(config_file))
-    config_dict["code"]["path"] = os.path.join(config_dir_path, config_dict["code"]["path"])
+    return config_dict
+
+
+def add_config_fields(config_dict, config_file):
+    if not os.path.isabs(config_dict["code"]["path"]):
+        config_dir_path = os.path.dirname(os.path.realpath(config_file))
+        config_dict["code"]["path"] = os.path.join(config_dir_path, config_dict["code"]["path"])
     print(f'Code path = {config_dict["code"]["path"]}')
 
     config_dict["colext"]["monitor_job"] = str(config_dict["colext"]["just_launcher"] != "True")
@@ -128,7 +143,6 @@ def read_config(config_file, args):
     config_dict["req_dev_types"] = list(set([client["dev_type"] for client in config_dict["clients"]]))
     config_dict["n_clients"] = sum(client["count"] for client in config_dict["clients"])
 
-    print("CoLExT configuration read successfully")
     return config_dict
 
 def print_err(msg):
