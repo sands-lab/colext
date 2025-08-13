@@ -3,6 +3,7 @@ import subprocess
 import os
 from pathlib import Path
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from colext.common.logger import log
 from colext.exp_deployers.deployer_base import DeployerBase
@@ -29,7 +30,7 @@ class LocalDeployer(DeployerBase):
         code_path = self.config["code"]["path"]
 
         # Prepare logs
-        logs_dir = Path(self.config["code"]["path"]) / "logs"
+        logs_dir = Path(self.config["code"]["path"]) / "colext_logs"
         # Clear previous logs
         shutil.rmtree(logs_dir, ignore_errors=True)
         os.makedirs(logs_dir, exist_ok=True)
