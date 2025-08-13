@@ -87,7 +87,7 @@ def apply_config_defaults(config_dict):
 
 def apply_config_overrides(config_dict, args):
     if args.local_deployer:
-        config_dict["deployer"] = "local_py"
+        config_dict["colext"]["deployer"] = "local_py"
 
     if args.just_launcher:
         config_dict["colext"]["just_launcher"] = "True"
@@ -110,7 +110,7 @@ def validate_config(config_dict):
         sys.exit(1)
 
     valid_deployers = ["sbc", "local_py"]
-    if config_dict["deployer"] not in valid_deployers:
+    if config_dict["colext"]["deployer"] not in valid_deployers:
         print_err(f"deployer can  only be set to {valid_deployers}")
         sys.exit(1)
 
@@ -167,7 +167,7 @@ def launch_experiment():
     args = get_args()
     config_dict = read_config(args.config_file, args)
 
-    Deployer = get_deployer(config_dict["deployer"])
+    Deployer = get_deployer(config_dict["colext"]["deployer"])
     deployer = Deployer(config_dict, args.test_env)
 
     if args.prepare_only:
@@ -195,3 +195,6 @@ def launch_experiment():
         print("Experiment complete.")
     else:
         print("Command will exit but experiment is still running.")
+
+
+launch_experiment()
