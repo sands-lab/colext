@@ -195,6 +195,3 @@ def launch_experiment():
         print("Experiment complete.")
     else:
         print("Command will exit but experiment is still running.")
-
-
-launch_experiment()
