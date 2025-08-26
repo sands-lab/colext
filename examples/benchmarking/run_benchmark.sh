@@ -28,8 +28,8 @@ for config in "$benchmark_folder"/output/colext_configs/*; do
     log_file="$benchmark_folder/output/logs/${config_id}.log"
 
     echo "Launching job based on: $config"
-    echo "log" > "$log_file"
-    # colext_launch_job -c $config -l > "$log_file" 2>&1
+    echo "Log file: $log_file"
+    colext_launch_job -c $config > "$log_file" 2>&1
     echo "Job finished"
 
     # Get job_id from pod labels
