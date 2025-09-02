@@ -274,7 +274,7 @@ This allows external users to interact with the server as if they were directly 
     sudo zerotier-cli info | awk '{print $3}'
     ```
 1. Share your ZeroTier device ID and a public SSH key with your CoLExT contact point
-1. Add an SSH config. Note that you need to replace the username:
+1. Add an SSH config. Please ask your contact point for your username.
     ```
     # Add to ~/.ssh/config
     Host colext
