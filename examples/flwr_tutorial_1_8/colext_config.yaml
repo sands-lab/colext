@@ -1,12 +1,9 @@
 project: colext_example # project name should not have spaces
 job_name: "SOTA FL experiment"
 
-# deployer: local_py
-# python_version: "3.10"
-
 code:
     # path: <code-root-dir>
-    # if `path` is ommited it defaults to the config file location
+    # if `path` is omitted, it defaults to the config file location
   client:
     # Assumes relative paths from path
     command: >-
@@ -19,12 +16,12 @@ code:
       --num_rounds=3
 
 clients:
-  # - dev_type: LattePandaDelta3
-  #   count: 4
-  #   add_args: "--max_step_count=50"
+   - dev_type: LattePandaDelta3
+     count: 2
+     add_args: "--max_step_count=50"
 
   - dev_type: JetsonOrinNano
-    count: 4
+    count: 2
     add_args: "--max_step_count=200"
 
   - dev_type: OrangePi5B
