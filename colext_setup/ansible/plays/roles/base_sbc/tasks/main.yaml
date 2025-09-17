@@ -20,9 +20,6 @@
 - name: Install packages
   ansible.builtin.import_tasks: install_packages.yaml
 
-- name: Install services
-  ansible.builtin.import_tasks: install_services.yaml
-
 - name: Configure Jetsons
   ansible.builtin.import_tasks: configure_jetsons.yaml
   when: "'jetsons' in group_names"
@@ -30,6 +27,7 @@
 
 - name: Configure datasets
   ansible.builtin.import_tasks: configure_datasets.yaml
+  tags: conf_dataset
 
 - name: Check if reboot required
   ansible.builtin.stat:

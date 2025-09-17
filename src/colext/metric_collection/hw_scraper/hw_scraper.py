@@ -52,16 +52,12 @@ class HWScraper():
     @staticmethod
     def get_scrapper_agent_for_device() -> ScraperBase:
         dev_type = get_colext_env_var_or_exit("COLEXT_DEVICE_TYPE")
-        has_smart_plug = HWScraper.has_smart_plug()
 
         scrapper_class = GeneralScrapper # Default
 
         if "Jetson" in dev_type:
             from .scrapers.jetson_scraper import JetsonScraper
             scrapper_class = JetsonScraper
-        elif "LattePanda" in dev_type and not has_smart_plug:
-            from .scrapers.latte_scraper import LatteScraper
-            scrapper_class = LatteScraper
 
         return scrapper_class
 

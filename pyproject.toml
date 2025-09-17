@@ -20,13 +20,11 @@ dependencies = [
     "python-on-whales~=0.68.0",
     "flwr>=1.5.0,<1.9",
     "psutil~=5.9.8",
-    "pyRAPL~=0.2.3.1",
     "tapo~=0.8.0",
 ]
 
 [project.optional-dependencies]
 jetson = ["jetson-stats==4.3.2"]
-# lp = ["pyRAPL~=0.2.3.1"]
 plotting = ["pandas>=2.0.3", "seaborn>=0.13.2", "matplotlib>=3.7.5"]
 
 
