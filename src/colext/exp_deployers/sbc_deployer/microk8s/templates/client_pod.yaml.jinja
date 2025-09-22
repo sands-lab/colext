@@ -50,6 +50,8 @@ spec:
         value: "/colext/datasets"
       - name: COLEXT_PYTORCH_DATASETS
         value: "/colext/pytorch_datasets"
+      - name: HF_DATASETS_CACHE
+        value: "/colext/hf_datasets"
 
       - name: PGHOSTADDR
         value: 10.0.0.100
@@ -59,7 +61,6 @@ spec:
         value: colext_user
       - name: PGPASSFILE
         value: /pgcreds/.pgpass
-      {# Set smartplug ip if set #}
       {% if SP_IP_ADDRESS is not none %}
       - name: SP_IP_ADDRESS
         value: "{{ SP_IP_ADDRESS }}"
@@ -74,6 +75,8 @@ spec:
         mountPath: /colext/datasets
       - name: colext-pytorch-datasets
         mountPath: /colext/pytorch_datasets
+      - name: colext-hf-datasets
+        mountPath: /colext/hf_datasets
     {% if "Jetson" in dev_type %}
       - mountPath: /run/jtop.sock
         name: jtop-socket
@@ -90,6 +93,10 @@ spec:
     - name: colext-pytorch-datasets
       hostPath:
         path: {{ pytorch_datasets_path }}
+        type: Directory
+    - name: colext-hf-datasets
+      hostPath:
+        path: {{ hf_datasets_path }}
         type: Directory
     {% if "Jetson" in dev_type %}
     - name: jtop-socket

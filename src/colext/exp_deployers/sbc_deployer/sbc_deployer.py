@@ -9,7 +9,7 @@ from python_on_whales import docker
 from jinja2 import Environment, FileSystemLoader
 
 from colext.common.logger import log
-from colext.common.vars import REGISTRY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH
+from colext.common.vars import REGISTRY, STD_DATASETS_PATH, PYTORCH_DATASETS_PATH, HF_DATASETS_PATH
 from colext.exp_deployers.deployer_base import DeployerBase
 from .kubernetes_utils import KubernetesUtils
 
@@ -164,6 +164,7 @@ class SBCDeployer(DeployerBase):
         pod_config["log_level"] = config["colext"]["log_level"]
         pod_config["std_datasets_path"] = STD_DATASETS_PATH
         pod_config["pytorch_datasets_path"] = PYTORCH_DATASETS_PATH
+        pod_config["hf_datasets_path"] = HF_DATASETS_PATH
 
         return pod_config
 
