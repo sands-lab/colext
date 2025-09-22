@@ -2,10 +2,7 @@ project: colext_example # project name should not have spaces
 job_name: "SOTA FL experiment"
 
 code:
-    # path: <code-root-dir>
-    # if `path` is omitted, it defaults to the config file location
   client:
-    # Assumes relative paths from path
     command: >-
       python3 ./client.py
       --flserver_address=${COLEXT_SERVER_ADDRESS}
