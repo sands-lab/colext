@@ -26,5 +26,5 @@
     dest: "/etc/ssh/sshd_config"
     insertafter: "#PasswordAuthentication yes"
     line: "PasswordAuthentication no"
-  # notify: Restart sshd
+  notify: Restart sshd
   when: "'jn' in inventory_hostname"

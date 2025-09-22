@@ -11,17 +11,9 @@
 #   ansible.builtin.shell:
 #     cmd: sudo nvpmodel -m 0
 
-- name: Configure tc modules
+- name: Configure tc modules for network emulation
   block:
-    - name: Ensure accidental destination directory does not exist
-      ansible.builtin.file:
-        path: "/lib/modules/{{ ansible_kernel }}/kernel/{{ item }}"
-        state: absent
-      loop:
-        - 4.9.337-tegra
-        - 5.10.120-tegra
-
-    - name: Copy kernel modules
+    - name: Copy pre-built kernel modules
       ansible.builtin.copy:
         src: jetson_tc_kernel_modules/{{ ansible_kernel }}/
         dest: "/lib/modules/{{ ansible_kernel }}/kernel/"

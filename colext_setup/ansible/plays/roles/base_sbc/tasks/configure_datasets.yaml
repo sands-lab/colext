@@ -11,10 +11,13 @@
     src: "{{ std_datasets.src_path }}"
     dest: "{{ std_datasets.dest_path }}"
 
-- name: Ensure dataset path for pytorch datasets exists
+- name: Ensure dataset path for pytorch/hf datasets exists
   ansible.builtin.file:
-    path: "{{ pytorch_datasets.path }}"
+    path: "{{ item }}"
     state: directory
-    owner: root
-    group: root
-    mode: '0555'
+    owner: 1000
+    group: 1000
+    mode: '0775'
+  loop:
+    - "{{ pytorch_datasets.path }}"
+    - "{{ hf_datasets.path }}"

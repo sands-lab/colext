@@ -12,3 +12,4 @@
     - snap          # Used to install microk8s
     - selinux-utils # Microk8s uses it and the jetson OS does not come with it
     - python3-pip
+    - stress        # Used to stress cpu
