@@ -21,14 +21,23 @@ COPY ./requirements.txt .
 RUN if [ "$BUILD_TYPE" = 'jetson' ]; then \
         sed -i '/^torch/d' test_code/requirements.txt; \
     fi
-# Putting this here to speed up install, this only works because the colext package dependency is commented out
+
+# Avoid installing GPU version of torch on CPU only machines
+RUN if [ "$BUILD_TYPE" = 'generic-cpu' ]; then \
+        sed -E -i 's|(https://download.pytorch.org/whl)/cu[0-9]+|\1/cpu|' test_code/requirements.txt; \
+    fi
+
+# Installing all dependencies expect the CoLExT package
+RUN sed -i '/^colext/d' test_code/requirements.txt;
 RUN python3 -m pip install --no-cache-dir -r ./test_code/requirements.txt
+
 RUN python3 -m pip install --no-cache-dir -r ./requirements.txt
 
 # Copy rest of test code
-COPY $TEST_REL_DIR/ test_code/
-# Copy and install colext package
+COPY --exclude=requirements.txt $TEST_REL_DIR/ test_code/
+# Copy the missing files
 COPY --exclude=colext_config.yaml,requirements.txt  . .
+# Install current state of CoLExT package
 RUN python3 -m pip install .${INSTALL_OPTIONS}
 
 WORKDIR /fl_testbed/test_code
