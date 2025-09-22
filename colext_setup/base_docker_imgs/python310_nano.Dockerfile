@@ -1,4 +1,4 @@
-FROM flserver:5000/colext/jetson-nano:torch1.10-r32.7.1-py38
+FROM colext:5000/colext/jetson-nano:torch1.10-r32.7.1-py38
 
 # Before we can abstract this we will also need to have the associated torch wheel
 # ARG PYTHON_VERSION=python3.10
@@ -15,14 +15,15 @@ ENV PYENV_ROOT="$HOME/.pyenv"
 ENV PATH="${PYENV_ROOT}/shims:${PYENV_ROOT}/bin:${PATH}"
 
 ENV PYTHON_VERSION=3.10
+ENV MAKEFLAGS="-j$(nproc)"
+ENV PYTHON_MAKEFLAGS="-j$(nproc)"
 RUN pyenv install ${PYTHON_VERSION}
 RUN pyenv global ${PYTHON_VERSION}
 
 RUN python3 -m pip install numpy==1.26.4
-# # torchvision, torchaudio compatibility https://pytorch.org/get-started/previous-versions/
-COPY ./torch_wheels/ torch_wheels
-RUN find torch_wheels/${PYTHON_VERSION} -name '*.whl' -exec python3 -m pip install {} +
+COPY ./wheels/nano/${PYTHON_VERSION} /wheels
+RUN find /wheels -name '*.whl' -exec python3 -m pip install {} +
 
 # Confirm torch packages can be imported and torch can use cuda
 RUN python3 --version && python3 -c "import torch; import torchvision; import torchaudio; \
-                                        print(f'CUDA available? {torch.cuda.is_available()}')"
+                                        assert torch.cuda.is_available(), 'CUDA not available'"
