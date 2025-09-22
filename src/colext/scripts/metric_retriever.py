@@ -100,7 +100,9 @@ def gen_clean_hw_metrics(jd):
         group['delta_t_sec'] = group['time'].diff().dt.total_seconds().fillna(0)
         group['energy'] = (group['power_consumption'] * group['delta_t_sec']).cumsum()
         return group
-    hw_metrics = hw_metrics.groupby('client_id').apply(comp_comulative_energy).reset_index(drop=True)
+    hw_metrics = hw_metrics.groupby('client_id') \
+                           .apply(comp_comulative_energy, include_groups=True) \
+                           .reset_index(drop=True)
 
     def attach_round_stage_state(client_i_hw):
         client_id = client_i_hw.name
@@ -123,7 +125,7 @@ def gen_clean_hw_metrics(jd):
 
     # prime state to idle - set running state during training portion
     hw_metrics["state"] = "idle"
-    hw_metrics = hw_metrics.groupby("client_id").apply(attach_round_stage_state)
+    hw_metrics = hw_metrics.groupby("client_id").apply(attach_round_stage_state, include_groups=True)
 
     # Adjust HW Units:
     hw_metrics["mem_util"] = hw_metrics["mem_util"] / 1024 / 1024 # MiB
@@ -198,7 +200,8 @@ def gen_cr_metric_summary(jd):
             cr_group["Data rcvd in round (MiB)"] = calc_diff(start_i, end_i, "Rcvd (MiB)")
 
         return cr_group
-    crs = crs.groupby(["client_id", "round_number", "stage"]).apply(get_scoped_metrics).reset_index(drop=True)
+    crs = crs.groupby(["client_id", "round_number", "stage"]) \
+        .apply(get_scoped_metrics, include_groups=True).reset_index(drop=True)
 
     crs['EDP (J*s)'] = crs['Energy training (J)'] * crs['Training time (s)']
 
