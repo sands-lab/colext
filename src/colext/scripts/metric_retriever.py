@@ -71,12 +71,17 @@ def download_metric_files(job_id):
 def read_metric_files():
     # FIX: Why set_index?
     client_info: DataFrame = pd.read_csv("client_info.csv").set_index("client_id")
-    round_metrics: DataFrame = pd.read_csv("round_metrics.csv", parse_dates=["start_time", "end_time"])
-    cr_timings: DataFrame = pd.read_csv("client_round_metrics.csv", parse_dates=["start_time", "end_time"])
-    # FIX: I want to merge these two lines
+    round_metrics: DataFrame = pd.read_csv("round_metrics.csv")
+    cr_timings: DataFrame = pd.read_csv("client_round_metrics.csv")
     hw_metrics: DataFrame = pd.read_csv("hw_metrics.csv")
-    hw_metrics["time"] = pd.to_datetime(hw_metrics["time"], format='ISO8601')
     # FIX: Can we set the index to time?
+
+    # Parse dates
+    round_metrics["start_time"] = pd.to_datetime(round_metrics["start_time"], format='ISO8601')
+    round_metrics["end_time"]   = pd.to_datetime(round_metrics["end_time"],   format='ISO8601')
+    cr_timings["start_time"]    = pd.to_datetime(cr_timings["start_time"],    format='ISO8601')
+    cr_timings["end_time"]      = pd.to_datetime(cr_timings["end_time"],      format='ISO8601')
+    hw_metrics["time"]          = pd.to_datetime(hw_metrics["time"],          format='ISO8601')
 
     job_data = {
         "client_info": client_info,
@@ -100,6 +105,7 @@ def gen_clean_hw_metrics(jd):
         group['delta_t_sec'] = group['time'].diff().dt.total_seconds().fillna(0)
         group['energy'] = (group['power_consumption'] * group['delta_t_sec']).cumsum()
         return group
+
     hw_metrics = hw_metrics.groupby('client_id') \
                            .apply(comp_comulative_energy, include_groups=True) \
                            .reset_index(drop=True)
