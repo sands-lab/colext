@@ -122,7 +122,7 @@ def test(net, testloader):
 def load_data():
     """Load CIFAR-10 (training and test set)."""
     trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-    datapath = os.getenv("COLEXT_PYTORCH_DATASETS", "./data")
+    datapath = os.getenv("DATASETS_CACHE", "./data")
     trainset = CIFAR10(datapath, train=True, download=True, transform=trf)
     testset = CIFAR10(datapath, train=False, download=True, transform=trf)
     return DataLoader(trainset, batch_size=32, shuffle=True, pin_memory=True), DataLoader(testset)

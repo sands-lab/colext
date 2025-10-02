@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from colext.common.logger import log
 from colext.exp_deployers.deployer_base import DeployerBase
-from colext.common.vars import STD_DATASETS_PATH, PYTORCH_DATASETS_PATH, HF_DATASETS_PATH
+from colext.common.vars import STD_DATASETS_PATH
 
 
 class LocalDeployer(DeployerBase):
@@ -77,8 +77,6 @@ class LocalDeployer(DeployerBase):
             "COLEXT_N_CLIENTS": str(self.config["n_clients"]),
 
             "COLEXT_DATASETS": os.getenv("COLEXT_DATASETS", STD_DATASETS_PATH),
-            "COLEXT_PYTORCH_DATASETS": os.getenv("PYTORCH_DATASETS_PATH", PYTORCH_DATASETS_PATH),
-            "HF_DATASETS_CACHE": os.getenv("HF_DATASETS_CACHE", HF_DATASETS_PATH),
 
             "COLEXT_MONITORING_LIVE_METRICS": str(self.config["monitoring"]["live_metrics"]),
             "COLEXT_MONITORING_PUSH_INTERVAL": str(self.config["monitoring"]["push_interval"]),

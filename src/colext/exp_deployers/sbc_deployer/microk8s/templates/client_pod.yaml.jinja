@@ -48,8 +48,6 @@ spec:
 
       - name: COLEXT_DATASETS
         value: "/colext/datasets"
-      - name: COLEXT_PYTORCH_DATASETS
-        value: "/colext/pytorch_datasets"
       - name: HF_DATASETS_CACHE
         value: "/colext/hf_datasets"
 
@@ -73,9 +71,7 @@ spec:
         mountPath: /pgcreds
       - name: colext-std-datasets
         mountPath: /colext/datasets
-      - name: colext-pytorch-datasets
-        mountPath: /colext/pytorch_datasets
-      - name: colext-hf-datasets
+      - name: hf-datasets-cache
         mountPath: /colext/hf_datasets
     {% if "Jetson" in dev_type %}
       - mountPath: /run/jtop.sock
@@ -90,11 +86,7 @@ spec:
       hostPath:
         path: {{ std_datasets_path }}
         type: Directory
-    - name: colext-pytorch-datasets
-      hostPath:
-        path: {{ pytorch_datasets_path }}
-        type: Directory
-    - name: colext-hf-datasets
+    - name: hf-datasets-cache
       hostPath:
         path: {{ hf_datasets_path }}
         type: Directory

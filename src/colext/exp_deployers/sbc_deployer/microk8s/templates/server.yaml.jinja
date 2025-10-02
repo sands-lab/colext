@@ -23,8 +23,6 @@ spec:
 
       - name: COLEXT_DATASETS
         value: "/colext/datasets"
-      - name: COLEXT_PYTORCH_DATASETS
-        value: "/colext/pytorch_datasets"
 
       - name: PGHOSTADDR
         value: 10.0.0.100
@@ -40,8 +38,8 @@ spec:
         mountPath: /pgcreds
       - name: colext-std-datasets
         mountPath: /colext/datasets
-      - name: colext-pytorch-datasets
-        mountPath: /colext/pytorch_datasets
+      - name: hf-datasets-cache
+        mountPath: /colext/hf_datasets
 
     ports:
       - containerPort: 8080
@@ -62,9 +60,9 @@ spec:
       hostPath:
         path: {{ std_datasets_path }}
         type: Directory
-    - name: colext-pytorch-datasets
+    - name: hf-datasets-cache
       hostPath:
-        path: {{ pytorch_datasets_path }}
+        path: {{ hf_datasets_path }}
         type: Directory
   restartPolicy: Never
   imagePullSecrets:

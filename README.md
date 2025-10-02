@@ -150,7 +150,6 @@ CoLExT exposes several bash environment variables that are passed to the executi
 | COLEXT_DEVICE_TYPE      | Hardware type of the client            |
 | COLEXT_SERVER_ADDRESS   | Server address (host:port)             |
 | COLEXT_DATASETS         | Naturally partitioned FL datasets path |
-| COLEXT_PYTORCH_DATASETS | Pytorch datasets caching path          |
 | COLEXT_JOB_ID           | Experiment job ID                      |
 
 
