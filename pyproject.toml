@@ -8,9 +8,7 @@ version = "0.4.0"
 requires-python = ">= 3.8"
 description = "FL testbed decorators and launch scripts."
 readme = "README.md"
-classifiers = [
-    "Private :: Do Not Upload"
-]
+classifiers = ["Private :: Do Not Upload"]
 
 dependencies = [
     "psycopg[binary,pool]~=3.1.17",
@@ -20,7 +18,7 @@ dependencies = [
     "python-on-whales~=0.68.0",
     "flwr>=1.5.0,<1.9",
     "psutil~=5.9.8",
-    "tapo~=0.8.0",
+    "tapo==0.8.5",                  # issue with 0.8.6 (missing current_power field)
 ]
 
 [project.optional-dependencies]
