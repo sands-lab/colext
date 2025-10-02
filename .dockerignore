@@ -1,3 +1,8 @@
 dev-config/
 dist/
 base_docker_imgs/
+build/
+colext_setup/
+docs/
+plotting/
+.git/

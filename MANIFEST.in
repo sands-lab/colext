@@ -2,6 +2,7 @@ prune deployment
 prune tests
 prune build
 prune examples
-prune dev-config
-prune base_docker_imgs
+prune colext_setup
+exclude plotting/*.pdf
+exclude plotting/*.csv
 prune .git

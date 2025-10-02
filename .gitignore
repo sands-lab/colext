@@ -9,3 +9,5 @@ data
 build/
 *.pdf
 torch_wheels
+sp_test.ipynb
+*_test*
