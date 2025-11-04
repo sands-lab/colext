@@ -13,8 +13,6 @@
         std_datasets:
           src_path: /colext/datasets/
           dest_path: /colext/datasets/
-        pytorch_datasets:
-          path: /colext/pytorch_datasets/
         hf_datasets:
           path: /colext/hf_datasets/
 
